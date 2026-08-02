@@ -63,7 +63,7 @@ with certificate validation. A typical AD filter is:
 `LDAP_ROLE_MAPPINGS` maps full group DNs to `requester`, `agent`, `manager`, or
 `admin`. Unmapped identities default to `requester`.
 
-After LDAP connectivity is verified, use **ITIL administration** to map AD
+After LDAP connectivity is verified, use **Administration home → Service delivery and governance** to map AD
 groups to fulfillment teams. A mapping accepts either a short common name such
 as `gg_unix` or the complete DN. Membership reconciles at each AD login.
 Directory synchronization removes only directory-managed memberships and does
