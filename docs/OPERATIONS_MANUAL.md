@@ -28,7 +28,7 @@ documented rollback rather than claiming infallibility.
 | Agent | Triage, assign, fulfill, document, and resolve operational work |
 | Manager | Agent work plus team oversight and manager approvals |
 | CCB member | Review planned changes, risk, evidence, schedule, and backout plan |
-| Administrator | Identity, ITIL configuration, CMDB, audit, and platform operation |
+| Administrator | Identity, service operations settings, CMDB, audit, and platform operation |
 
 CoreApps, Database, Network, Windows, Unix, and SSD are standard fulfillment
 teams. Administrators can map AD groups such as `gg_unix` to the Unix team;
@@ -371,9 +371,67 @@ break-glass account and should not be used for routine work.
 
 ### Navigation
 
-The left application navigator contains role-appropriate modules. The top bar
-contains global search, favorites, recent history, notifications, help, and
-preferences. The categorized Preferences workspace controls density, font
+The compact left application navigator groups high-frequency destinations under
+Workspace, Leadership, Operations, and Administration. It remains narrow and
+never overlays the record content. Administration has one entry leading to the
+grouped Administration home. The top bar contains the sidebar toggle, global
+search, saved/recent utility icons, notifications, help, and preferences.
+
+Menu destinations are canonical: a page appears in one appropriate sidebar or
+Administration-home location rather than under multiple labels. Acronyms use
+their product spelling consistently, including **CMDB** and **RT**. The main
+search bar searches both navigation destinations and tenant-visible records,
+including tickets, requests, requested items, operational and catalog tasks,
+knowledge, enterprise work, CMDB configuration items, assets, and catalog
+items. Administrators can additionally find users, groups, and integration
+connections. Results preserve the same tenant, role, team, and record-access
+rules as their source pages.
+
+Long administration workspaces use a sticky section navigator. Selecting a
+section scrolls it into view; continued page scrolling automatically updates
+the highlighted section, its `aria-current` state, and the URL fragment. The
+navigator itself remains stationary: it does not auto-scroll or reorder as the
+page moves. A clicked destination remains selected throughout smooth scrolling
+instead of flashing through intermediate sections. Every
+Administration child workspace begins with a persistent breadcrumb and a clear
+**Back to Administration home** action so administrators never have to infer a
+return path from the global sidebar.
+
+The sticky Administration context bar is the only breadcrumb pattern on
+administration pages. Page headers do not repeat an uppercase Administration
+home path, and list toolbars do not add another return button. Nested pages use
+the same bar with an intermediate parent, for example **Administration home /
+Users and access / New user** or **Administration home / Integrations and
+delivery / RT import**.
+
+Service-delivery administration follows page order exactly: Catalog and
+routing; Directory mappings; Team aliases; Directory synchronization; Team
+ownership; Governance groups; Approval authority; Freeze windows; Service
+offerings; Calendars and commitments. Governance groups are separated from
+service offerings so every navigation item has one non-overlapping scroll
+target and related people, change, and service controls stay together.
+
+Change approval policy is owned by **Service delivery and governance → Change
+approval policy**, beside approval authority and freeze windows. Platform
+settings does not duplicate it. The final **Runtime environment** section is a
+read-only deployment summary, not another settings form. It reports the active
+deployment profile, database endpoint, upload storage, replica count, and
+ingress/TLS ownership, together with whether each value is changed through
+Docker Compose, Helm, a secret, a volume, or an ingress controller. Explicit
+fallback text is shown when a deployment value is not declared.
+
+Ticket defaults are owned by **Service delivery and governance → Ticket
+defaults**. This includes the default priority used when a new ticket does not
+declare one and the option to synchronize parent incident state changes to child
+incidents. Both controls apply live, are audited, and are not duplicated under
+Platform settings.
+
+The Platform settings introduction reflects its current contents: organization
+identity and branding, sign-in and directory providers, security limits,
+workspace defaults, email delivery, NetBox and RT connections, and the read-only
+runtime environment. It directs ticket, team, change, service, and SLA policy to
+Service delivery and governance.
+The categorized Preferences workspace controls density, font
 scale, high contrast, reduced motion, accessible tooltips, keyboard shortcuts,
 date/list presentation, whether the sidebar stays pinned open, and the start
 page. The user name in the navigation footer opens the self-service profile,
@@ -382,9 +440,13 @@ format. Role, active state, department, team membership, manager authority and
 CCB authority are not self-service fields.
 ServiceOps is light-only; there is no theme selector (ADR-012).
 
-Administrators use Administration home for a capability-oriented entry point
-to identity, ITIL configuration, workflow, CMDB, integrations, diagnostics and
-analytics. Users & roles provides tenant-scoped search and an editable user
+Administrators use Administration home for a capability-oriented entry point.
+While an administration page is open, the normal workspace menu becomes a
+pinned, filterable navigator grouped as Overview, Users and access, ITSM
+configuration, CMDB, Workflow and automation, Data management, Integrations,
+Security, User interface, Development, Deployment, and System. Modules link to
+implemented ServiceOps capabilities and specific configuration sections; the UI
+does not advertise unsupported ServiceNow tools. Users and roles provides tenant-scoped search and an editable user
 record. Only administrators with `security_administer` may alter role, active
 state or department. AD-sourced team membership continues to reconcile from
 configured directory mappings and is not replaced by profile editing.
@@ -422,7 +484,7 @@ submit. ServiceOps creates REQ, RITM, approvals, and SCTASK records. Follow the
 request page for approval and fulfillment status.
 
 Each catalog item has an administrator-controlled default fulfillment route
-under **ITIL configuration → Catalog item fulfillment routing**. The generated
+under **Administration home → Service delivery and governance → Catalog and routing**. The generated
 initial SCTASK inherits that team. Laptop and Software catalog items are routed
 to Windows by default. Administrators can route any current or future catalog
 item to another active fulfillment team without changing application code.
@@ -498,7 +560,7 @@ there is something in them — an empty service desk means an empty dashboard,
 not two panels permanently reading "nothing here." **Recently updated** shows
 the last eight records touched anywhere you have visibility into, useful for
 picking back up after a context switch. Administrators can turn any of these
-panels on or off tenant-wide from **System settings**.
+panels on or off tenant-wide from **Administration home → Platform settings → Workspace defaults**.
 
 ### Incidents list
 
@@ -682,9 +744,9 @@ knowledge article that documents their permanent fix once root cause is
 found, closing the loop between "we investigated this once" and "here's how
 to solve it fast next time."
 
-### Administration → System settings
+### Administration home → Platform settings
 
-![The System settings page: a long form of tenant-wide configuration grouped into sections (branding, security, workflow, dashboard, email, identity providers), each field marked Live or Restart required.](screenshots/admin_settings.png)
+![The Platform settings page: tenant-wide configuration divided into identity and experience, protection and behavior, connections, and deployment groups; each field is marked Live or Restart required.](screenshots/admin_settings.png)
 
 Every tenant-wide behavior this manual describes as configurable — branding,
 security limits, dashboard panel visibility, SLA warning windows, the new
@@ -718,9 +780,9 @@ This is the evidence trail an external auditor or incident responder would
 ask for first; see "Ticket history and change reapproval" earlier in this
 manual for how per-record history relates to this tenant-wide audit stream.
 
-### ITIL configuration
+### Administration home → Service delivery and governance
 
-![The ITIL configuration page: administrator controls for catalog item fulfillment routing, SLA definitions, business calendars, and CCB/team-manager assignment.](screenshots/itil_admin.png)
+![The Service delivery and governance page: operational records for catalog routing, people and teams, change governance, service mapping, calendars, and commitments.](screenshots/itil_admin.png)
 
 This is where the process framework itself is configured, as opposed to
 day-to-day operational work: which team fulfills which catalog item by
@@ -886,7 +948,7 @@ LDAP at least once are matched and updated, by directory DN.
 
 Two ways to run it:
 
-- **Manual**: Administration → System settings → "Sync from LDAP" panel
+- **Manual**: Administration home → Service delivery and governance → Directory synchronization
   triggers an immediate synchronous run (with a dry-run preview option) for
   the current tenant and shows a result summary (entries read, users
   updated, managers resolved, memberships added/removed, unmatched entries,
@@ -904,7 +966,7 @@ Two ways to run it:
   individually-flagged tenant, consistent with the platform's fail-closed
   tenant policy.
 
-Relevant settings (Administration → System settings → Authentication):
+Relevant settings (Administration home → Platform settings → Sign-in and directory):
 
 | Setting | Purpose |
 |---|---|
@@ -925,7 +987,7 @@ Operational notes:
 
 ## 10. Post-deployment system settings
 
-Administrators can open **Administration → System settings** after deployment
+Administrators can open **Administration home → Platform settings** after deployment
 to change the platform name, company name, PNG logo, primary and accent colors,
 support identity, display defaults, LDAP, Keycloak, encrypted provider secrets,
 security limits, workflow defaults, and notification identity.
@@ -951,7 +1013,7 @@ result. A manager or administrator may select a different priority only while
 supplying an auditable reason of at least ten characters.
 
 Administrators manage business calendars and SLA definitions under
-**ITIL configuration**. Calendars use IANA timezone names, explicit business
+**Administration home → Service delivery and governance**. Calendars use IANA timezone names, explicit business
 weekdays and opening hours, plus named excluded holiday dates. An SLA without a
 calendar remains a 24x7 wall-clock commitment. A calendar change applies to
 future SLA attachments; it does not silently rewrite targets already in flight.
@@ -968,7 +1030,7 @@ Workflow source is controlled in `config/workflows.json`. On startup ServiceOps
 validates the package and publishes a new immutable PostgreSQL runtime version
 only when the canonical specification changes. Administrators can inspect the
 deployed hash and versions, redeploy the packaged source, and run a mutation-free
-simulation under **Administration → Workflows**.
+simulation under **Administration home → Automation rules**.
 
 The supported foundation accepts `ticket.state_entry` events, equality,
 inequality, membership and empty-value conditions over explicitly allowed
@@ -1007,7 +1069,7 @@ immutable published workflow specification, so runtime execution never depends
 on mutable external fragments.
 
 Administrators configure recurring ticket schedules under
-**Administration → Workflows**. Each schedule is tenant-scoped, targets one
+**Administration home → Automation rules**. Each schedule is tenant-scoped, targets one
 ticket, uses a bounded minute interval, and can be enabled or disabled without
 deleting its evidence. Concurrent workers claim due schedules with PostgreSQL
 row locking. The event and next-run advancement commit together. If the system

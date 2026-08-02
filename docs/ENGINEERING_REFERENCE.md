@@ -674,7 +674,7 @@ This mapping uses the source guide as a behavioral reference. ServiceOps does no
 |---|---|
 | Next Experience and unified navigation | Unified top navigation, collapsible application navigation, global search, favorites, history, notifications, help, preferences, and role-aware landing pages |
 | Landing pages and dashboards | Operational dashboard, analytics workspace, workload counters, role-based record visibility, selectable start page |
-| Configurable workspace | Purpose-built ticket, request, change, CMDB, catalog, approval, analytics, and ITIL administration workspaces |
+| Configurable workspace | Purpose-built ticket, request, change, CMDB, catalog, approval, analytics, and service operations settings workspaces |
 | CMDB discovery | Manual administrator create/edit/retire for configuration items and CI-to-CI relationships; automated registration from Linux hosts via `PUT /api/v1/cmdb/configuration-items` (idempotent upsert-by-name) and a lightweight shell agent, with an example Puppet class for scheduled fleet-wide sync |
 | Lists and filters | Searchable/filterable record lists, states, priorities, badges, responsive tables, empty states; administrator user list searches name, username, email and department |
 | Forms and activity | Structured forms, field validation, comments/activity stream, work notes, related approvals, SLAs, checklist, attachments, audit events, and Incident section navigation for Notes/Related Records/Resolution/Event History |

@@ -1298,7 +1298,7 @@ infallibility.
 | Agent | Triage, assign, fulfill, document, and resolve operational work |
 | Manager | Agent work plus team oversight and manager approvals |
 | CCB member | Review planned changes, risk, evidence, schedule, and backout plan |
-| Administrator | Identity, ITIL configuration, CMDB, audit, and platform operation |
+| Administrator | Identity, service operations settings, CMDB, audit, and platform operation |
 
 CoreApps, Database, Network, Windows, Unix, and SSD are standard fulfillment
 teams. AD groups (e.g. `gg_unix`) map to teams; membership reconciles at
@@ -1460,7 +1460,7 @@ indicators, operational columns.
 
 **Requests and catalog**: select item → variables/justification → submit →
 REQ/RITM/approvals/SCTASK created. Fulfillment routing is
-administrator-controlled under **ITIL configuration → Catalog item
+administrator-controlled under **Administration home → Service delivery and governance → Catalog and
 fulfillment routing**; Laptop/Software route to Windows by default (and, as
 of this session, both catalog items themselves are now auto-created on
 first bootstrap — see Part 5). Legacy items without an explicit route fall
@@ -1537,7 +1537,7 @@ revoked-user/missing-email/role-change/provider-outage.
 
 ### 10. Post-deployment system settings
 
-**Administration → System settings**: platform/company name, PNG logo,
+**Administration home → Platform settings**: platform/company name, PNG logo,
 colors, support identity, display defaults, LDAP/Keycloak, encrypted
 provider secrets, security limits, workflow defaults, notification
 identity. Each field marked **Live** (read from PostgreSQL every request) or
