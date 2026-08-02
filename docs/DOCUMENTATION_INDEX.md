@@ -15,6 +15,7 @@ meaningful change.
 | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Implementation evidence mapped to requirements/backlog items |
 | [UI_CAPABILITY_MAPPING.md](UI_CAPABILITY_MAPPING.md) | Supplied ServiceNow UI PDF analysis and capability gaps |
 | [ITIL_TICKET_HIERARCHY.md](ITIL_TICKET_HIERARCHY.md) | ServiceNow-pattern ticket hierarchy reference and Change Task governance rule mapping |
+| [ADMINISTRATION_INFORMATION_ARCHITECTURE.md](ADMINISTRATION_INFORMATION_ARCHITECTURE.md) | Canonical ownership and naming of every administration area; prevents duplicated settings |
 | [gdpr/ROPA.md](gdpr/ROPA.md) | Record of Processing Activities (Art. 30): personal data categories, purposes, legal basis, recipients, retention, transfer risk |
 | [gdpr/DPIA.md](gdpr/DPIA.md) | Data Protection Impact Assessment for audit logging, attachment storage, and LDAP sync |
 | [gdpr/DATA_SUBJECT_RIGHTS.md](gdpr/DATA_SUBJECT_RIGHTS.md) | Art. 15/16/17/18/20/21 procedures mapped to the actual data model, including the audit-immutability vs. erasure tension |
