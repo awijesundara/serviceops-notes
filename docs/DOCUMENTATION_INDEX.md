@@ -15,6 +15,9 @@ meaningful change.
 | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Implementation evidence mapped to requirements/backlog items |
 | [UI_CAPABILITY_MAPPING.md](UI_CAPABILITY_MAPPING.md) | Supplied ServiceNow UI PDF analysis and capability gaps |
 | [ITIL_TICKET_HIERARCHY.md](ITIL_TICKET_HIERARCHY.md) | ServiceNow-pattern ticket hierarchy reference and Change Task governance rule mapping |
+| [iso27001/SOA.md](iso27001/SOA.md) | ISO/IEC 27001:2022 Statement of Applicability — all Annex A controls, applicability, and current implementation status with codebase evidence |
+| [iso27001/GAP_ANALYSIS.md](iso27001/GAP_ANALYSIS.md) | Concrete gap descriptions and remediation items for every Gap/Partially-Implemented control in the SOA |
+| [iso27001/ISMS_POLICIES.md](iso27001/ISMS_POLICIES.md) | Draft core ISMS policies (Information Security, Access Control, Incident Management, Business Continuity/Backup, Supplier/Vendor Security, Acceptable Use) |
 
 ## Keeping this synchronized
 
