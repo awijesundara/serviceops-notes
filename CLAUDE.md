@@ -336,11 +336,17 @@ When implementing:
 
 ## Documentation control
 
-Controlled local documentation begins at:
+Internal engineering documentation (governance, backlog, traceability, engineering
+reference, deployment guide, API reference, this file) lives in the sibling
+`serviceops-notes` repo, not in this repo's GitHub history. Controlled documentation
+begins at `serviceops-notes/docs/DOCUMENTATION_INDEX.md`.
 
-docs/DOCUMENTATION_INDEX.md
+This `ServiceOps` repo's GitHub-visible docs are limited to `README.md` and
+`docs/ServiceOps_Complete_Platform_Manual.pdf` (the public user manual) plus the
+screenshots referenced by the README. Everything else under `docs/` is gitignored
+here (see `.gitignore`) and must never be re-added to this repo's git history.
 
-Keep these synchronized where they exist:
+Keep these synchronized in `serviceops-notes` where they exist:
 
 - Documentation index
 - Product backlog
@@ -356,7 +362,10 @@ Keep these synchronized where they exist:
 - Migration and rollback instructions
 - Release evidence
 
-The docs directory may be excluded from GitHub, but it still must be maintained locally. Do not delete it because it is gitignored.
+After editing this file or any doc that belongs in `serviceops-notes`, copy the
+changed file(s) into `/Users/anushka/Github/serviceops-notes` and commit there too —
+see that repo's own README for the sync procedure. Do not delete local docs because
+they are gitignored here; they must still be maintained, just in the notes repo.
 
 ## Validation expectations
 
