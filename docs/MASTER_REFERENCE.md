@@ -1472,7 +1472,25 @@ only.
 **Changes**: must state type, affected CI, owning team, risk, impact,
 planned window, implementation/test/backout plans. Review conflicts before
 approval. CCB approval is authorization, not technical validation or
-implementation-team membership.
+implementation-team membership. The New Change form now also accepts a
+repeatable "Additional configuration items" picker alongside the primary CI,
+linked via the existing `TaskCI` mechanism at creation time; adding an
+affected CI to an approved change is still a material change (new approval
+cycle).
+
+**Sidebar profile card**: shows the signed-in user's name, avatar, and
+active role. A user holding more than one granted role sees an "Acting as
+{Role}" control there (not in the top nav) to switch active role without
+signing out; single-role users never see it. A full-width, text-labeled
+"Sign out" button sits below it.
+
+**System Health** (Administration home → System): application-error table
+(`ApplicationLog`) plus a raw `LOG_DIR` request-log-file viewer, both with
+combinable Splunk-style filters (level, logger, path, request ID, date
+range; method/status on the log-file viewer) and CSV/JSON/NDJSON/text export
+(`/admin/system-health/errors/export`, `/admin/system-health/logs/export`,
+admin-only, audited, 10k-row cap). `docker logs`/`kubectl logs` mirror the
+same detailed JSON lines as the in-app viewer and the log file.
 
 **Knowledge, CMDB, assets, boards**: search knowledge before duplicating
 work; use the CMDB relationship view for service-impact understanding
@@ -1707,6 +1725,13 @@ Confidential OIDC client, standard authorization-code flow, redirect URI
 profile email`, include realm roles in the ID token if role mapping is
 needed. `KEYCLOAK_ROLE_MAPPINGS` maps realm role names to ServiceOps
 roles. Keep the local admin credential vaulted for IdP outages.
+`KEYCLOAK_ATTR_MAP` (mirrors `LDAP_ATTR_MAP`'s shape) additionally maps
+title/department/division/employee_id/employee_type/business_phone/
+mobile_phone/location from OIDC userinfo claims onto the user profile on
+every login, same as LDAP sync does for interactive LDAP logins; LDAP sync
+itself now also covers business_phone/mobile_phone/location, not just the
+original five fields. Neither path ever nulls a field the current login's
+claim/attribute set left out.
 
 ### Fast installation
 

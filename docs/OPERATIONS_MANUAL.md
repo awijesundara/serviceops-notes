@@ -440,6 +440,50 @@ format. Role, active state, department, team membership, manager authority and
 CCB authority are not self-service fields.
 ServiceOps is light-only; there is no theme selector (ADR-012).
 
+The sidebar profile card is the single place a signed-in user confirms who
+they are and signs out. It shows the user's name and their currently active
+role directly beneath their avatar. A user who holds more than one granted
+role (see **Roles and teams**, §2) additionally sees an **Acting as
+{Role}** control immediately below their name — opening it lists every role
+they hold, marks the currently active one, and lets them switch which role
+authorization checks use for the rest of the session with one click, without
+signing out. A single-role user never sees this control; it only appears when
+`current_user.granted_roles` has more than one entry. Below the profile
+identity (and the role switcher, when present) is a full-width, clearly
+labeled **Sign out** button — both the icon and the word are always visible,
+not an icon-only affordance a user has to guess at.
+
+### System Health
+
+**Administration home → System → System Health** is the operator-facing view
+of application errors and request activity, distinct from the Audit log
+(§Audit log), which records user actions rather than technical events.
+
+The page has two views: the application error table (backed by the
+`ApplicationLog` database record, survives container restarts) and a raw
+request-log-file viewer reading the same JSON lines the container writes to
+`LOG_DIR`. Both views share the same combinable, Splunk-style filter bar —
+severity level, logger name (contains), request path (contains), request ID
+(exact match), and a from/to date-time range; the log-file viewer additionally
+filters by HTTP method and status code. Filters combine with AND semantics and
+the same filtered result set is what gets exported, so what an operator sees
+on screen is exactly what they download.
+
+Each view has its own export action supporting four formats — CSV and plain
+text for spreadsheet tools, JSON and NDJSON for SIEM/log-shipper ingestion
+(NDJSON is the bulk-ingest shape Splunk and Elastic both prefer) — via
+`GET /admin/system-health/errors/export` and
+`GET /admin/system-health/logs/export` (`format=csv|json|ndjson|txt`,
+admin-only, each export itself is audited). Exports are capped at 10,000 rows
+per request and inherit the same filters currently applied on screen.
+
+Whatever detail appears in the in-app log viewer and the `LOG_DIR` file also
+appears, byte-for-byte identically, in `docker logs`/`kubectl logs` output —
+the same `JsonLogFormatter`/`RedactingFilter` pipeline that writes the file
+also writes to stdout, so an operator without shell access to the log volume
+never sees less detail via the container's own log stream than the in-app
+viewer promises.
+
 Administrators use Administration home for a capability-oriented entry point.
 While an administration page is open, the normal workspace menu becomes a
 pinned, filterable navigator grouped as Overview, Users and access, ITSM
@@ -510,6 +554,17 @@ Every change must state type, affected CI, owning team, risk, impact, planned
 window, implementation plan, test plan, and executable backout plan. Review
 conflicts before approval. CCB approval is authorization, not a substitute for
 technical validation or membership in the owning implementation team.
+
+A change can affect more than one Configuration Item. The New Change form
+captures a primary CI (used for risk scoring and conflict/freeze detection
+against overlapping changes) plus an optional, repeatable **Additional
+configuration items** picker — click **Add another configuration item** for
+each further CI the change touches. Every additional CI is linked at the
+moment the change is created and appears on the change's own **Affected CIs**
+section alongside any CIs added later from the record itself. Adding an
+affected CI to an already-approved change is a material change: it
+invalidates the current approval chain and starts a new approval cycle, the
+same as editing the implementation, test, or backout plan.
 
 ### Knowledge, CMDB, assets, and boards
 
@@ -813,7 +868,8 @@ in-flight ticket.
 
 1. From the Changes list, click **New**, select change type `Normal`, and
    complete the required implementation plan, test plan, backout plan,
-   planned window, affected CI and owning team.
+   planned window, primary configuration item and owning team; use **Add
+   another configuration item** if the change touches more than one CI.
 2. On submission ServiceOps runs conflict detection against other in-flight
    changes touching the same CI or a related one, and creates a two-stage
    approval chain: the owning team's manager first, then the CCB.
@@ -935,13 +991,26 @@ URI, short-lived tokens, approved realm-role claims, client-secret rotation,
 and restrictive redirect/web-origin settings. Validate login, logout, expired
 session, revoked user, missing email, role changes, and provider outage.
 
+In addition to name/email/role claims, Keycloak/OIDC login can populate the
+same profile fields LDAP sync does — title, department, division, employee
+ID, employee type, business phone, mobile phone, and location — from OIDC
+userinfo claims, via the admin-configurable `KEYCLOAK_ATTR_MAP` setting
+(Administration home → Platform settings → Sign-in and directory), a
+`{ServiceOps field: claim name}` JSON map mirroring `LDAP_ATTR_MAP`'s shape.
+Populate it with a realm's actual custom protocol-mapper claim names (e.g.
+`department`, `employee_id`, `phone_number`); an empty map skips profile
+mapping and only name/email/roles are applied, as before. As with LDAP sync,
+a sparser claim set on a later login never nulls out a profile value a
+previous login already set.
+
 ### LDAP directory synchronization
 
 In addition to interactive AD/LDAP login (which creates the `ExternalIdentity`
 row for a user on first login), ServiceOps can periodically enrich already
 LDAP-provisioned user records from the directory: profile fields (`title`,
-`department`, `division`, `employee_id`, `employee_type`), the manager
-reporting chain (`User.manager_id`), and AD-group-driven team membership.
+`department`, `division`, `employee_id`, `employee_type`, `business_phone`,
+`mobile_phone`, `location`), the manager reporting chain (`User.manager_id`),
+and AD-group-driven team membership.
 This is implemented in `serviceops_core/ldap_sync.py::sync_directory` and
 does **not** create new users — only accounts that already authenticated via
 LDAP at least once are matched and updated, by directory DN.
@@ -970,7 +1039,8 @@ Relevant settings (Administration home → Platform settings → Sign-in and dir
 
 | Setting | Purpose |
 |---|---|
-| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults match typical Active Directory attributes. |
+| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults match typical Active Directory attributes, including `business_phone`→`telephoneNumber`, `mobile_phone`→`mobile`, `location`→`physicalDeliveryOfficeName`. |
+| `KEYCLOAK_ATTR_MAP` | The same shape of JSON map, applied to Keycloak/OIDC userinfo claims instead of LDAP attributes (see **Keycloak** above). Independent of `LDAP_ATTR_MAP` — a tenant can run either or both providers with their own mappings. |
 | `LDAP_SYNC_ENABLED` | Enables the scheduled sync for this tenant. Default off; manual sync is always available regardless of this flag. |
 | `LDAP_SYNC_INTERVAL_MINUTES` | Minimum minutes between scheduled sync runs per tenant (5–10080). Default 60. |
 
