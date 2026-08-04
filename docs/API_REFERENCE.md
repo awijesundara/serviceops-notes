@@ -51,6 +51,7 @@ Available scopes:
 | `incidents:create` | Create incidents |
 | `tickets:update` | Update an authorized owning-team ticket |
 | `workflows:execute` | Trigger configured API workflows for an authorized ticket |
+| `cmdb:write` | Idempotent upsert of Configuration Items (§9) |
 
 ## 3. Authentication and common headers
 
