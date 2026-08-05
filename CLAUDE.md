@@ -341,10 +341,19 @@ reference, deployment guide, API reference, this file) lives in the sibling
 `serviceops-notes` repo, not in this repo's GitHub history. Controlled documentation
 begins at `serviceops-notes/docs/DOCUMENTATION_INDEX.md`.
 
-This `ServiceOps` repo's GitHub-visible docs are limited to `README.md` and
-`docs/ServiceOps_Complete_Platform_Manual.pdf` (the public user manual) plus the
-screenshots referenced by the README. Everything else under `docs/` is gitignored
-here (see `.gitignore`) and must never be re-added to this repo's git history.
+This `ServiceOps` repo's GitHub-visible docs are limited to `README.md`,
+`docs/ServiceOps_Complete_Platform_Manual.pdf` (the public user manual),
+`docs/API_REFERENCE.md` (the public REST API reference — the one deliberate
+carve-out, effective 2026-08-05, since integrators need it and it contains no
+internal governance/backlog/security-posture material), plus the screenshots
+referenced by the README. Everything else under `docs/` is gitignored here
+(see `.gitignore`) and must never be re-added to this repo's git history.
+
+`docs/API_REFERENCE.md` in this repo is the maintained original; the copy at
+`ServiceOps/docs/API_REFERENCE.md` is a byte-identical mirror. Never let the
+original diverge from what's published — after any edit here, re-run
+`tools/sync_api_reference.sh` (or copy it manually) in the same change so
+both are updated together.
 
 Keep these synchronized in `serviceops-notes` where they exist:
 
