@@ -4,6 +4,22 @@ For the full user, administrator, identity, Kubernetes, security, monitoring,
 backup, recovery, upgrade, rollback, and incident-response runbook, use the
 [complete platform manual](OPERATIONS_MANUAL.md).
 
+## Local development deployment convention
+
+During the active development period on Anushka's local machine, the Docker
+Compose deployment must always publish ServiceOps at `http://localhost:80`
+(normally entered as `http://localhost`). Keep the local, untracked
+`ServiceOps/.env` setting as:
+
+```dotenv
+APP_PORT=80
+```
+
+After every application update, run `./tools/deploy-local.sh` and verify
+`http://localhost/health`. Do not change the container's internal port 8080;
+Compose maps host port 80 to that internal port. This workstation convention
+does not change production ingress, reverse-proxy, or Kubernetes ports.
+
 ## Kubernetes production deployment
 
 The supported enterprise topology is the Helm chart in `charts/serviceops`
