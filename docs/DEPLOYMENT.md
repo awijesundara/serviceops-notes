@@ -27,6 +27,51 @@ secrets and retained audit-signing keys would become undecryptable. Store that
 key separately with the local recovery material. Port changes require only
 `APP_PORT`; they must not rotate encryption keys.
 
+## Service health and monitoring
+
+Use `/live` only for process liveness. `/ready` is the traffic-admission gate:
+it checks PostgreSQL, the exact migration head, active-tenant audit-key
+decryptability, worker heartbeat, upload writability, and configured object
+storage. `/health` remains the lightweight Docker dependency check because the
+Compose worker starts after the app; making app container health depend on that
+worker would create a startup cycle.
+
+Prometheus scrapes `/metrics`; set `METRICS_TOKEN` to require `Authorization:
+Bearer ...`. Install `deploy/monitoring/prometheus-rules.yaml` and route its
+critical alerts to a staffed destination. Run `tools/synthetic_login.py` from
+outside the cluster with a dedicated unprivileged requester to prove the full
+CSRF, password, session, and authenticated-page journey.
+
+## Account and emergency recovery
+
+Local users can request a non-enumerating, single-use 30-minute password-reset
+link. Completion resets lockout state and revokes every existing browser
+session. Users review their own sessions; tenant administrators can inventory
+and revoke all tenant sessions. For operator recovery, use only:
+
+```bash
+./serviceops diagnose-recovery
+./serviceops recover-admin USERNAME
+./serviceops recover-audit-key TENANT_SLUG
+```
+
+Mutation commands take a checksummed recovery set first. Audit-key recovery is
+an explicit integrity boundary; it never pretends that signatures made with a
+lost key remain verifiable.
+
+## Immutable recovery and object storage
+
+Each recovery manifest records a non-secret fingerprint of the exact settings
+encryption key. Configure `BACKUP_ARCHIVE_*` to upload database, uploads, and
+manifest artifacts to S3-compatible storage. With
+`BACKUP_REQUIRE_OBJECT_LOCK=true`, backup fails unless Object Lock is enabled.
+Use a KMS key and a separate account/credential from the application.
+
+Set `OBJECT_STORAGE_BUCKET` and related `OBJECT_STORAGE_*` values for
+S3-compatible attachments. Empty bucket configuration retains the Docker
+volume/PVC backend. Readiness validates the configured bucket before admitting
+traffic.
+
 ## Kubernetes production deployment
 
 The supported enterprise topology is the Helm chart in `charts/serviceops`
