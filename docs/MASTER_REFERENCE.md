@@ -26,6 +26,16 @@ replacement for them.
 
 ## Part 0 — Quick-start for an AI agent picking up this repo
 
+### Local development deployment convention
+
+During development on Anushka's local machine, always deploy the Docker
+Compose application at `http://localhost:80` (displayed to the user simply as
+`http://localhost`). Preserve `APP_PORT=80` in the local, untracked
+`ServiceOps/.env`, redeploy after every application update with
+`./tools/deploy-local.sh`, and verify `http://localhost/health`. Port 8080
+remains the container-internal listener; this convention changes only the
+host-port mapping and does not apply to production ingress.
+
 **What this product is**: an independent, production-oriented ITSM platform
 (Flask + PostgreSQL + SQLAlchemy + Alembic), inspired by ITIL/ServiceNow
 patterns but explicitly not claiming ServiceNow parity or compatibility (see
