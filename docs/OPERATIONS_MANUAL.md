@@ -573,6 +573,34 @@ to understand service impact. Asset pages track accountable inventory. The
 visual task board changes the underlying ticket state and therefore remains
 audited and role controlled.
 
+**Agentless discovery** (Administration → CMDB → Discovery) populates
+Configuration Items and their connections automatically from switches and
+other SNMP-speaking devices, without installing anything on the target — an
+administrator configures a discovery target (a single host or a CIDR subnet)
+with its own SNMP version/port/community string, which is encrypted at rest
+the same way other per-integration secrets are. A target can be run on demand
+or on a schedule (the same in-process worker loop that handles SLA breaches
+and LDAP sync). Each run reads standard MIB-II/IF-MIB system and interface
+facts, the device's ARP table, and LLDP neighbor advertisements, then
+reconciles them into the CMDB: it creates a CI per responding device
+(guessing a sensible class — Network Switch, Server, Network Appliance —
+from what it sees) and a "Connects to" relationship for every LLDP-discovered
+neighbor pair. Discovery is deliberately conservative toward manual edits: a
+CI an administrator already classified by hand keeps its name, class, and
+vendor exactly as set — only its last-seen technical detail is refreshed —
+so a scheduled discovery run can never silently overwrite a curated CMDB
+record. This is a distinct, complementary path to the existing
+self-registering host agent (`tools/cmdb_sync_agent.sh`, which a host runs on
+itself); discovery is for devices — switches, appliances — that can't run an
+agent of their own. Nothing is ever scanned beyond a target an administrator
+explicitly entered.
+
+**Topology map** (`/cmdb/topology`, linked from the CMDB page) renders every
+CI and relationship visible to you as an interactive, draggable graph —
+manually created and SNMP-discovered CIs are colored distinctly, and hovering
+an edge shows the relationship type. No screenshot exists yet for this view
+in the visual walkthrough below; it renders identically to how it looks live.
+
 Release 1.27.18 enriches the Configuration Item record beyond the original
 name/class/environment/status/IP/owner fields: each CI now also carries a
 description, lifecycle state (Planned/In Use/Maintenance/Retired/Disposed,

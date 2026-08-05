@@ -1498,6 +1498,15 @@ work; use the CMDB relationship view for service-impact understanding
 location, owning team, vendor/model/serial, discovery source, install/
 warranty dates); asset pages track accountable inventory; the visual task
 board changes underlying ticket state and remains audited/role-controlled.
+**Agentless SNMP discovery** (Admin → CMDB → Discovery, `DiscoveryTarget`,
+`serviceops_core/network_discovery.py`) auto-populates CIs and "Connects to"
+relationships from switches/devices via SNMP GET/WALK (MIB-II/IF-MIB/IP-MIB
+ARP/LLDP-MIB), on demand or scheduled via the outbox worker loop;
+credentials encrypted at rest like `IntegrationConnection`; never overwrites
+a manually-classified CI's identity fields, only refreshes attributes.
+Complementary to (not a replacement for) the agent-based
+`tools/cmdb_sync_agent.sh`. New `/cmdb/topology` page renders CIs/
+relationships as a dependency-free vanilla-JS force-directed graph.
 
 ### 4. Deployment decision
 
