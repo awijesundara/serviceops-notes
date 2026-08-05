@@ -36,6 +36,15 @@ Compose application at `http://localhost:80` (displayed to the user simply as
 remains the container-internal listener; this convention changes only the
 host-port mapping and does not apply to production ingress.
 
+The untracked local `SETTINGS_ENCRYPTION_KEY` must be retained with recovery
+material and reused with the existing database. Changing `APP_PORT` never
+requires or authorizes rotating that key. On 2026-08-05, a lost prior key made
+the database's retained audit-signing keys undecryptable and caused login audit
+creation to return HTTP 500. Authorized break-glass recovery preserved the 32
+historical audit rows and key records, created a new active signing key, and
+recorded the recovery boundary; those historical rows cannot be
+cryptographically reverified without the lost key. See B-278.
+
 **What this product is**: an independent, production-oriented ITSM platform
 (Flask + PostgreSQL + SQLAlchemy + Alembic), inspired by ITIL/ServiceNow
 patterns but explicitly not claiming ServiceNow parity or compatibility (see
