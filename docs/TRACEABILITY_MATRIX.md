@@ -64,7 +64,7 @@ has code but incomplete external/runtime proof; **Gap** is not production-ready.
 | Scheduled workflows and subflows | reusable subflow expansion with unknown/cycle rejection, immutable materialized versions, tenant ticket schedules, concurrent scheduler claims, single due-event emission and missed-run coalescing | Implemented; calendar expressions, blackout policy, package dependencies, concurrency quotas and production-scale proof pending | B-209 |
 | Bootstrap credential lifecycle | mounted-file priority, worker exclusion, split Kubernetes runtime/bootstrap Secrets, password rotation, auth-version session invalidation, verified retirement command | Implemented; external vault/provider rotation ceremony pending | B-006, B-210 |
 | Supply-chain evidence | exact dependencies, digest-pinned bases, full-SHA-pinned CI actions, tests, Trivy high/critical gate, CycloneDX image SBOM, digest-only publication/deployment, keyless Cosign signature, GitHub SLSA/SBOM attestations, registry verification and Sigstore namespace admission enforcement | Implemented; representative tagged GHCR publication and cluster rejection proof pending | B-007, B-210 |
-| Production observability/SLOs | health endpoints only | Gap | B-070 |
+| Production observability/SLOs | deep readiness, Prometheus metrics, trace correlation, alert rules, System Health, authenticated synthetic probe | Partial; external retention, delivery, SLO dashboards and on-call exercise remain | B-070 |
 
 ## Connection-dependent capability boundary
 
