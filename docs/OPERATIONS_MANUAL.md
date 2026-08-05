@@ -573,35 +573,44 @@ to understand service impact. Asset pages track accountable inventory. The
 visual task board changes the underlying ticket state and therefore remains
 audited and role controlled.
 
-**Agentless discovery** (Administration → CMDB → Discovery) populates
-Configuration Items and their connections automatically from switches and
-other SNMP-speaking devices, without installing anything on the target — an
+**Agentless discovery** (Administration → CMDB → Discovery) finds
+Configuration Items and their connections from switches and other
+SNMP-speaking devices, without installing anything on the target — an
 administrator configures a discovery target (a single host or a CIDR subnet)
-with its own SNMP version/port/community string, which is encrypted at rest
-the same way other per-integration secrets are. A target can be run on demand
-or on a schedule (the same in-process worker loop that handles SLA breaches
-and LDAP sync). Each run reads standard MIB-II/IF-MIB system and interface
-facts, the device's ARP table, and LLDP neighbor advertisements, then
-reconciles them into the CMDB: it creates a CI per responding device
-(guessing a sensible class — Network Switch, Server, Network Appliance —
-from what it sees) and a "Connects to" relationship for every LLDP-discovered
-neighbor pair. Discovery is deliberately conservative toward manual edits: a
-CI an administrator already classified by hand keeps its name, class, and
-vendor exactly as set — only its last-seen technical detail is refreshed —
-so a scheduled discovery run can never silently overwrite a curated CMDB
-record. Most consumer and office devices — phones, laptops, most routers,
-smart-home gear — don't run an SNMP agent at all, so a device that doesn't
-answer SNMP is still checked for basic reachability (a handful of common
-TCP ports, never a port scan) and, if alive, recorded as a bare CI — IP
-address only, `discovery_source` "Network sweep (no SNMP)" — rather than
-being silently invisible; on a typical network expect far more devices
-found this second way than the first. A device already fully profiled via
-SNMP on an earlier run is never downgraded to a bare entry by a later
-liveness-only hit. This is a distinct, complementary path to the existing
-self-registering host agent (`tools/cmdb_sync_agent.sh`, which a host runs
-on itself); discovery is for devices — switches, appliances — that can't
-run an agent of their own. Nothing is ever scanned beyond a target an
-administrator explicitly entered.
+with its own SNMP version/port/community string, encrypted at rest the same
+way other per-integration secrets are. A target can be run on demand or on a
+schedule (the same in-process worker loop that handles SLA breaches and LDAP
+sync). Each run reads standard MIB-II/IF-MIB system and interface facts, the
+device's ARP table, and LLDP neighbor advertisements for anything that
+answers SNMP. Most consumer and office devices — phones, laptops, most
+routers, smart-home gear — don't run an SNMP agent at all, so a device that
+doesn't answer SNMP is still checked for basic reachability (a handful of
+common TCP ports, never a port scan) and, if alive, recorded as a bare
+result — IP address plus a best-effort reverse-DNS name where the network's
+own DNS/router setup supports it — rather than being silently invisible;
+on a typical network expect far more devices found this second way than the
+first.
+
+**A run never creates a CI by itself.** It stages every device found as a
+reviewable candidate; the discovery list shows a "Review N devices" link
+whenever a target has pending results, opening a page listing each one
+(name, address, class, vendor, and whether it came from SNMP or a bare
+liveness hit) with a checkbox per row. From there an administrator adds the
+selected devices, adds every candidate in one action, or discards the whole
+batch without touching the CMDB — nothing lands in the CMDB without an
+explicit decision. Only at that point does reconciliation run: it creates a
+CI per chosen device (guessing a sensible class — Network Switch, Server,
+Network Appliance — from what it saw) and a "Connects to" relationship for
+every LLDP-discovered neighbor pair where both sides were selected together.
+Reconciliation is deliberately conservative toward manual edits: a CI an
+administrator already classified by hand keeps its name, class, and vendor
+exactly as set on a later re-import — only its last-seen technical detail is
+refreshed — and a device already fully profiled via SNMP is never downgraded
+to a bare entry by a later liveness-only hit on the same address. This is a
+distinct, complementary path to the existing self-registering host agent
+(`tools/cmdb_sync_agent.sh`, which a host runs on itself); discovery is for
+devices — switches, appliances — that can't run an agent of their own.
+Nothing is ever scanned beyond a target an administrator explicitly entered.
 
 **Topology map** (`/cmdb/topology`, linked from the CMDB page) renders every
 CI and relationship visible to you as an interactive, draggable graph —
