@@ -1506,7 +1506,14 @@ credentials encrypted at rest like `IntegrationConnection`; never overwrites
 a manually-classified CI's identity fields, only refreshes attributes.
 Complementary to (not a replacement for) the agent-based
 `tools/cmdb_sync_agent.sh`. New `/cmdb/topology` page renders CIs/
-relationships as a dependency-free vanilla-JS force-directed graph.
+relationships as a dependency-free vanilla-JS force-directed graph. A device
+that doesn't answer SNMP (most consumer/office devices don't) still gets a
+bare liveness check (`tcp_liveness_probe`, a handful of common TCP ports
+against only the configured target, no port scanning) via shared
+`probe_host()`, recorded as a bare CI (`discovery_source` "Network sweep
+(no SNMP)") rather than silently invisible; never downgrades a CI already
+SNMP-profiled. Real-hardware validation: 1→96 devices found on the same
+real `/24` after this fix.
 
 ### 4. Deployment decision
 

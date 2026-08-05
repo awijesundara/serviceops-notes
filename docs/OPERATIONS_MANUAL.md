@@ -589,11 +589,19 @@ neighbor pair. Discovery is deliberately conservative toward manual edits: a
 CI an administrator already classified by hand keeps its name, class, and
 vendor exactly as set — only its last-seen technical detail is refreshed —
 so a scheduled discovery run can never silently overwrite a curated CMDB
-record. This is a distinct, complementary path to the existing
-self-registering host agent (`tools/cmdb_sync_agent.sh`, which a host runs on
-itself); discovery is for devices — switches, appliances — that can't run an
-agent of their own. Nothing is ever scanned beyond a target an administrator
-explicitly entered.
+record. Most consumer and office devices — phones, laptops, most routers,
+smart-home gear — don't run an SNMP agent at all, so a device that doesn't
+answer SNMP is still checked for basic reachability (a handful of common
+TCP ports, never a port scan) and, if alive, recorded as a bare CI — IP
+address only, `discovery_source` "Network sweep (no SNMP)" — rather than
+being silently invisible; on a typical network expect far more devices
+found this second way than the first. A device already fully profiled via
+SNMP on an earlier run is never downgraded to a bare entry by a later
+liveness-only hit. This is a distinct, complementary path to the existing
+self-registering host agent (`tools/cmdb_sync_agent.sh`, which a host runs
+on itself); discovery is for devices — switches, appliances — that can't
+run an agent of their own. Nothing is ever scanned beyond a target an
+administrator explicitly entered.
 
 **Topology map** (`/cmdb/topology`, linked from the CMDB page) renders every
 CI and relationship visible to you as an interactive, draggable graph —
