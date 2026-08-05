@@ -20,6 +20,13 @@ After every application update, run `./tools/deploy-local.sh` and verify
 Compose maps host port 80 to that internal port. This workstation convention
 does not change production ingress, reverse-proxy, or Kubernetes ports.
 
+The local `.env` is part of the recovery set even though it is intentionally
+not committed. In particular, never regenerate or replace
+`SETTINGS_ENCRYPTION_KEY` while retaining an existing database: platform
+secrets and retained audit-signing keys would become undecryptable. Store that
+key separately with the local recovery material. Port changes require only
+`APP_PORT`; they must not rotate encryption keys.
+
 ## Kubernetes production deployment
 
 The supported enterprise topology is the Helm chart in `charts/serviceops`
