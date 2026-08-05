@@ -28,3 +28,11 @@ findings in the governed backlog.
 
 Production promotion remains blocked until gates 1–3 have no unresolved
 critical/high issue and the accountable owner explicitly accepts residual risk.
+
+## Current implementation checkpoint — 2026-08-05
+
+ServiceOps 1.38.2 improves release consistency, CI quality checks, one redirect
+boundary, and shared accessibility semantics. It does not close any gate in
+the table above. The authoritative scope and next-release sequence are in
+`REMEDIATION_PLAN_1.38.2.md`; the independently executed, environment-specific
+evidence remains mandatory.
