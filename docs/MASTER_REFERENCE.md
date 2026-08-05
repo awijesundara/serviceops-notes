@@ -1499,21 +1499,30 @@ location, owning team, vendor/model/serial, discovery source, install/
 warranty dates); asset pages track accountable inventory; the visual task
 board changes underlying ticket state and remains audited/role-controlled.
 **Agentless SNMP discovery** (Admin → CMDB → Discovery, `DiscoveryTarget`,
-`serviceops_core/network_discovery.py`) auto-populates CIs and "Connects to"
+`serviceops_core/network_discovery.py`) finds CIs and "Connects to"
 relationships from switches/devices via SNMP GET/WALK (MIB-II/IF-MIB/IP-MIB
 ARP/LLDP-MIB), on demand or scheduled via the outbox worker loop;
-credentials encrypted at rest like `IntegrationConnection`; never overwrites
-a manually-classified CI's identity fields, only refreshes attributes.
-Complementary to (not a replacement for) the agent-based
-`tools/cmdb_sync_agent.sh`. New `/cmdb/topology` page renders CIs/
-relationships as a dependency-free vanilla-JS force-directed graph. A device
-that doesn't answer SNMP (most consumer/office devices don't) still gets a
-bare liveness check (`tcp_liveness_probe`, a handful of common TCP ports
-against only the configured target, no port scanning) via shared
-`probe_host()`, recorded as a bare CI (`discovery_source` "Network sweep
-(no SNMP)") rather than silently invisible; never downgrades a CI already
-SNMP-profiled. Real-hardware validation: 1→96 devices found on the same
-real `/24` after this fix.
+credentials encrypted at rest like `IntegrationConnection`. Complementary to
+(not a replacement for) the agent-based `tools/cmdb_sync_agent.sh`. New
+`/cmdb/topology` page renders CIs/relationships as a dependency-free
+vanilla-JS force-directed graph. A device that doesn't answer SNMP (most
+consumer/office devices don't) still gets a bare liveness check
+(`tcp_liveness_probe`, a handful of common TCP ports against only the
+configured target, no port scanning) plus a best-effort `reverse_dns_lookup`
+via shared `probe_host()`, rather than being silently invisible.
+Real-hardware validation: 1→96 devices found on the same real `/24` after
+that fix. **A run never writes a CI directly** — it stages every result as
+a `DiscoveryCandidate` row; the new `/cmdb/discovery/<id>/review` page lets
+an administrator add selected devices, add all of them, or discard the
+batch, and only that explicit decision calls `reconcile_facts_into_cmdb`
+(which still never overwrites a manually-classified CI's identity fields,
+and never downgrades an SNMP-profiled CI to a bare one on a later liveness-
+only hit). Real production incident fixed in the same pass: `discover_host`
+was constructing a brand-new `SnmpEngine()` (pysnmp's heaviest object, MIB
+compilation on cold cache) per GET/WALK — ~9 per host — which under 40
+concurrent sweep threads could exhaust memory; refactored to one shared
+`SnmpEngine`/event-loop per host via `_SnmpSession`, verified bounded
+memory (266MB isolated, ~470MB on the live stack) for a full `/24` sweep.
 
 ### 4. Deployment decision
 
