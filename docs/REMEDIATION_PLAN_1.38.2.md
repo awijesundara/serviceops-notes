@@ -74,3 +74,15 @@ approval.
   healthy; `/health` reports `1.38.2`; migration head `20260805_0056`.
 - No `ERROR`, traceback, or Gunicorn control-socket failure appears in the
   post-fix app/worker log window.
+
+## Remote release evidence
+
+- Immutable application commit: `72b025d79d1b4ee3ef909f29ac4bc7a5a26cdae8`.
+- Tag workflow: `https://github.com/awijesundara/ServiceOps/actions/runs/30996357438`
+  completed successfully, including dependency audit, Trivy high/critical
+  gate, SBOM generation, Cosign signing, attestations, and verification.
+- Published image: `ghcr.io/awijesundara/serviceops@sha256:c790eec3aaab4145f68fadbbdb540e56584f3cb687904e958c57bbd43a6e8dc7`.
+- GitHub Release: `https://github.com/awijesundara/ServiceOps/releases/tag/v1.38.2`.
+
+This is real registry evidence, but not representative cluster-admission
+evidence. The latter remains open under B-007.
