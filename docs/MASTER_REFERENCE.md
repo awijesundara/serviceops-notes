@@ -7,6 +7,13 @@
 
 # ServiceOps master reference (for any AI or engineer touching this codebase)
 
+> **Current feature inventory:**
+> [FEATURE_CATALOG.md](FEATURE_CATALOG.md) is the canonical code-audited
+> catalogue of every implemented ServiceOps 1.39.2 capability. This master
+> reference retains governance, historical audit, architecture, and operating
+> context; use the feature catalogue when determining what the product
+> currently does.
+
 This single document merges every controlled ServiceOps planning/governance
 document, the BP-001 blueprint traceability, and a fresh whole-app audit into
 one place, so an AI agent or new engineer can get complete, precise context
