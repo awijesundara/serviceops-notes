@@ -193,6 +193,22 @@ production image, and both must be destroyed before any production assessment.
 
 ## Part 2 — Governed backlog (authoritative work register)
 
+### 1.38.2 remediation checkpoint (2026-08-05)
+
+The live backlog now includes B-277 and `docs/REMEDIATION_PLAN_1.38.2.md` as the
+controlled scope for the next patch. That release synchronizes every governed
+version-bearing runtime, installer, and Helm location; adds CI correctness,
+compilation, migration-head, test, shell, JavaScript, and Compose-mode gates;
+closes a scheme-relative improvement return-path redirect; and improves shared
+keyboard/navigation/dialog semantics. The deployment pass also disables
+Gunicorn 26's unused control socket, which could not be created beneath the
+non-login user's home in the read-only container. It makes no schema change and does not
+claim that the external penetration test, independent tenant review, real
+registry/cluster validation, production recovery/rollback rehearsals,
+observability, load testing, object storage, organization-enforced MFA/SCIM,
+independent accessibility audit, or privacy controls are complete. Read the
+live backlog and remediation plan for current acceptance evidence.
+
 (Full text of `docs/BACKLOG.md` as last fully merged here; the live file has
 since grown well past the entries reproduced below — as of this note it runs
 through B-261 (whole-application audit follow-through: tenant_id on the three
@@ -239,10 +255,10 @@ enhancement.)
 | B-051 | P1 | Implemented | Helm HA scaffolding; real multi-zone cluster validation pending. |
 | B-052 | P1 | Open | Add supported object storage for attachments, antivirus scanning, encryption and retention. |
 | B-061 | P1 | Implemented | LDAP/Keycloak/local admin plus AD-group-to-team login sync; representative external validation pending. |
-| B-062 | P1 | Open | Add MFA policy integration, SCIM lifecycle, session inventory/revocation and emergency access controls. |
+| B-062 | P1 | In progress | Local TOTP MFA is implemented; organization-enforced IdP MFA, SCIM lifecycle, session inventory/revocation and emergency access controls remain. |
 | B-070 | P1 | Open | Metrics, structured logs, traces, alerting, SLO dashboards, capacity model and runbooks. |
 | B-071 | P1 | Open | Load/soak/failover tests with published targets. |
-| B-080 | P1 | Open | Accessibility audit to WCAG 2.2 AA. |
+| B-080 | P1 | In progress | Shared preferences and 1.38.2 landmark/navigation/dialog improvements are implemented; independent WCAG 2.2 AA audit evidence remains. |
 | B-090 | P1 | Open | Data classification, retention, legal hold, privacy export/deletion and regional controls. |
 | B-100 | P2 | Implemented | Administrator post-deployment settings; extend to workflows/numbering/states/notifications/policy versioning. |
 | B-101 | P2 | Verified | Consolidate lifecycle operations behind `./serviceops`. |

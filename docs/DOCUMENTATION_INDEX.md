@@ -10,6 +10,8 @@ meaningful change.
 | [API_REFERENCE.md](API_REFERENCE.md) | REST API contract: authentication, scopes, endpoints, examples, errors |
 | [OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md) | Complete platform manual: administration, security model, ITIL workflows, product use |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Docker, Kubernetes, RPM packaging, identity, backup, and recovery instructions |
+| [PRODUCTION_READINESS_PLAN.md](PRODUCTION_READINESS_PLAN.md) | Evidence gates that block production promotion |
+| [REMEDIATION_PLAN_1.38.2.md](REMEDIATION_PLAN_1.38.2.md) | Scope, verification, release sequence, and explicitly open production-readiness work for 1.38.2 |
 | [BACKLOG.md](BACKLOG.md) | Authoritative completed and open work, with evidence references |
 | [GOVERNANCE.md](GOVERNANCE.md) | Architecture decisions, production-readiness verdict, non-deviation controls |
 | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Implementation evidence mapped to requirements/backlog items |

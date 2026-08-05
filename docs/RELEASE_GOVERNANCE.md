@@ -14,9 +14,9 @@ never moved or rebuilt; a correction receives a new patch version.
 
 1. Merge reviewed changes to `main`; branch protection requires the supply-chain gate.
 2. Run **Governed release** and select patch, minor, or major.
-3. The workflow reads `VERSION`, calculates the next version, and synchronizes the Helm chart, README badge, and service-worker cache identifiers.
+3. The workflow reads `VERSION`, calculates the next version, and synchronizes the runtime version, Helm chart and default image tag, README badge, service-worker cache identifiers, example environment, graphical installer, and CLI server installer.
 4. It commits `chore(release): X.Y.Z`, creates the immutable annotated `vX.Y.Z` tag, and invokes the reusable supply-chain workflow against that exact tag.
-5. The supply-chain gate runs the full application suite and dependency audit, builds and scans the image, generates an SBOM, pushes by source SHA, signs it, and publishes provenance/SBOM attestations.
+5. The supply-chain gate runs release-consistency, Ruff correctness, bytecode, migration-head, complete-test-suite, shell/JavaScript syntax, both Compose-mode, and dependency-audit checks; it then builds and scans the image, generates an SBOM, pushes by source SHA, signs it, and publishes provenance/SBOM attestations.
 6. Only after all gates pass does automation publish the GitHub release and generated release notes.
 
 If a post-tag gate fails, there is no published GitHub release. Fix forward and
