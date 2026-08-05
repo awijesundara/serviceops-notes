@@ -8,6 +8,7 @@ generated `docs/ServiceOps_Complete_Platform_Manual.pdf` artifact; it links
 here instead of duplicating documentation sources.
 
 - `CLAUDE.md` — collaboration instructions for AI-assisted development on ServiceOps.
+- `docs/FEATURE_CATALOG.md` — canonical detailed inventory of every implemented ServiceOps feature and its explicit boundaries.
 - `docs/` — governance, backlog, traceability, ITIL, API, deployment, and engineering reference docs.
 
 ## Repository ownership rule
