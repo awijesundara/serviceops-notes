@@ -2,11 +2,26 @@
 
 ## Governing rule
 
-The compact application sidebar is the primary navigator. It groups familiar,
-high-frequency links under Workspace, Leadership, Operations, and
-Administration. Administration appears as one **Administration home** entry;
-detailed settings are organized inside that workspace instead of expanding a
-large menu over the current page.
+The compact application sidebar is the primary navigator. Release 1.46.0 uses
+a persistent GLPI-inspired accordion so the hierarchy remains visible while
+the main content changes. Its top-level applications are Home, My work,
+Self-service, Management, Operations, and Administration. Only sections the
+acting role may use are rendered.
+
+Each application expands in place, one at a time. The application containing
+the current destination opens automatically, and the exact destination keeps a
+high-contrast active marker. A menu-only filter searches every visible module,
+opens matching application and nested groups, and reports an empty result
+without navigating away. The existing global search remains responsible for
+searching both navigation destinations and application records.
+
+Administration no longer takes over or replaces the left navigator. It expands
+inside the same persistent application list. **User management** is a nested
+group containing Users, Groups/teams/access, Roles/permissions, and Active
+sessions. The remaining canonical administration destinations sit beside it:
+Administration home, Service delivery and governance, Platform settings,
+Integrations and delivery, Automation rules, API access, Audit and evidence,
+System health, and (for superadministrators) Platform tenants.
 
 Each destination has one canonical menu location. Operational CMDB, asset, and
 analytics links live under Operations and are not duplicated on Administration
@@ -15,9 +30,12 @@ discoverable without adding repeated menu entries.
 
 The compact top bar provides the sidebar toggle, global search, saved/recent
 utility popovers, notifications, help, and preferences. The experimental
-All/Favorites/History/Workspaces/Admin tab strip and oversized accordion panel
-were removed because they obscured content and reduced navigation scanability.
-The administration navigator follows this order:
+All/Favorites/History/Workspaces/Admin tab strip and oversized overlay panel
+remain intentionally removed because they obscured content and reduced
+navigation scanability. Administration-home capability cards remain useful as
+an overview, while the sidebar provides direct, persistent navigation.
+
+The administration information architecture follows this order:
 
 1. Overview
 2. Users and access

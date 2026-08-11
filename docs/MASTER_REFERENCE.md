@@ -9,10 +9,11 @@
 
 > **Current feature inventory:**
 > [FEATURE_CATALOG.md](FEATURE_CATALOG.md) is the canonical code-audited
-> catalogue of every implemented ServiceOps 1.39.2 capability. This master
-> reference retains governance, historical audit, architecture, and operating
-> context; use the feature catalogue when determining what the product
-> currently does.
+> catalogue of every implemented ServiceOps capability (baseline being
+> refreshed off ServiceOps 1.62.5 as of this pass; see that file's own
+> header for its current audit date). This master reference retains
+> governance, historical audit, architecture, and operating context; use the
+> feature catalogue when determining what the product currently does.
 
 This single document merges every controlled ServiceOps planning/governance
 document, the BP-001 blueprint traceability, and a fresh whole-app audit into
@@ -279,19 +280,19 @@ enhancement.)
 | B-042 | P0 | Verified | All active IT fulfillment-team members/managers read every INC/CHG; mutation stays owning-team/admin only. |
 | B-050 | P1 | Implemented | Docker bundled/external PostgreSQL deployment; restore/rolling-upgrade proof pending completion. |
 | B-051 | P1 | Implemented | Helm HA scaffolding; real multi-zone cluster validation pending. |
-| B-052 | P1 | Open | Add supported object storage for attachments, antivirus scanning, encryption and retention. |
+| B-052 | P1 | In progress | S3-compatible attachment storage with a supported local-to-S3 migration tool, real MinIO round-trip evidence, and graceful degradation on storage outage; representative encryption/retention testing against a real cloud provider remains. |
 | B-061 | P1 | Implemented | LDAP/Keycloak/local admin plus AD-group-to-team login sync; representative external validation pending. |
 | B-062 | P1 | In progress | Local TOTP MFA is implemented; organization-enforced IdP MFA, SCIM lifecycle, session inventory/revocation and emergency access controls remain. |
-| B-070 | P1 | Open | Metrics, structured logs, traces, alerting, SLO dashboards, capacity model and runbooks. |
-| B-071 | P1 | Open | Load/soak/failover tests with published targets. |
+| B-070 | P1 | In progress | Metrics, structured logs, traces, alerting, deployable alert rules and readiness signals are implemented with real Prometheus/Alertmanager rehearsal evidence; SLO dashboards, capacity model and exercised runbooks remain. |
+| B-071 | P1 | In progress | Real authenticated load-test tooling with concurrency/latency/error evidence against a live deployment; production-scale (not simulated) soak and independently-set capacity targets remain. |
 | B-080 | P1 | In progress | Shared preferences and 1.38.2 landmark/navigation/dialog improvements are implemented; independent WCAG 2.2 AA audit evidence remains. |
-| B-090 | P1 | Open | Data classification, retention, legal hold, privacy export/deletion and regional controls. |
+| B-090 | P1 | Verified | Data classification, retention, legal hold, and GDPR-style privacy export/deletion for client contacts. |
 | B-100 | P2 | Implemented | Administrator post-deployment settings; extend to workflows/numbering/states/notifications/policy versioning. |
 | B-101 | P2 | Verified | Consolidate lifecycle operations behind `./serviceops`. |
 | B-102 | P2 | Verified | Explicit isolated test-fixture loader (`tools/load_test_fixture.py`). **This session added a second, richer loader**, `tools/load_demo_dataset.py` (full CMDB, INC/PRB/CHG/REQ/RITM/SCTASK/KB spread) — see Part 5. |
-| B-120 | P2 | Open | Guided tours and contextual help with versioned content and role targeting. |
-| B-121 | P2 | Open | Configurable workspace/page builder. |
-| B-130 | P1 | In progress | Durable outbox, worker coordination, bounded retry, SMTP/webhooks/Teams, encrypted secrets, delivery evidence, monitoring ingestion. External validation and DNS-rebinding egress enforcement remain. |
+| B-120 | P2 | Verified | Guided tours and contextual help with versioned content and role targeting. |
+| B-121 | P2 | Verified | Configurable workspace ("My Workspace") from a closed, code-defined widget catalog; a general-purpose page/metadata-runtime designer remains out of scope. |
+| B-130 | P1 | In progress | Durable outbox, worker coordination, bounded retry, SMTP/webhooks/Teams, encrypted secrets, delivery evidence, monitoring ingestion, and real DNS-rebinding egress rejection are implemented and evidenced; live delivery to a real public HTTPS receiver remains structurally out of reach for this environment. |
 | B-200 | P0 | In progress | Decompose BP-001 into atomic requirements and governed release epics (ADR-010–019). |
 | B-201 | P0 | Verified | Foundation CSRF/session/cookie/deployment release. |
 | B-202 | P0 | In progress | Default tenant creation, 15 tenant-owned roots backfilled, tenant-aware query conventions. Independent tenant-isolation review remains. |
@@ -1002,8 +1003,8 @@ external/runtime proof; **Gap** is not production-ready.)
 | Lists, filters, forms, activity, attachments, checklists | shared task-derived record shell, Event history, rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
 | Visual task boards | `/task-board`, move endpoint and test | Verified | B-023 |
 | Branding/logo/theme configuration | installer and `/admin/settings`; light-only UI | Implemented | B-024 |
-| Guided help/tours | interactive step-by-step tour; static help articles | Partial | B-120 |
-| Full configurable workspace/page-builder | no page designer or metadata runtime | Gap | B-121 |
+| Guided help/tours | interactive step-by-step tour, versioned content, role targeting, admin builder | Verified | B-120 |
+| Configurable workspace ("My Workspace") | closed, code-defined widget catalog with per-user layout; no page designer or metadata runtime | Verified for the closed catalog; general-purpose page/metadata-runtime designer is a deliberately descoped gap | B-121 |
 | Production-only initialization | seed, installer, Compose, cleanup tool and tests | Implemented | B-001 |
 | Team-manager and CCB approval chain | named manager controls, explicit CCB grants, chains/gates/votes | Implemented | B-030 |
 | Approval and lifecycle integrity | centralized transition guards, adversarial tests | Verified | B-034 |
@@ -1031,7 +1032,7 @@ external/runtime proof; **Gap** is not production-ready.)
 | Scheduled workflows and subflows | subflow expansion, tenant schedules, scheduler claims | Implemented; calendar/blackout pending | B-209 |
 | Bootstrap credential lifecycle | mounted-file priority, split Secrets, rotation | Implemented; external vault ceremony pending | B-006, B-210 |
 | Supply-chain evidence | pinned deps/images/actions, Trivy, SBOM, Cosign, attestations | Implemented; GHCR/cluster proof pending | B-007, B-210 |
-| Production observability/SLOs | health endpoints only | Gap | B-070 |
+| Production observability/SLOs | metrics, structured logs, traces, deployable alert rules, real Prometheus/Alertmanager rehearsal evidence | Partial; SLO dashboards, capacity model and exercised runbooks remain | B-070 |
 
 ### Connection-dependent capability boundary
 
