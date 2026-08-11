@@ -1,5 +1,11 @@
 # ServiceOps 1.39.0 operational-resilience release
 
+> **Historical — superseded.** Target version 1.39.0 is ~23 releases behind
+> current (1.62.5 as of this note). The gaps and evidence below are a
+> point-in-time snapshot of that release; `BACKLOG.md` carries the current
+> status for every item referenced here. Kept for historical record, not as
+> a live plan.
+
 ## Objective
 
 Close the application-controlled monitoring, authentication recovery, session

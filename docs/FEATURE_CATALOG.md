@@ -1,9 +1,13 @@
 # ServiceOps complete feature catalogue
 
-**Catalogue baseline:** ServiceOps 1.39.2<br>
-**Last code audit:** 5 August 2026<br>
+**Catalogue baseline:** ServiceOps 1.62.5<br>
+**Last code audit:** 11 August 2026<br>
 **Evidence base:** application routes, models, templates, configuration,
 migrations, tools, deployment manifests, and automated tests in `ServiceOps`.
+<br>Note: this pass targeted the specific gaps identified below (new
+capabilities added since the 1.46.0 baseline, and the §24 boundary
+contradiction); it is not a full section-by-section re-audit of every prior
+entry.
 
 This is the canonical inventory of implemented ServiceOps functionality. It
 describes working product behavior, not roadmap aspirations. Features that
@@ -12,8 +16,14 @@ unverified capabilities are listed under “Explicit boundaries.”
 
 ## 1. Application shell and user experience
 
-- Authenticated shell with persistent left navigation and global controls.
+- Authenticated shell with a compact persistent accordion navigator and global
+  controls.
 - Role-aware menus that hide inaccessible destinations.
+- Canonical Home, My work, Self-service, Management, Operations, and
+  Administration applications with one-at-a-time expansion, automatic current
+  section opening, exact module highlighting, and a menu-only filter.
+- Nested User management navigation for users, groups/teams/access,
+  roles/permissions, and active sessions.
 - Administration home with categorized entry points and consistent return
   context on child administration pages.
 - Global search across authorized records and navigation destinations.
@@ -452,11 +462,53 @@ global-search results, analytics, and overdue reporting where applicable.
   compliance, CMDB/import/discovery, LDAP, NetBox, RT, workflow, recovery,
   migrations, installer, release versioning, and security hardening.
 
+## 23a. Guided tours and contextual help ([[B-120]])
+
+- Admin-authored guided tours (`GuidedTour`/`GuidedTourStep` models) with
+  ordered steps, versioning, and role targeting.
+- CSP-safe overlay player (`static/guided-tour.js`) driven by
+  `/api/guided-tours/active` and per-step progress recorded via
+  `/api/guided-tours/<id>/progress` (`UserTourProgress`).
+- Admin authoring UI at `/admin/guided-tours`.
+
+## 23b. Configurable personal workspace ("My Workspace", [[B-121]])
+
+- Per-user, drag-configurable landing page (`/workspace`) built from a
+  closed, code-defined widget catalog (`WORKSPACE_WIDGET_REGISTRY`: ticket
+  stats, my open tickets, recent tickets, SLA-at-risk, approvals awaiting
+  me, favorites, recently viewed, notifications).
+- Layout persisted per user (`UserWorkspaceLayout`); individual widgets can
+  be disabled instance-wide via admin settings.
+- **Not** a general-purpose page/metadata-runtime designer — see §24.
+
+## 23c. Data classification, retention, and privacy ([[B-090]])
+
+- `DataRetentionPolicy` and `RecordLegalHold` models governing retention and
+  legal-hold state.
+- `DATA_CLASSIFICATION_REGISTRY` mapping record types to classification.
+- GDPR Art. 17/20-style erasure and export for `ClientContact` records, with
+  an admin UI for reviewing/actioning requests.
+
+## 23d. Client support mailbox (email-to-ticket, [[B-052]] adjacent)
+
+- Client Management support mailbox admin page for configuring an
+  IMAP/SMTP-polled inbox.
+- Inbound polling creates/threads `ClientTicket`s from real email
+  (`process_client_email_inbox`), with attachment ingestion through the same
+  storage/malware-scan path as other attachments.
+- Outbound replies sent via the configured mailbox's SMTP
+  (`deliver_client_email_reply`), threaded via `In-Reply-To`/`References`.
+- Basic-auth IMAP/SMTP only (no OAuth) — Gmail/O365 app-password or
+  equivalent required; no content-based spam scoring beyond loop/rate-limit
+  defenses.
+
 ## 24. Explicit boundaries
 
 ServiceOps does **not** claim these as complete built-in capabilities:
 
-- General-purpose visual page/workspace designer.
+- General-purpose visual page/metadata-runtime designer (arbitrary new page
+  layouts, custom fields-as-widgets, drag-in third-party components). A
+  closed-catalog personal workspace exists — see §23b — but it is not this.
 - Arbitrary low-code flow/action marketplace; workflow actions are restricted.
 - Built-in SAML adapter; implemented enterprise identity adapters are LDAP and
   Keycloak OIDC.

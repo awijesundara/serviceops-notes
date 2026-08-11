@@ -371,11 +371,24 @@ break-glass account and should not be used for routine work.
 
 ### Navigation
 
-The compact left application navigator groups high-frequency destinations under
-Workspace, Leadership, Operations, and Administration. It remains narrow and
-never overlays the record content. Administration has one entry leading to the
-grouped Administration home. The top bar contains the sidebar toggle, global
-search, saved/recent utility icons, notifications, help, and preferences.
+The compact left application navigator is a persistent accordion with Home,
+My work, Self-service, Management, Operations, and Administration applications.
+Opening one application closes the previous top-level application, while the
+application containing the current page opens automatically and the exact
+module stays highlighted. It remains narrow and never overlays record content.
+The top bar contains the sidebar toggle, global search, saved/recent utility
+icons, notifications, help, and preferences.
+
+Use **Find menu** at the top of the sidebar to filter every module available to
+your acting role. Matching applications and nested groups open automatically;
+clearing the field restores the accordion. This only filters navigation. Use
+the top-bar global search to find records and navigation destinations together.
+
+Administration expands without hiding the other applications. It contains
+Administration home plus a nested **User management** group for Users,
+Groups/teams/access, Roles/permissions, and Active sessions. Governance,
+platform settings, integrations, automation, API access, audit, system health,
+and platform tenants (superadministrators only) have one direct canonical link.
 
 Menu destinations are canonical: a page appears in one appropriate sidebar or
 Administration-home location rather than under multiple labels. Acronyms use
@@ -941,7 +954,7 @@ in-flight ticket.
 
 ### Review team performance as a manager
 
-1. Open **Manager portal** from the Leadership section of the sidebar.
+1. Open **Management → Manager portal** from the sidebar.
 2. Each team you manage has its own panel with team-level open-work and
    SLA-breach totals, and a per-member table below it.
 3. Use the per-member columns (open incidents/changes/tasks, 30-day resolved

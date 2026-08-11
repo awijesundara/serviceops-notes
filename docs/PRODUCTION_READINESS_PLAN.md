@@ -29,10 +29,25 @@ findings in the governed backlog.
 Production promotion remains blocked until gates 1–3 have no unresolved
 critical/high issue and the accountable owner explicitly accepts residual risk.
 
-## Current implementation checkpoint — 2026-08-05
+## Current implementation checkpoint — 2026-08-11
 
-ServiceOps 1.38.2 improves release consistency, CI quality checks, one redirect
-boundary, and shared accessibility semantics. It does not close any gate in
-the table above. The authoritative scope and next-release sequence are in
-`REMEDIATION_PLAN_1.38.2.md`; the independently executed, environment-specific
-evidence remains mandatory.
+ServiceOps 1.62.5 has substantially deepened the internal scaffolding behind
+several gates since the 2026-08-05 checkpoint below — most notably Privacy
+(classification/retention/legal-hold/GDPR export-deletion, tracked as
+B-090, code-complete and internally verified), Object storage (S3-compatible
+storage with a supported migration tool and outage-degradation evidence,
+B-052), and Observability (Prometheus/Alertmanager rules with real rehearsal
+evidence, B-070/B-071). **None of this closes any gate in the table above**:
+per this document's own standard, a gate requires independent or
+organization-executed evidence (an external penetration test, an
+organization's own approved DPA/DPIA sign-off, a real production-scale load
+test), not internal code-level verification alone, however thorough. See
+`BACKLOG.md` for current, item-by-item status; the historical 1.38.2
+checkpoint and its remediation plan are below for record only.
+
+### Prior checkpoint — 2026-08-05 (historical)
+
+ServiceOps 1.38.2 improved release consistency, CI quality checks, one
+redirect boundary, and shared accessibility semantics. It did not close any
+gate in the table above. Scope and evidence are in
+`REMEDIATION_PLAN_1.38.2.md` (now superseded; see that file).

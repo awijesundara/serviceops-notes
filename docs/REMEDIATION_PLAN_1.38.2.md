@@ -1,5 +1,12 @@
 # ServiceOps 1.38.2 remediation and release plan
 
+> **Historical — superseded.** This plan's date (2026-08-05) and target
+> version (1.38.2) are ~24 releases behind current (1.62.5 as of this note).
+> Every gap it lists as open is tracked with materially more current status
+> directly in `BACKLOG.md` (e.g. the privacy/data-governance item this plan
+> treats as not-yet-started is B-090, now Verified). Kept for historical
+> record of that release's scope and evidence, not as a live plan.
+
 Date: 2026-08-05  
 Release type: patch  
 Owner: ServiceOps maintainers
