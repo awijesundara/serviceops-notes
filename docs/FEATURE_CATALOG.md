@@ -1,7 +1,7 @@
 # ServiceOps complete feature catalogue
 
-**Catalogue baseline:** ServiceOps 1.62.5<br>
-**Last code audit:** 11 August 2026<br>
+**Catalogue baseline:** ServiceOps 1.62.6<br>
+**Last code audit:** 12 August 2026<br>
 **Evidence base:** application routes, models, templates, configuration,
 migrations, tools, deployment manifests, and automated tests in `ServiceOps`.
 <br>Note: this pass targeted the specific gaps identified below (new

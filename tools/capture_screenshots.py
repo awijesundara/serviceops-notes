@@ -24,6 +24,7 @@ if not PASSWORD:
 
 PAGES = [
     ("dashboard", "/"),
+    ("my_workspace", "/workspace"),
     ("incidents_list", "/tickets/incident"),
     ("changes_list", "/tickets/change"),
     ("open_work", "/work/open"),
@@ -42,6 +43,9 @@ PAGES = [
     ("users_roles", "/admin/users"),
     ("audit_log", "/admin/audit"),
     ("itil_admin", "/itil/administration"),
+    ("guided_tours_admin", "/admin/guided-tours"),
+    ("data_governance_admin", "/admin/data-governance"),
+    ("client_mailboxes_admin", "/client-management/mailboxes"),
 ]
 
 

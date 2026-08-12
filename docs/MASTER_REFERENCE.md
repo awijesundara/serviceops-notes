@@ -10,7 +10,7 @@
 > **Current feature inventory:**
 > [FEATURE_CATALOG.md](FEATURE_CATALOG.md) is the canonical code-audited
 > catalogue of every implemented ServiceOps capability (baseline being
-> refreshed off ServiceOps 1.62.5 as of this pass; see that file's own
+> refreshed off ServiceOps 1.62.6 as of this pass; see that file's own
 > header for its current audit date). This master reference retains
 > governance, historical audit, architecture, and operating context; use the
 > feature catalogue when determining what the product currently does.

@@ -260,6 +260,15 @@ and records ingestion in the append-only audit chain.
 ### Sign in
 
 The sign-in page offers the identity methods enabled by the administrator:
+Keycloak/OIDC (a single **Continue with Keycloak** button), a local
+administrator account, and/or a corporate AD/LDAP directory account — when
+both local and directory sign-in are enabled, a dropdown lets the user pick
+which one they're using. For directory accounts, the username field accepts
+any of the three standard Windows login forms — the bare username
+(`jsmith`), the UPN form (`jsmith@company.com`), or the down-level logon
+form (`CORP\jsmith`) — and shows a small live hint confirming which bare
+account it resolved a domain-qualified entry to before the form is even
+submitted.
 
 ### Workflow state integrity
 
@@ -675,6 +684,19 @@ the last eight records touched anywhere you have visibility into, useful for
 picking back up after a context switch. Administrators can turn any of these
 panels on or off tenant-wide from **Administration home → Platform settings → Workspace defaults**.
 
+### My Workspace
+
+![My Workspace: a per-user, drag-configurable landing page built from a closed catalog of widgets -- ticket stats, my open tickets, recent tickets, SLA-at-risk, approvals awaiting me, favorites, recently viewed, and notifications.](screenshots/my_workspace.png)
+
+**My Workspace** (`/workspace`) is an alternative, personal landing page each
+user can lay out to their own preference, sitting alongside the shared
+Dashboard rather than replacing it. Its widget catalog is closed and
+code-defined — ticket stats, my open tickets, recent tickets, SLA-at-risk,
+approvals awaiting me, favorites, recently viewed, and notifications — not a
+general-purpose page designer; an administrator can disable individual
+widgets tenant-wide from Platform settings, and each user's own layout is
+saved independently of everyone else's.
+
 ### Incidents list
 
 ![The Incidents list workspace: a searchable, filterable, paginated table with Number, Opened, Short description, Caller, Priority, State, Category, Assignment group, Assigned to and Updated columns.](screenshots/incidents_list.png)
@@ -903,6 +925,39 @@ default, what an SLA's target duration and business calendar are, and who
 holds CCB approval authority. Changes made here govern all future tickets and
 requests; they do not retroactively alter SLA targets already attached to an
 in-flight ticket.
+
+### Guided tours administration
+
+![Guided tours administration: a list of admin-authored, versioned tours with ordered steps and role targeting, plus the tour-creation form.](screenshots/guided_tours_admin.png)
+
+Administrators author step-by-step guided tours here (`/admin/guided-tours`)
+— ordered steps, versioning, and role targeting so a tour can be scoped to
+just the roles it's relevant for. End users see active tours play back as a
+lightweight on-page overlay; each user's progress through a tour is recorded
+so it doesn't replay from the start on their next visit.
+
+### Data governance administration
+
+![Data governance administration: retention policies, legal holds, and data classification, plus a queue for reviewing GDPR-style export/erasure requests.](screenshots/data_governance_admin.png)
+
+The data governance page (`/admin/data-governance`) is where retention
+policies and legal holds are defined, and where classification-driven
+GDPR Art. 17/20-style erasure and export requests for client contacts are
+reviewed and actioned. A legal hold on a record blocks its scheduled
+retention-driven deletion regardless of policy, until explicitly lifted.
+
+### Client support mailbox administration
+
+![Client support mailbox administration: a list of configured IMAP/SMTP-polled inboxes with active/inactive toggles, and the mailbox-creation form.](screenshots/client_mailboxes_admin.png)
+
+The Client Management support mailbox page (`/client-management/mailboxes`)
+configures a real IMAP/SMTP inbox that automatically becomes Client tickets:
+inbound mail is polled, threaded onto existing tickets by Message-ID/subject
+token, and creates a new ticket (with contact/organization auto-matching)
+when nothing matches; agent replies go back out through the same mailbox's
+SMTP, correctly threaded. Only basic-auth IMAP/SMTP is supported — providers
+like Gmail/Microsoft 365 that require OAuth or an app password need one
+configured here rather than the account's normal password.
 
 ## 3B. Common task walkthroughs
 
