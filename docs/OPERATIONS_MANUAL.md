@@ -266,9 +266,11 @@ both local and directory sign-in are enabled, a dropdown lets the user pick
 which one they're using. For directory accounts, the username field accepts
 any of the three standard Windows login forms — the bare username
 (`jsmith`), the UPN form (`jsmith@company.com`), or the down-level logon
-form (`CORP\jsmith`) — and shows a small live hint confirming which bare
-account it resolved a domain-qualified entry to before the form is even
-submitted.
+form (`CORP\jsmith`). The field's own ghost text shows the site's actual
+domain as an example (e.g. `jsmith or jsmith@corp.example.com`), derived
+automatically from the configured LDAP base DN rather than a generic
+placeholder — and switches to a plain "Username" placeholder when the
+dropdown is set to the local administrator account instead.
 
 ### Workflow state integrity
 
