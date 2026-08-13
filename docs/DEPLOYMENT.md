@@ -4,6 +4,18 @@ For the full user, administrator, identity, Kubernetes, security, monitoring,
 backup, recovery, upgrade, rollback, and incident-response runbook, use the
 [complete platform manual](OPERATIONS_MANUAL.md).
 
+## Mandatory browser quality gate
+
+Every pull request, push to `main`, and governed release runs a separate
+`browser-quality-gate` job. It creates an isolated `serviceops-e2e` Docker
+Compose project on `127.0.0.1:18080` with generated masked credentials, runs
+the critical Dashboard, Administration, CMDB, and Client Management journeys
+in Chromium at desktop and mobile viewport sizes, and blocks the change on an
+HTTP/rendering failure, browser console error, or serious/critical axe-core
+WCAG 2.2 AA finding. On failure, Playwright traces, full-page screenshots, and
+Compose logs are retained as workflow artifacts. The job always destroys its
+containers and volumes and never reuses the standing development deployment.
+
 ## Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker

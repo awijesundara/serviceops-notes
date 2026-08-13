@@ -29,15 +29,18 @@ findings in the governed backlog.
 Production promotion remains blocked until gates 1–3 have no unresolved
 critical/high issue and the accountable owner explicitly accepts residual risk.
 
-## Current implementation checkpoint — 2026-08-11
+## Current implementation checkpoint — 2026-08-13
 
-ServiceOps 1.62.5 has substantially deepened the internal scaffolding behind
+ServiceOps 1.67.0 has substantially deepened the internal scaffolding behind
 several gates since the 2026-08-05 checkpoint below — most notably Privacy
 (classification/retention/legal-hold/GDPR export-deletion, tracked as
 B-090, code-complete and internally verified), Object storage (S3-compatible
 storage with a supported migration tool and outage-degradation evidence,
-B-052), and Observability (Prometheus/Alertmanager rules with real rehearsal
-evidence, B-070/B-071). **None of this closes any gate in the table above**:
+B-052), Observability (Prometheus/Alertmanager rules with real rehearsal
+evidence, B-070/B-071), and Accessibility (a mandatory desktop/mobile
+Playwright plus axe-core CI gate over four critical workflows, B-323). Global
+search also has PostgreSQL trigram indexes and avoids request-time full-object
+ID materialization. **None of this closes any gate in the table above**:
 per this document's own standard, a gate requires independent or
 organization-executed evidence (an external penetration test, an
 organization's own approved DPA/DPIA sign-off, a real production-scale load
