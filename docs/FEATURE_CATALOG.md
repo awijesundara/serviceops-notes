@@ -27,10 +27,15 @@ unverified capabilities are listed under “Explicit boundaries.”
 - Administration home with categorized entry points and consistent return
   context on child administration pages.
 - Global search across authorized records and navigation destinations.
+- PostgreSQL trigram-indexed global search with authorization-preserving ID
+  subqueries and a separately tested immutable navigation catalogue.
 - Type-ahead lookup and browser for configuration items and record links.
 - User favorites and recently viewed page history.
 - Application/workspace directory and cross-domain My Tasks/Open Work queues.
 - Persisted sidebar scroll state and navigation state.
+- Blocking desktop/mobile browser QA for Dashboard, Administration, CMDB, and
+  Client Management, including console-error detection and axe-core WCAG 2.2
+  AA serious/critical violation checks with failure traces and screenshots.
 - Acting-role switcher limited to roles actually granted to the user.
 - User preferences for density, font scale, date format, timezone, dashboard
   widgets, list-page size, high contrast, and reduced motion.
