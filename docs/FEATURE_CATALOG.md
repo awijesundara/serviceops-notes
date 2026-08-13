@@ -54,6 +54,11 @@ unverified capabilities are listed under “Explicit boundaries.”
 
 ### Authentication and recovery
 
+- User-authenticated native mobile sessions for local and LDAP accounts, with
+  MFA, short-lived access tokens, rotating refresh tokens, Keychain storage,
+  revocation, tenant/role/team authorization, and per-user app/device audit
+  attribution. Shared embedded API keys are not used by the iOS client.
+
 - Local username/password authentication with Argon2id hashes.
 - Transparent upgrade of legacy PBKDF2 hashes after successful login.
 - Configurable password policy and audited password changes.
