@@ -1,0 +1,48 @@
+# OS/editor state and local working copies.
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Local environments, caches, and generated output.
+.env
+.env.*
+!.env.example
+.envrc
+.direnv/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+dist/
+build/
+*.log
+
+# Never publish credentials, keys, certificates, or signing material.
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.der
+*.crt
+*.csr
+*.jks
+*.keystore
+*.mobileprovision
+*.provisionprofile
+id_rsa*
+id_ed25519*
+credentials.json
+credentials.*.json
+secrets.json
+secrets.*.json
+*.tfvars
+*.tfvars.json
+
+# Generated recovery/release material may include operational metadata.
+backups/
+release-evidence/
