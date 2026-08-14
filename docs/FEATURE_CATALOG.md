@@ -532,7 +532,8 @@ global-search results, analytics, and overdue reporting where applicable.
   authorization after the app opens.
 - Native notification inbox with unread badge and read/read-all actions;
   mobile bootstrap/profile and assignment teams; ticket list/detail/update,
-  incident creation and activity comments; approval decisions; searchable
+  incident creation and activity comments; tenant-scoped attachment listing,
+  authenticated download, and native Quick Look preview; approval decisions; searchable
   knowledge; and searchable read-only CMDB inventory.
 - iOS navigation uses Home, My Work, Create, Inbox, and More. More exposes
   Approvals, Knowledge, CMDB, and Settings/Security without overloading tabs.
