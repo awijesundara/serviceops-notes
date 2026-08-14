@@ -5,13 +5,16 @@
 The native iPhone application is maintained in
 [`awijesundara/ServiceOps_iOS`](https://github.com/awijesundara/ServiceOps_iOS).
 It complements the ServiceOps web workspace; it does not replace the web
-administration interface. The current release is iOS **1.3.1 (build 7)** and
-connects to ServiceOps 1.70.2 through the versioned mobile REST API.
+administration interface. The current release is iOS **1.3.2 (build 8)** and
+connects to ServiceOps 1.70.3 through the versioned mobile REST API.
 
-The approved ServiceOps network-cube artwork is the shared application icon.
-The web platform publishes it as the browser favicon, Apple touch icon, PWA
-192/512 icons, and default sidebar/login mark. The iOS asset catalogue uses
-the same opaque 1024 px master for standard, dark, and tinted appearance slots.
+The approved ServiceOps identity has three coordinated source variants. The
+opaque white rounded-square network icon is used for the iOS launcher, Apple
+touch icon, and PWA 192/512 icons. The transparent horizontal ServiceOps
+wordmark is used in the web sidebar and authentication/recovery screens. The
+transparent standalone network mark is used for compact/favicon placement.
+The iOS asset catalogue uses the opaque 1024 px launcher artwork for standard,
+dark, and tinted appearance slots so no alpha reaches an app-icon asset.
 Customer-uploaded company logos remain separate tenant branding and are not
 silently overwritten by the product app icon.
 
