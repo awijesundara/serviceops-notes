@@ -1,5 +1,18 @@
 # ServiceOps deployment guide
 
+## Passkeys and Apple Associated Domains
+
+Passkeys require a stable public HTTPS origin. Configure
+`WEBAUTHN_RP_ID=serviceops.example.com`,
+`WEBAUTHN_ORIGIN=https://serviceops.example.com`, an optional
+`WEBAUTHN_RP_NAME`, and `APPLE_PASSKEY_APP_ID` as the Apple Team ID plus bundle
+ID. The iOS target's `webcredentials:` associated domain must exactly match
+`WEBAUTHN_RP_ID`. Confirm the unauthenticated
+`/.well-known/apple-app-site-association` response is reachable without a
+redirect or authentication challenge before enabling passkeys. Local
+`http://192.168.*` deployments support password login and biometric app lock,
+but not a real Apple passkey ceremony.
+
 For the full user, administrator, identity, Kubernetes, security, monitoring,
 backup, recovery, upgrade, rollback, and incident-response runbook, use the
 [complete platform manual](OPERATIONS_MANUAL.md).
@@ -426,6 +439,19 @@ continued source health. The command never migrates the production database.
 5. Run automated tests.
 6. Upgrade production with `./serviceops update`.
 7. Verify health, login, ticket creation, approval routing, attachment access, and database backups.
+
+## Apple push notification configuration
+
+Configure these encrypted Platform settings before enabling push:
+`APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_BUNDLE_ID`, and the complete `.p8` value
+in `APNS_PRIVATE_KEY`; then set `APNS_ENABLED=true`. Development builds register
+sandbox tokens and Release builds register production tokens. The bundle ID and
+Apple provisioning profile must match `APNS_BUNDLE_ID`.
+
+Never commit the `.p8` file, provisioning profiles, certificates, or populated
+environment/xcconfig files. Validate on a signed physical iPhone: sign in,
+allow notifications, create a notification for that user, confirm delivery and
+inbox state, then sign out and confirm the installation is unregistered.
 
 ## Security checklist
 

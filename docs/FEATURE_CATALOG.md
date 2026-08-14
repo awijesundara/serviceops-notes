@@ -58,6 +58,12 @@ unverified capabilities are listed under “Explicit boundaries.”
   MFA, short-lived access tokens, rotating refresh tokens, Keychain storage,
   revocation, tenant/role/team authorization, and per-user app/device audit
   attribution. Shared embedded API keys are not used by the iOS client.
+- Optional foreground biometric lock using Face ID, Touch ID, Optic ID, or the
+  device passcode recovery path, backed by device-only Keychain storage.
+- Apple platform-passkey registration and passwordless sign-in using
+  HTTPS-only, tenant/user-bound, expiring single-use WebAuthn challenges,
+  user verification, signature-counter tracking, self-service credential
+  inventory/revocation, request throttling, and audited mobile sessions.
 
 - Local username/password authentication with Argon2id hashes.
 - Transparent upgrade of legacy PBKDF2 hashes after successful login.
@@ -512,6 +518,27 @@ global-search results, analytics, and overdue reporting where applicable.
   equivalent required; no content-based spam scoring beyond loop/rate-limit
   defenses.
 
+## 23e. Native iOS operations workspace and push notifications ([[B-327]])
+
+- User-authenticated iOS 1.3 workspace with local/LDAP, MFA, biometric lock,
+  passkeys, rotating mobile sessions, and authoritative username/app/device
+  audit attribution.
+- APNs registration is bound to the authenticated tenant user. Device tokens
+  are encrypted at rest, indexed only by a one-way hash, and disabled when
+  Apple reports them invalid or unregistered.
+- Durable push delivery runs through the integration outbox worker, preserving
+  retries and delivery evidence. Notifications carry only display text and
+  opaque record identifiers; protected record data is fetched under current
+  authorization after the app opens.
+- Native notification inbox with unread badge and read/read-all actions;
+  mobile bootstrap/profile and assignment teams; ticket list/detail/update,
+  incident creation and activity comments; approval decisions; searchable
+  knowledge; and searchable read-only CMDB inventory.
+- iOS navigation uses Home, My Work, Create, Inbox, and More. More exposes
+  Approvals, Knowledge, CMDB, and Settings/Security without overloading tabs.
+- Production APNs still requires an Apple push key, matching signed profile,
+  physical device, and HTTPS-reachable ServiceOps deployment.
+
 ## 24. Explicit boundaries
 
 ServiceOps does **not** claim these as complete built-in capabilities:
@@ -522,7 +549,6 @@ ServiceOps does **not** claim these as complete built-in capabilities:
 - Arbitrary low-code flow/action marketplace; workflow actions are restricted.
 - Built-in SAML adapter; implemented enterprise identity adapters are LDAP and
   Keycloak OIDC.
-- Hardware-backed WebAuthn/passkeys.
 - MID Server equivalent.
 - Guaranteed network discovery of devices exposing neither SNMP nor a probed
   TCP liveness port.
