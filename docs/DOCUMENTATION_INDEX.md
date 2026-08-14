@@ -1,5 +1,7 @@
 # ServiceOps documentation index
 
+- [iOS mobile application](MOBILE_APP.md) — features, authentication, audit attribution, APNs architecture, local setup, and release evidence.
+
 Controlled local documentation. Every entry below must stay synchronized with
 the current source, migrations, and release evidence as part of any
 meaningful change.

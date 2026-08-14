@@ -447,6 +447,8 @@ Configure these encrypted Platform settings before enabling push:
 in `APNS_PRIVATE_KEY`; then set `APNS_ENABLED=true`. Development builds register
 sandbox tokens and Release builds register production tokens. The bundle ID and
 Apple provisioning profile must match `APNS_BUNDLE_ID`.
+For the maintained ServiceOps iOS target, set `APNS_BUNDLE_ID` to
+`wijesundara.com.ServiceOps`; the web application's default now matches it.
 
 Never commit the `.p8` file, provisioning profiles, certificates, or populated
 environment/xcconfig files. Validate on a signed physical iPhone: sign in,

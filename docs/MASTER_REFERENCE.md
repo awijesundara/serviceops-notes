@@ -1082,7 +1082,7 @@ product names, or proprietary runtime.
 | Core UI developer tooling | Flask templates, reusable styles, routes, tests |
 | CMS/UI Builder/widget APIs/Angular/Jelly/ServiceNow scripting | Not applicable — vendor-specific; ServiceOps uses Flask/Jinja/SQLAlchemy/CSS/JS |
 | Advanced Work Assignment/Agent Chat/Virtual Agent/voice/predictive | Requires external messaging/telephony/workforce-routing/AI services; not represented as operational |
-| Native mobile apps and offline distribution | Responsive web only; no native app publishing |
+| Native mobile apps and offline distribution | Native iOS 1.3.0 workspace implements authenticated operational work, passkeys, biometric locking, versioned audit context, and APNs/inbox notifications; distribution and offline record synchronization remain external |
 
 **Verification expectation**: every capability described as implemented must
 have a working route/UI, persistent data, role enforcement, and automated or
