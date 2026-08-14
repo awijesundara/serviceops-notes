@@ -5,8 +5,15 @@
 The native iPhone application is maintained in
 [`awijesundara/ServiceOps_iOS`](https://github.com/awijesundara/ServiceOps_iOS).
 It complements the ServiceOps web workspace; it does not replace the web
-administration interface. The current release is iOS **1.3.0 (build 6)** and
-connects to ServiceOps 1.70.1 through the versioned mobile REST API.
+administration interface. The current release is iOS **1.3.1 (build 7)** and
+connects to ServiceOps 1.70.2 through the versioned mobile REST API.
+
+The approved ServiceOps network-cube artwork is the shared application icon.
+The web platform publishes it as the browser favicon, Apple touch icon, PWA
+192/512 icons, and default sidebar/login mark. The iOS asset catalogue uses
+the same opaque 1024 px master for standard, dark, and tinted appearance slots.
+Customer-uploaded company logos remain separate tenant branding and are not
+silently overwritten by the product app icon.
 
 The web application exposes **ServiceOps mobile** in the Self-service menu,
 global navigation search, and Help Center. That page links to the iOS source
