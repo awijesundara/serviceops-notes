@@ -539,6 +539,9 @@ global-search results, analytics, and overdue reporting where applicable.
 - The installed application version and build are always visible under More >
   About and repeated in Settings > About. Both values come from the signed app
   bundle, so the UI cannot drift from Xcode release/build metadata.
+- The web Self-service navigation, global search, and Help Center expose a
+  dedicated ServiceOps mobile page with the maintained iOS repository link,
+  supported capabilities, connection steps, and APNs prerequisites.
 - Production APNs still requires an Apple push key, matching signed profile,
   physical device, and HTTPS-reachable ServiceOps deployment.
 
