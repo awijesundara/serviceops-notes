@@ -29,7 +29,7 @@ This mapping uses the source guide as a behavioral reference. ServiceOps does no
 | Core UI developer tooling | Adapted as server-rendered Flask templates, reusable styles, routes, and automated tests |
 | CMS, UI Builder, widget developer APIs, Angular providers, Jelly, and ServiceNow scripting APIs | Not applicable: these are vendor-specific development runtimes. ServiceOps uses Flask, Jinja, SQLAlchemy, CSS, and JavaScript instead |
 | Advanced Work Assignment, Agent Chat, Virtual Agent, voice guidance, predictive recommendations | Requires external messaging, telephony, workforce-routing, or AI services and is not represented as locally operational |
-| Native mobile apps and offline distribution | Responsive web access is implemented; native app publishing is not included |
+| Native mobile apps and offline distribution | Native iOS 1.3.0 workspace implements authenticated tickets, approvals, knowledge, CMDB, passkeys, biometric locking, app-version evidence, and APNs/inbox notifications; App Store/TestFlight distribution and offline record synchronization are not included |
 
 ## Verification expectations
 
