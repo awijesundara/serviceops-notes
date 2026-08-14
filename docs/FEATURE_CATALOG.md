@@ -536,6 +536,9 @@ global-search results, analytics, and overdue reporting where applicable.
   knowledge; and searchable read-only CMDB inventory.
 - iOS navigation uses Home, My Work, Create, Inbox, and More. More exposes
   Approvals, Knowledge, CMDB, and Settings/Security without overloading tabs.
+- The installed application version and build are always visible under More >
+  About and repeated in Settings > About. Both values come from the signed app
+  bundle, so the UI cannot drift from Xcode release/build metadata.
 - Production APNs still requires an Apple push key, matching signed profile,
   physical device, and HTTPS-reachable ServiceOps deployment.
 
