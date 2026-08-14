@@ -6,7 +6,7 @@ The native iPhone application is maintained in
 [`awijesundara/ServiceOps_iOS`](https://github.com/awijesundara/ServiceOps_iOS).
 It complements the ServiceOps web workspace; it does not replace the web
 administration interface. The current release is iOS **1.3.2 (build 8)** and
-connects to ServiceOps 1.70.3 through the versioned mobile REST API.
+connects to ServiceOps 1.71.2 through the versioned mobile REST API.
 
 The approved ServiceOps identity has three coordinated source variants. The
 opaque white rounded-square network icon is used for the iOS launcher, Apple
@@ -43,6 +43,8 @@ The five primary tabs are Home, My Work, Create, Inbox, and More. They provide:
 - operational counts, major-incident visibility, recent work, and shortcuts;
 - assigned incident/change lists with type filters and full-text client search;
 - incident creation, state/priority updates, record refresh, and work notes;
+- tenant-scoped ticket attachment metadata and authenticated PDF/image/file
+  downloads, with native Quick Look preview for supported files;
 - notification read/read-all behavior and unread badges;
 - approval decisions, knowledge search, CMDB search, connection diagnostics,
   passkey management, biometric lock controls, sign-out, and the installed app
