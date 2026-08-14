@@ -1,7 +1,23 @@
 # ServiceOps complete feature catalogue
 
-**Catalogue baseline:** ServiceOps 1.62.6<br>
-**Last code audit:** 12 August 2026<br>
+## Optional full IPFS storage mode
+
+- Complete feature parity through an encrypted, IPFS-authoritative checkpoint
+  and volatile relational query projection; no PostgreSQL container or
+  persistent embedded database.
+- Automatic migration of the former B-335 login-only user/tenant checkpoint.
+- Persistent audit chain, session inventory/revocation, restart-surviving rate
+  limits, preferences, notifications, operational records, configuration,
+  workflow jobs, API/mobile sessions, and attachment metadata.
+- Encrypted IPFS attachment objects and encrypted full-state checkpoints.
+- Coalesced checkpoint creation and retrying asynchronous IPNS publication,
+  with pending durability visible in `/ready`.
+- Single-process integrated scheduled worker to avoid divergent IPNS writers.
+- See [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md) for deployment and the
+  explicit scale/durability boundary.
+
+**Catalogue baseline:** ServiceOps 1.73.0<br>
+**Last code audit:** 14 August 2026<br>
 **Evidence base:** application routes, models, templates, configuration,
 migrations, tools, deployment manifests, and automated tests in `ServiceOps`.
 <br>Note: this pass targeted the specific gaps identified below (new
@@ -27,10 +43,15 @@ unverified capabilities are listed under “Explicit boundaries.”
 - Administration home with categorized entry points and consistent return
   context on child administration pages.
 - Global search across authorized records and navigation destinations.
+- PostgreSQL trigram-indexed global search with authorization-preserving ID
+  subqueries and a separately tested immutable navigation catalogue.
 - Type-ahead lookup and browser for configuration items and record links.
 - User favorites and recently viewed page history.
 - Application/workspace directory and cross-domain My Tasks/Open Work queues.
 - Persisted sidebar scroll state and navigation state.
+- Blocking desktop/mobile browser QA for Dashboard, Administration, CMDB, and
+  Client Management, including console-error detection and axe-core WCAG 2.2
+  AA serious/critical violation checks with failure traces and screenshots.
 - Acting-role switcher limited to roles actually granted to the user.
 - User preferences for density, font scale, date format, timezone, dashboard
   widgets, list-page size, high contrast, and reduced motion.
@@ -48,6 +69,17 @@ unverified capabilities are listed under “Explicit boundaries.”
 ## 2. Identity, authentication, roles, sessions, and tenancy
 
 ### Authentication and recovery
+
+- User-authenticated native mobile sessions for local and LDAP accounts, with
+  MFA, short-lived access tokens, rotating refresh tokens, Keychain storage,
+  revocation, tenant/role/team authorization, and per-user app/device audit
+  attribution. Shared embedded API keys are not used by the iOS client.
+- Optional foreground biometric lock using Face ID, Touch ID, Optic ID, or the
+  device passcode recovery path, backed by device-only Keychain storage.
+- Apple platform-passkey registration and passwordless sign-in using
+  HTTPS-only, tenant/user-bound, expiring single-use WebAuthn challenges,
+  user verification, signature-counter tracking, self-service credential
+  inventory/revocation, request throttling, and audited mobile sessions.
 
 - Local username/password authentication with Argon2id hashes.
 - Transparent upgrade of legacy PBKDF2 hashes after successful login.
@@ -502,6 +534,34 @@ global-search results, analytics, and overdue reporting where applicable.
   equivalent required; no content-based spam scoring beyond loop/rate-limit
   defenses.
 
+## 23e. Native iOS operations workspace and push notifications ([[B-327]])
+
+- User-authenticated iOS 1.3 workspace with local/LDAP, MFA, biometric lock,
+  passkeys, rotating mobile sessions, and authoritative username/app/device
+  audit attribution.
+- APNs registration is bound to the authenticated tenant user. Device tokens
+  are encrypted at rest, indexed only by a one-way hash, and disabled when
+  Apple reports them invalid or unregistered.
+- Durable push delivery runs through the integration outbox worker, preserving
+  retries and delivery evidence. Notifications carry only display text and
+  opaque record identifiers; protected record data is fetched under current
+  authorization after the app opens.
+- Native notification inbox with unread badge and read/read-all actions;
+  mobile bootstrap/profile and assignment teams; ticket list/detail/update,
+  incident creation and activity comments; tenant-scoped attachment listing,
+  authenticated download, and native Quick Look preview; approval decisions; searchable
+  knowledge; and searchable read-only CMDB inventory.
+- iOS navigation uses Home, My Work, Create, Inbox, and More. More exposes
+  Approvals, Knowledge, CMDB, and Settings/Security without overloading tabs.
+- The installed application version and build are always visible under More >
+  About and repeated in Settings > About. Both values come from the signed app
+  bundle, so the UI cannot drift from Xcode release/build metadata.
+- The web Self-service navigation, global search, and Help Center expose a
+  dedicated ServiceOps mobile page with the maintained iOS repository link,
+  supported capabilities, connection steps, and APNs prerequisites.
+- Production APNs still requires an Apple push key, matching signed profile,
+  physical device, and HTTPS-reachable ServiceOps deployment.
+
 ## 24. Explicit boundaries
 
 ServiceOps does **not** claim these as complete built-in capabilities:
@@ -512,7 +572,6 @@ ServiceOps does **not** claim these as complete built-in capabilities:
 - Arbitrary low-code flow/action marketplace; workflow actions are restricted.
 - Built-in SAML adapter; implemented enterprise identity adapters are LDAP and
   Keycloak OIDC.
-- Hardware-backed WebAuthn/passkeys.
 - MID Server equivalent.
 - Guaranteed network discovery of devices exposing neither SNMP nor a probed
   TCP liveness port.

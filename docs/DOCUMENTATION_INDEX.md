@@ -1,5 +1,7 @@
 # ServiceOps documentation index
 
+- [iOS mobile application](MOBILE_APP.md) — features, authentication, audit attribution, APNs architecture, local setup, and release evidence.
+
 Controlled local documentation. Every entry below must stay synchronized with
 the current source, migrations, and release evidence as part of any
 meaningful change.
@@ -11,6 +13,7 @@ meaningful change.
 | [API_REFERENCE.md](API_REFERENCE.md) | REST API contract: authentication, scopes, endpoints, examples, errors |
 | [OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md) | Complete platform manual: administration, security model, ITIL workflows, product use |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Docker, Kubernetes, RPM packaging, identity, backup, and recovery instructions |
+| [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md) | Full IPFS-mode architecture, B-335 upgrade, deployment, recovery, health signals, and operating boundaries |
 | [PRODUCTION_READINESS_PLAN.md](PRODUCTION_READINESS_PLAN.md) | Evidence gates that block production promotion |
 | [REMEDIATION_PLAN_1.38.2.md](REMEDIATION_PLAN_1.38.2.md) | Scope, verification, release sequence, and explicitly open production-readiness work for 1.38.2 |
 | [BACKLOG.md](BACKLOG.md) | Authoritative completed and open work, with evidence references |

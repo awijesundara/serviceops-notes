@@ -126,7 +126,7 @@ has code but incomplete external/runtime proof; **Gap** is not production-ready.
 
 | Requirement/source | ServiceOps evidence | Status | Backlog |
 |---|---|---|---|
-| Unified navigation, search, favorites, history, preferences (UI PDF: Next Experience) | `templates/base.html`, `/ui/search`, favorites/recent views, `tests/test_app.py` | Verified | B-021 |
+| Unified navigation, search, favorites, history, preferences (UI PDF: Next Experience) | `templates/base.html`, `/ui/search`, immutable `serviceops_core.navigation` catalogue, authorization-preserving database subqueries, PostgreSQL trigram indexes, favorites/recent views, unit and blocking browser tests | Verified | B-021, B-323 |
 | User profile, user list and administration home (UI PDF: User Interface/User Administration) | tenant-scoped `/profile`, `/admin/users`, `/admin/users/<id>` and `/admin`; self-service contact fields are separated from admin-only role, active state and department authority; search and persistence/denial tests | Verified | B-248 |
 | Categorized personal interface settings (UI PDF: System Settings) | `/preferences` categories for accessibility, lists, forms and notification navigation; persistent density, scale, contrast, motion, tooltips, date display and navigation settings; light-only governed by ADR-012 | Verified for implemented settings; vendor theme/developer controls are intentionally not reproduced | B-248, B-240 |
 | Lists, filters, forms, activity, attachments, checklists (UI PDF: Core UI/Workspace) | shared task-derived record shell for INC/CHG/PRB/enterprise records/REQ, common two-column operational fields, action headers, field-level Event history, type-specific related sections and Incident section navigation, shared list toolbar/search/filter/record count/pagination/priority signals and lifecycle plus rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
@@ -695,7 +695,7 @@ This mapping uses the source guide as a behavioral reference. ServiceOps does no
 | Core UI developer tooling | Adapted as server-rendered Flask templates, reusable styles, routes, and automated tests |
 | CMS, UI Builder, widget developer APIs, Angular providers, Jelly, and ServiceNow scripting APIs | Not applicable: these are vendor-specific development runtimes. ServiceOps uses Flask, Jinja, SQLAlchemy, CSS, and JavaScript instead |
 | Advanced Work Assignment, Agent Chat, Virtual Agent, voice guidance, predictive recommendations | Requires external messaging, telephony, workforce-routing, or AI services and is not represented as locally operational |
-| Native mobile apps and offline distribution | Responsive web access is implemented; native app publishing is not included |
+| Native mobile apps and offline distribution | Native iOS 1.3.0 workspace is implemented with user authentication, passkeys, biometric locking, operational workflows, app-version audit context, and APNs/inbox notifications; distribution and offline record synchronization remain external |
 
 ### Verification expectations
 
