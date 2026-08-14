@@ -6,7 +6,7 @@ ServiceOps is an independent, production-oriented ITSM platform. It is completel
 
 1. ServiceOps is inspired by established ITIL and enterprise ITSM patterns, but must not falsely claim complete ServiceNow compatibility or parity.
 2. Preserve the existing product and improve it through bounded modules and stable interfaces. Do not perform a disguised rewrite.
-3. PostgreSQL is the only supported standard production database.
+3. PostgreSQL is the default, standard production database. An optional, install-time IPFS-backed storage mode exists for self-hosted, database-less deployments (`STORAGE_MODE=ipfs`); it is not a substitute for PostgreSQL in multi-tenant, high-scale, or compliance-sensitive production deployments unless and until it has separately documented production-readiness evidence per the "Validation expectations" section. It ships as an optional adapter behind the same interface, not a fork, per rule 10.
 4. REST is the primary API. Do not introduce GraphQL without a demonstrated consumer requirement.
 5. The UI is light-mode only. Dark mode is an explicit governed non-requirement.
 6. The product is responsive and PWA-first. Preserve authentication and API designs that could support native clients later.
