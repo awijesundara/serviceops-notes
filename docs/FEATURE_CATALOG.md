@@ -1,7 +1,23 @@
 # ServiceOps complete feature catalogue
 
-**Catalogue baseline:** ServiceOps 1.62.6<br>
-**Last code audit:** 12 August 2026<br>
+## Optional full IPFS storage mode
+
+- Complete feature parity through an encrypted, IPFS-authoritative checkpoint
+  and volatile relational query projection; no PostgreSQL container or
+  persistent embedded database.
+- Automatic migration of the former B-335 login-only user/tenant checkpoint.
+- Persistent audit chain, session inventory/revocation, restart-surviving rate
+  limits, preferences, notifications, operational records, configuration,
+  workflow jobs, API/mobile sessions, and attachment metadata.
+- Encrypted IPFS attachment objects and encrypted full-state checkpoints.
+- Coalesced checkpoint creation and retrying asynchronous IPNS publication,
+  with pending durability visible in `/ready`.
+- Single-process integrated scheduled worker to avoid divergent IPNS writers.
+- See [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md) for deployment and the
+  explicit scale/durability boundary.
+
+**Catalogue baseline:** ServiceOps 1.73.0<br>
+**Last code audit:** 14 August 2026<br>
 **Evidence base:** application routes, models, templates, configuration,
 migrations, tools, deployment manifests, and automated tests in `ServiceOps`.
 <br>Note: this pass targeted the specific gaps identified below (new

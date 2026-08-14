@@ -9,8 +9,8 @@
 
 > **Current feature inventory:**
 > [FEATURE_CATALOG.md](FEATURE_CATALOG.md) is the canonical code-audited
-> catalogue of every implemented ServiceOps capability (baseline being
-> refreshed off ServiceOps 1.62.6 as of this pass; see that file's own
+> catalogue of every implemented ServiceOps capability (baseline ServiceOps
+> 1.73.0 as of 14 August 2026; see that file's own
 > header for its current audit date). This master reference retains
 > governance, historical audit, architecture, and operating context; use the
 > feature catalogue when determining what the product currently does.
@@ -29,6 +29,28 @@ production-only policy, authentication rules, ITIL record model, change
 governance, security requirements, migration rules, engineering workflow, and
 report format). Everything below is detail underneath those rules, not a
 replacement for them.
+
+---
+
+## Current IPFS storage-mode architecture (B-338)
+
+ServiceOps 1.73.0 replaces the former login-only IPFS milestone with the full
+application. IPFS is the authoritative durable store for an encrypted
+full-state relational checkpoint and encrypted attachments. At runtime, the
+checkpoint is restored into a volatile in-memory SQLite projection so the
+existing 109-table domain model, authorization checks, UI, API, audit chain,
+session revocation, rate limiting, and scheduled operations retain their
+normal behavior without PostgreSQL or a persistent embedded database. The
+IPFS deployment is deliberately single-process, with scheduled work integrated
+into the web process to prevent divergent writers. Commits are coalesced and
+published through retrying asynchronous IPNS publication; pending durability
+is visible in `/ready`.
+
+This is not a claim of zero relational execution or production-scale parity.
+Whole-state checkpoints are O(N), a hard kill may lose the short coalescing
+window, and promotion remains blocked on scale/soak, abrupt-termination
+recovery, and independent security validation. See `IPFS_STORAGE_MODE.md` and
+backlog B-338 for operating instructions and evidence.
 
 ---
 

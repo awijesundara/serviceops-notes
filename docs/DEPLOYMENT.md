@@ -1,5 +1,8 @@
 # ServiceOps deployment guide
 
+> For the complete zero-PostgreSQL profile, including upgrade, recovery and
+> limitations, see [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md).
+
 ## Passkeys and Apple Associated Domains
 
 Passkeys require a stable public HTTPS origin. Configure
