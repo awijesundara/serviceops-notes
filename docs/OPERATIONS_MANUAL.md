@@ -1378,6 +1378,43 @@ usage, query latency, replication/backup health, volume capacity, login errors,
 notification failures, and SLA breach rate. Define business-approved SLOs and
 page only on actionable symptoms.
 
+### 14A. Watchdog-heal (on-demand health probe + auto-restart)
+
+`./serviceops watchdog-heal` probes `/health` (and, if set, an external
+front-door `WATCHDOG_URL` in `.env`) with one retry after 10s before acting,
+so a transient blip doesn't trigger a restart. If still unhealthy, it
+restarts the `app`/`worker` services (via `docker compose up -d
+--force-recreate`), re-probes for up to 30s, and logs every step with a UTC
+timestamp to `logs/watchdog-heal.log`.
+
+Before probing, `./serviceops` (every command, not just this one) also warns
+if a container from a *different* Compose project is bound to the configured
+port -- `docker compose` only ever manages containers under its own project
+name, so a stray stack left over from manual experimentation (e.g. a
+`serviceops_fresh` project when `.env`/`compose.yaml` declare project
+`serviceops`) can otherwise silently answer health checks or absorb restarts
+meant for the real one, exactly the failure mode this warning exists to
+surface immediately rather than let an operator discover mid-incident.
+
+**Deliberately does not install a scheduler.** A recurring cron entry that
+isn't explicitly redirected mails its full output to the crontab owner on
+every single run (cron's default behavior) -- for a job running every couple
+of minutes, that buries a real incident under routine "healthy" noise almost
+immediately. Operators who want this to run automatically should wire it
+into whatever scheduler they already trust (systemd timer, cron with output
+redirected, an external monitoring agent's "run this on alert" hook), e.g.:
+
+```cron
+*/2 * * * * cd /path/to/ServiceOps && ./serviceops watchdog-heal >>logs/watchdog-heal-cron.log 2>&1
+```
+
+Live-verified 2026-08-19: with the port-80 stack's `db`/`app`/`worker`
+containers fully stopped (Docker Desktop restart did not bring them back),
+`./serviceops watchdog-heal` detected the unhealthy state, retried once,
+rebuilt/recreated `app` and `worker`, waited for `db` to report healthy, and
+confirmed `/health` returned 200 -- full unattended recovery from a cold
+stack, `exit 0`, logged to `logs/watchdog-heal.log`.
+
 ## 15. Incident response
 
 Declare severity and incident commander, preserve evidence, stabilize service,

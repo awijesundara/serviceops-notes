@@ -48,6 +48,14 @@ After every application update, run `./tools/deploy-local.sh` and verify
 Compose maps host port 80 to that internal port. This workstation convention
 does not change production ingress, reverse-proxy, or Kubernetes ports.
 
+The separate full-IPFS development profile is intentionally published at
+`http://localhost:8081` and on the trusted local network at
+`http://192.168.68.65:8081`. Its untracked `.env.ipfs-demo` must set
+`BIND_ADDRESS=0.0.0.0` and `APP_PORT=8081`. Do not configure router port
+forwarding; this HTTP endpoint is for `192.168.68.0/24` development access
+only. See [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md) for its architecture,
+recovery, and operating limits.
+
 The local `.env` is part of the recovery set even though it is intentionally
 not committed. In particular, never regenerate or replace
 `SETTINGS_ENCRYPTION_KEY` while retaining an existing database: platform
