@@ -229,26 +229,31 @@ Build the RPM from a release checkout:
 # Digest-pinned (recommended): pass the pushed image's sha256 digest as the
 # third argument so the packaged install uses an immutable repository@sha256:...
 # reference instead of a mutable tag.
-bash packaging/build-dist.sh 1.26.3 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
+bash packaging/build-dist.sh 1.77.3 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
 # Tag-pinned fallback (prints a warning; the tag can later be overwritten):
-# bash packaging/build-dist.sh 1.26.3 <your-registry>/serviceops
-rpmdev-setuptree
-cp dist/serviceops-1.26.3.tar.gz packaging/systemd/serviceops.service ~/rpmbuild/SOURCES/
-rpmbuild --define "version 1.26.3" -ba packaging/rpm/serviceops.spec
+# bash packaging/build-dist.sh 1.77.3 <your-registry>/serviceops
+rpmbuild -ta dist/serviceops-1.77.3.tar.gz --define "version 1.77.3"
 ```
 
 Install and bring it up:
 
 ```bash
-sudo dnf install ~/rpmbuild/RPMS/noarch/serviceops-1.26.3-1.*.noarch.rpm
+# Docker CE packages come from Docker's repository, not the base RHEL/Rocky repo.
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install ~/rpmbuild/RPMS/noarch/serviceops-1.77.3-1.*.noarch.rpm
 sudo serviceops install server --yes
 sudo systemctl enable --now serviceops
 ```
 
-Requires Docker Engine and the Compose plugin (`docker-ce`, `docker-compose-plugin`)
-already installed and running; the package's `%pre` scriptlet adds the
+The RPM declares Docker Engine, the Compose plugin, systemd, Python, requests,
+curl, OpenSSL, tar, gzip, and the remaining host tools as dependencies, so DNF
+installs them from configured repositories. Docker's repository must be enabled
+as shown above. The package's `%pre` scriptlet adds the
 `serviceops` system account to the `docker` group so the systemd unit can
-reach the socket without running as root. The browser-based web installer
+reach the socket without running as root. Until the installer creates
+`/etc/serviceops/serviceops.env`, systemd intentionally refuses to start the
+unit. Its preflight uses quiet Compose validation so secrets are not rendered
+into the journal. The browser-based web installer
 (`serviceops install web`) is not included in packaged installs, since it
 builds its own Flask app from source -- use `serviceops install server`
 instead. Upgrading the RPM upgrades the control plane only; it does not by
