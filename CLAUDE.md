@@ -35,6 +35,30 @@ Every push to GitHub that lands new changes must carry a matching git tag:
 5. Never retag or move an existing tag to a different commit — if a tag was wrong, cut a new version instead.
 6. Never add a `Co-Authored-By: Claude` (or any other Claude/Anthropic) trailer to commit messages or annotated tag messages. All commits and tags are authored solely under the user's configured git identity.
 
+## Complete release obligation (effective 2026-08-23)
+
+Per explicit user direction, every improvement that is pushed must complete the
+same governed release lifecycle, including documentation-only improvements:
+
+1. Update application, operator, installation, and companion-repository
+   documentation affected by the change.
+2. Run the complete application, lint, compilation, migration, shell,
+   JavaScript, Compose, browser, accessibility, dependency, and vulnerability
+   gates applicable to the change. Record real limitations rather than silently
+   substituting mocks for unavailable infrastructure.
+3. Use the governed semantic-version workflow. Never move or reuse a tag.
+4. Publish and verify the immutable GHCR image, signature, SBOM, and provenance.
+5. Clean-build and install-test all supported RPM targets, publish every RPM and
+   checksum as GitHub release assets, and verify their provenance.
+6. Publish a non-draft, non-prerelease GitHub release and confirm that it is the
+   current stable release with the expected artifacts.
+7. Wait for hosted CI to reach a terminal successful state before reporting the
+   release complete.
+
+The governed release workflow must keep these steps automated. If any stage
+fails, fix the cause and cut a new version where immutability requires it; never
+rewrite a published tag or replace an immutable artifact in place.
+
 ## Production-only policy
 
 Never restore or introduce:
