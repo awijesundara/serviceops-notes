@@ -222,6 +222,21 @@ Layout after installation:
 | `/var/lib/serviceops/backups` | Database/upload backups (`/opt/serviceops/backups` is a symlink to it) |
 | `/usr/bin/serviceops` | Symlink to the CLI |
 | `systemd` unit `serviceops.service` | Wraps `serviceops start`/`serviceops stop` |
+| `serviceops-health.timer` | Two-minute health check and automatic recovery |
+| `serviceops-backup.timer` | Daily verified database/upload recovery set |
+| `/etc/logrotate.d/serviceops` | Rotation for host-side operational logs |
+
+### Supported RPM platforms
+
+The release pipeline builds and clean-install tests separate packages for the
+currently supported Enterprise Linux major families (EL8, EL9, and EL10) and
+the currently supported Fedora releases (Fedora 43 and Fedora 44). This
+covers current RHEL, Rocky Linux, AlmaLinux, and Oracle Linux releases that are
+binary-compatible with the corresponding EL major. Only the current supported
+minor release in each major family is supported; hosts must apply normal DNF
+security and minor-version updates. Fedora packages follow Fedora's shorter
+support lifecycle and must be upgraded as releases retire. Debian and
+Ubuntu use `.deb` packages rather than RPM and are outside this RPM matrix.
 
 Build the RPM from a release checkout:
 
@@ -229,20 +244,23 @@ Build the RPM from a release checkout:
 # Digest-pinned (recommended): pass the pushed image's sha256 digest as the
 # third argument so the packaged install uses an immutable repository@sha256:...
 # reference instead of a mutable tag.
-bash packaging/build-dist.sh 1.77.3 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
+bash packaging/build-dist.sh 1.78.0 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
 # Tag-pinned fallback (prints a warning; the tag can later be overwritten):
-# bash packaging/build-dist.sh 1.77.3 <your-registry>/serviceops
-rpmbuild -ta dist/serviceops-1.77.3.tar.gz --define "version 1.77.3"
+# bash packaging/build-dist.sh 1.78.0 <your-registry>/serviceops
+bash packaging/build-rpms.sh 1.78.0
 ```
 
 Install and bring it up:
 
 ```bash
-# Docker CE packages come from Docker's repository, not the base RHEL/Rocky repo.
+# Docker CE packages come from Docker's repository, not the base EL repository.
+sudo dnf install -y dnf-plugins-core
+# RHEL:
+# sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+# Rocky/Alma/Oracle Linux use the compatible CentOS repository:
 sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf install ~/rpmbuild/RPMS/noarch/serviceops-1.77.3-1.*.noarch.rpm
-sudo serviceops install server --yes
-sudo systemctl enable --now serviceops
+sudo dnf install ./serviceops-1.78.0-1.el$(rpm -E %rhel).noarch.rpm
+sudo serviceops setup --mode bundled --yes
 ```
 
 The RPM declares Docker Engine, the Compose plugin, systemd, Python, requests,
@@ -253,9 +271,19 @@ as shown above. The package's `%pre` scriptlet adds the
 reach the socket without running as root. Until the installer creates
 `/etc/serviceops/serviceops.env`, systemd intentionally refuses to start the
 unit. Its preflight uses quiet Compose validation so secrets are not rendered
-into the journal. The browser-based web installer
+into the journal. `serviceops setup` explicitly enables Docker, initializes the
+digest-pinned PostgreSQL and application containers, and enables the application,
+health-recovery, and backup timers. Daily recovery sets are written with `0600`
+permissions under `/var/lib/serviceops/backups`; by default, sets older than 35
+days are pruned while at least seven complete sets are always retained. Configure
+`BACKUP_ARCHIVE_*` values for off-host object-locked recovery storage.
+
+The RPM intentionally does not open a firewall or request a public TLS certificate:
+those operations require an operator-selected hostname, DNS ownership, and network
+policy. The safe default binds ServiceOps to loopback; publish it through the
+organization's managed HTTPS load balancer or reverse proxy. The browser-based web installer
 (`serviceops install web`) is not included in packaged installs, since it
-builds its own Flask app from source -- use `serviceops install server`
+builds its own Flask app from source -- use `serviceops setup`
 instead. Upgrading the RPM upgrades the control plane only; it does not by
 itself change the running application version. Run `serviceops update`
 (or bump `SERVICEOPS_IMAGE` in `/etc/serviceops/serviceops.env` and
