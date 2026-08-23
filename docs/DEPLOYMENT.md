@@ -244,10 +244,10 @@ Build the RPM from a release checkout:
 # Digest-pinned (recommended): pass the pushed image's sha256 digest as the
 # third argument so the packaged install uses an immutable repository@sha256:...
 # reference instead of a mutable tag.
-bash packaging/build-dist.sh 1.78.0 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
+bash packaging/build-dist.sh 1.78.1 ghcr.io/awijesundara/serviceops-server sha256:<pushed-image-digest>
 # Tag-pinned fallback (prints a warning; the tag can later be overwritten):
-# bash packaging/build-dist.sh 1.78.0 <your-registry>/serviceops
-bash packaging/build-rpms.sh 1.78.0
+# bash packaging/build-dist.sh 1.78.1 <your-registry>/serviceops
+bash packaging/build-rpms.sh 1.78.1
 ```
 
 Install and bring it up:
@@ -259,7 +259,7 @@ sudo dnf install -y dnf-plugins-core
 # sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
 # Rocky/Alma/Oracle Linux use the compatible CentOS repository:
 sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf install ./serviceops-1.78.0-1.el$(rpm -E %rhel).noarch.rpm
+sudo dnf install ./serviceops-1.78.1-1.el$(rpm -E %rhel).noarch.rpm
 sudo serviceops setup --mode bundled --yes
 ```
 
