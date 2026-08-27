@@ -55,9 +55,11 @@ same governed release lifecycle, including documentation-only improvements:
 7. Wait for hosted CI to reach a terminal successful state before reporting the
    release complete.
 
-The governed release workflow must keep these steps automated. If any stage
-fails, fix the cause and cut a new version where immutability requires it; never
-rewrite a published tag or replace an immutable artifact in place.
+The governed release workflow must keep these steps automated. Every successful
+quality-gate run for the current `main` commit automatically enters the patch
+release pipeline; minor and major increments use its manual dispatch. If any
+stage fails, fix the cause and cut a new version where immutability requires it;
+never rewrite a published tag or replace an immutable artifact in place.
 
 ## Production-only policy
 

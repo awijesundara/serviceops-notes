@@ -32,6 +32,15 @@ WCAG 2.2 AA finding. On failure, Playwright traces, full-page screenshots, and
 Compose logs are retained as workflow artifacts. The job always destroys its
 containers and volumes and never reuses the standing development deployment.
 
+A successful supply-chain gate for the current `main` commit automatically
+starts the governed-release workflow. That workflow creates the next patch
+version and immutable tag, repeats the release gates, signs and attests the
+digest-pinned image, clean-builds and install-tests every supported RPM target,
+and publishes the verified stable release. It refuses stale commits, ignores
+failed gates and fork-originated runs, serializes releases, and excludes its own
+version commits to prevent recursive releases. Use the manual release dispatch
+only when selecting a minor or major version increment.
+
 ## Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker
