@@ -41,6 +41,24 @@ failed gates and fork-originated runs, serializes releases, and excludes its own
 version commits to prevent recursive releases. Use the manual release dispatch
 only when selecting a minor or major version increment.
 
+## Air-gapped deployment boundary
+
+Air-gapped production deployments use the released RPM plus a transfer bundle
+prepared on an internet-connected Linux host. The bundle must contain the
+signed, immutable ServiceOps release image and the digest-pinned PostgreSQL and
+optional Kubo runtime images. `tools/offline/vendorize.sh` refuses mutable
+application references, saves each image for one declared target platform, and
+creates portable SHA-256 checksums. `tools/offline/build-offline.sh` rejects
+unsafe archive paths, verifies every transferred file before loading images,
+and confirms each locked digest after loading.
+
+The bundle never contains secrets or database data. RPM, Docker Engine, and OS
+dependencies remain the responsibility of the organization's signed offline OS
+repository. Verify GitHub image provenance on the connected preparation host,
+apply approved removable-media scanning and chain-of-custody controls, then use
+the normal packaged setup, systemd, health, readiness, backup, and restore
+procedures inside the restricted network.
+
 ## Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker
