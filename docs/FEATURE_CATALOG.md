@@ -266,6 +266,9 @@ global-search results, analytics, and overdue reporting where applicable.
 - Parent/child CI relationships and relationship types.
 - Service-impact analysis using service-to-CI mapping and dependencies.
 - Interactive draggable topology with discovered/manual visual distinction.
+- Resolution-responsive authenticated workspace with no fixed desktop width
+  ceiling, verified at mobile, standard desktop, and 2560-pixel-wide desktop
+  viewports.
 
 ### Import and synchronization
 
@@ -275,6 +278,14 @@ global-search results, analytics, and overdue reporting where applicable.
 - NetBox synchronization for devices and virtual machines, including
   interfaces, ports, power ports, inventory, location, IPv4/IPv6, out-of-band
   IP, vendor, platform, and additional attributes when supplied.
+- Schema-aware NetBox reconciliation: typed external IDs keep device and VM
+  namespaces separate; server-capped pagination is complete; removed source
+  values are cleared; v1 and v2 API tokens are supported; operational status,
+  lifecycle, environment, role, platform, cluster, and location retain their
+  distinct meanings.
+- Controlled role-to-class normalization for common infrastructure roles.
+  Unrecognized administrator-defined roles remain attributes and use the
+  neutral `Device` class instead of creating arbitrary CMDB classes.
 - NetBox URL, encrypted token, CA certificate, and explicitly marked
   last-resort TLS-verification bypass.
 - Self-registering CMDB agent and Puppet deployment example.
