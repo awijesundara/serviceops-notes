@@ -236,6 +236,10 @@ global-search results, analytics, and overdue reporting where applicable.
 - Request/RITM detail, lifecycle progress, opened/opened-by, approval, task,
   attachment, and item information.
 - Approval prerequisites validated before record creation.
+- Approval-required RITMs route first to the requested-for employee's active,
+  same-tenant line manager, including AD/LDAP managers provisioned before first
+  login; the target is an immutable submission-time snapshot and never falls
+  back to an arbitrary administrator.
 - Catalogue tasks support assignment, notes, controls, attachments, state,
   and audit history.
 - Production work can require a linked approved change.

@@ -551,6 +551,16 @@ Select a catalog item, supply its variables and business justification, and
 submit. ServiceOps creates REQ, RITM, approvals, and SCTASK records. Follow the
 request page for approval and fulfillment status.
 
+For an approval-required item, the first approval is assigned to the
+requested-for employee's active line manager recorded in ServiceOps, including
+a manager profile provisioned from AD/LDAP before that manager has ever logged
+in. The assignment is snapshotted when the RITM is submitted so a later
+directory change affects future requests without silently redirecting an
+approval already under audit. ServiceOps never substitutes an administrator:
+an absent, inactive, self-referential, or cross-tenant manager relationship
+fails closed before any REQ/RITM is created. The second stage requires an
+active Service Desk member.
+
 Each catalog item has an administrator-controlled default fulfillment route
 under **Administration home → Service delivery and governance → Catalog and routing**. The generated
 initial SCTASK inherits that team. Laptop and Software catalog items are routed
@@ -1002,8 +1012,10 @@ configured here rather than the account's normal password.
 1. Open the **Service catalog** page, pick an item, add any requested
    details, and click **Request**.
 2. ServiceOps creates a REQ container and one RITM for the item; if the item
-   requires approval, an approval chain starts (manager, then the fulfilling
-   team) before any fulfillment work begins.
+   requires approval, an approval chain starts (the requested-for employee's
+   recorded line manager, then Service Desk fulfillment authorization) before
+   any fulfillment work begins. If either stage has no valid approver, the
+   request fails closed before records are created.
 3. Track status from **Requests & RITMs** — open the RITM itself to see its
    own lifecycle stepper and the SCTASKs doing the actual fulfillment work.
 4. The RITM reaches `Closed Complete` once every SCTASK finishes; the parent

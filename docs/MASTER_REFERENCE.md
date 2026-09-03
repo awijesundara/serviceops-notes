@@ -1524,7 +1524,12 @@ New/search/filter bar, filter summary, record count, pagination, priority
 indicators, operational columns.
 
 **Requests and catalog**: select item → variables/justification → submit →
-REQ/RITM/approvals/SCTASK created. Fulfillment routing is
+REQ/RITM/approvals/SCTASK created. Approval-required RITMs snapshot the
+requested-for employee's active, same-tenant line manager as stage one, even
+when AD/LDAP provisioned that manager before their first login; stage two is
+active Service Desk fulfillment authorization. Missing, inactive,
+self-referential, or cross-tenant manager relationships fail closed before
+record creation, and an administrator is never substituted. Fulfillment routing is
 administrator-controlled under **Administration home → Service delivery and governance → Catalog and
 fulfillment routing**; Laptop/Software route to Windows by default (and, as
 of this session, both catalog items themselves are now auto-created on
