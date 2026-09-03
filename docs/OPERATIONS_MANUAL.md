@@ -671,6 +671,36 @@ fields — it remains upsert-by-name over the original five fields only, so
 richer CI data must currently be entered through the web UI. Migration:
 `20260729_0023_cmdb_enrichment.py`.
 
+Administrators can run **CMDB → Import → Sync from NetBox** as a dry-run
+preview before applying any reconciliation. ServiceOps treats the NetBox
+inventory schema conservatively:
+
+- device name, serial, device-type manufacturer/model, primary management IP,
+  site/location, and rack placement become structured CMDB fields;
+- NetBox operational status maps separately from CMDB lifecycle (for example,
+  `offline` becomes **Down / In Use**, not Retired; `staged` becomes
+  **Maintenance / Planned**);
+- common functional role terms normalize to controlled classes such as Server,
+  Switch, Router, Firewall, PDU, Storage, Load Balancer, or Wireless Access
+  Point; a custom role is retained as `NetBox: Role` and uses class Device;
+- platform remains an operating-system attribute, and a VM cluster remains a
+  logical-grouping attribute. Neither is mislabeled as hardware Model or
+  physical Location; a VM's site is used for Location when supplied;
+- NetBox tenant is retained for reference and is never treated as the owning
+  ServiceOps support group. Operational ownership and business data remain
+  governed in ServiceOps;
+- typed identifiers (`dcim.device:<id>` and
+  `virtualization.virtualmachine:<id>`) prevent independent NetBox object
+  tables with the same numeric primary key from overwriting one another;
+- fields removed at the source are cleared on the next applied sync. Dry run,
+  per-record error isolation, component permission warnings, and separate
+  physical-device/VM counts make the effect reviewable.
+
+Use a read-only NetBox token. NetBox v2 tokens beginning `nbt_` are sent with
+Bearer authentication; legacy v1 tokens remain supported with Token
+authentication. TLS verification is enabled by default; add the internal CA
+certificate rather than enabling the explicitly marked insecure bypass.
+
 ## 3A. Visual walkthrough
 
 This chapter shows every major workspace as it actually renders, captured
