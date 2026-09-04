@@ -1141,6 +1141,17 @@ identity, a narrow base DN, an escaped username filter, and explicit group-role
 mappings. Validate bind, search, user bind, disabled-user behavior, group
 mapping, certificate expiry, and directory outage behavior.
 
+The self-service profile shows the reporting line, direct reports, team
+responsibilities and a bounded directory snapshot. The default attribute map
+supports display/given/family name, title, department, division, employee ID
+and type, office, telephone/mobile, mail, UPN, manager, team, group memberships,
+account control/expiry and selected directory/logon timestamps, country,
+object GUID, uid/gid, Unix home and login shell. This is an allowlist:
+password-related material, certificates, SIDs and raw security descriptors from
+an unrestricted LDAP search are never persisted or rendered. Review the map
+against the organization's schema and data-minimization policy before enabling
+additional attributes.
+
 ### Keycloak
 
 Use a confidential OIDC client, authorization-code flow, exact HTTPS redirect
@@ -1166,7 +1177,8 @@ In addition to interactive AD/LDAP login (which creates the `ExternalIdentity`
 row for a user on first login), ServiceOps can periodically enrich already
 LDAP-provisioned user records from the directory: profile fields (`title`,
 `department`, `division`, `employee_id`, `employee_type`, `business_phone`,
-`mobile_phone`, `location`), the manager reporting chain (`User.manager_id`),
+`mobile_phone`, `location`), bounded directory details shown on the profile,
+the manager reporting chain (`User.manager_id`), account enabled/disabled state,
 and AD-group-driven team membership.
 This is implemented in `serviceops_core/ldap_sync.py::sync_directory` and
 does **not** create new users — only accounts that already authenticated via
@@ -1196,10 +1208,13 @@ Relevant settings (Administration home → Platform settings → Sign-in and dir
 
 | Setting | Purpose |
 |---|---|
-| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults match typical Active Directory attributes, including `business_phone`→`telephoneNumber`, `mobile_phone`→`mobile`, `location`→`physicalDeliveryOfficeName`. |
+| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username/directory-detail fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults cover the bounded fields documented above, including `business_phone`→`telephoneNumber`, `mobile_phone`→`mobile`, `location`→`physicalDeliveryOfficeName`, `team`→`teamName`, and `account_control`→`userAccountControl`. |
 | `KEYCLOAK_ATTR_MAP` | The same shape of JSON map, applied to Keycloak/OIDC userinfo claims instead of LDAP attributes (see **Keycloak** above). Independent of `LDAP_ATTR_MAP` — a tenant can run either or both providers with their own mappings. |
 | `LDAP_SYNC_ENABLED` | Enables the scheduled sync for this tenant. Default off; manual sync is always available regardless of this flag. |
 | `LDAP_SYNC_INTERVAL_MINUTES` | Minimum minutes between scheduled sync runs per tenant (5–10080). Default 60. |
+| `LDAP_AUTO_CREATE_TEAMS` | Conservatively creates a tenant-scoped team only from the configured single-valued team attribute. Default off. It never turns every `memberOf` group into a ServiceOps team. |
+| `LDAP_SYNC_ACCOUNT_STATUS` | Deactivates a linked ServiceOps account when AD marks it disabled, revoking its sessions. Default on. Re-enablement remains an explicit administrative decision. |
+| `CLIENT_HOSTNAME_LOOKUP` | Optionally records a forward-confirmed reverse-DNS name for a login source IP. Default off. The result is informational and never an identity or authorization input. |
 
 Operational notes:
 
@@ -1209,8 +1224,27 @@ Operational notes:
   than failing the whole sync.
 - All directory attribute names are admin-configurable; nothing about a
   specific company's schema is hard-coded.
+- Reporting links are applied before manager grants are recalculated, avoiding
+  order-dependent role flapping. A user with an active direct report or managed
+  team receives manager capability automatically.
+- If automatic team creation is enabled, manager inference is fail-safe: it is
+  applied only to an unowned team when every active member has the same active,
+  same-tenant line manager. Explicit managers are never replaced.
 - This does not populate org-chart/manager data for interactively-created
   local accounts that have never authenticated via LDAP.
+
+### Manager absence approval coverage
+
+A people or team manager may open **My profile** and record a start, end and
+reason for an absence. Coverage is permitted only upward to that manager's own
+active, same-tenant line manager and for at most 90 days. Existing requested
+votes remain accountable to the original manager until the backup acts; at
+decision time ServiceOps stores the backup as the actor and the original
+manager as `delegated_from`. The backup intentionally receives no initial
+request notification, and web/mobile decisions enforce the same state,
+tenant, authorization and change-freeze policy. Cancellation and decisions are
+audited. Configure reporting lines before relying on this control and test the
+organization's real absence/escalation scenario during go-live validation.
 
 ## 10. Post-deployment system settings
 
