@@ -168,6 +168,14 @@ event identifiers, timestamps and HMAC signatures, with bounded retry and
 delivery evidence. The organization must still validate its actual immutable
 SIEM/WORM destination and retention controls.
 
+Revision `20260904_0085` signs a bounded security context into each new audit
+event: source IP, optional forward-confirmed hostname, browser/OS label, user
+agent, language, authentication provider, HTTP method/path, request and trace
+IDs, sanitized referrer without its query string, and a one-way session
+reference. The audit page renders this evidence and verified exports include
+it. Cookies, authorization/CSRF headers, request bodies, proxy header chains,
+passwords, and tokens are deliberately excluded.
+
 Protect `AUDIT_INTEGRITY_KEY` as a rotated secret independent from database
 operator access. When it is absent, ServiceOps uses the settings encryption key
 and finally the application secret. Changing the effective key without a
@@ -695,6 +703,13 @@ inventory schema conservatively:
 - fields removed at the source are cleared on the next applied sync. Dry run,
   per-record error isolation, component permission warnings, and separate
   physical-device/VM counts make the effect reviewable.
+- current NetBox device and VM serializers are consumed without flattening
+  unlike concepts: assigned IP/DNS/VRF details, physical and virtual
+  interfaces, VLAN/cable context, console/power/cooling components, modules,
+  bays, inventory items, virtual disks, owner, coordinates, configuration
+  context, timestamps, tags and custom fields are retained as namespaced
+  attributes; rack location/group/facility/status/role/type/dimension/weight
+  metadata is retained on the rack itself.
 
 Use a read-only NetBox token. NetBox v2 tokens beginning `nbt_` are sent with
 Bearer authentication; legacy v1 tokens remain supported with Token
@@ -1173,21 +1188,23 @@ previous login already set.
 
 ### LDAP directory synchronization
 
-In addition to interactive AD/LDAP login (which creates the `ExternalIdentity`
-row for a user on first login), ServiceOps can periodically enrich already
-LDAP-provisioned user records from the directory: profile fields (`title`,
+In addition to interactive AD/LDAP login, ServiceOps provides an
+administrator-only full synchronization that creates an LDAP-backed profile
+for every valid directory entry before first login. It also enriches profile
+fields (`title`,
 `department`, `division`, `employee_id`, `employee_type`, `business_phone`,
 `mobile_phone`, `location`), bounded directory details shown on the profile,
 the manager reporting chain (`User.manager_id`), account enabled/disabled state,
 and AD-group-driven team membership.
-This is implemented in `serviceops_core/ldap_sync.py::sync_directory` and
-does **not** create new users — only accounts that already authenticated via
-LDAP at least once are matched and updated, by directory DN.
+This is implemented in `serviceops_core/ldap_sync.py::sync_directory`. The
+bulk-provisioning mode is passed only by the administrator route; the worker
+does not receive authority to create the entire directory.
 
 Two ways to run it:
 
-- **Manual**: Administration home → Service delivery and governance → Directory synchronization
-  triggers an immediate synchronous run (with a dry-run preview option) for
+- **Manual**: Administration → Platform settings → Sign-in and directory →
+  **Sync all LDAP users** triggers an immediate administrator-only synchronous
+  run (with a dry-run preview option) for
   the current tenant and shows a result summary (entries read, users
   updated, managers resolved, memberships added/removed, unmatched entries,
   errors).
@@ -1203,6 +1220,8 @@ Two ways to run it:
   no default or fallback tenant — iteration is always by explicit,
   individually-flagged tenant, consistent with the platform's fail-closed
   tenant policy.
+  Scheduled runs refresh linked users and reporting managers but never enable
+  full-directory account creation.
 
 Relevant settings (Administration home → Platform settings → Sign-in and directory):
 
