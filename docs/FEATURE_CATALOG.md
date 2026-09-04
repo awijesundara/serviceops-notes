@@ -132,7 +132,8 @@ unverified capabilities are listed under “Explicit boundaries.”
   team merge through alias governance.
 - Directory group-to-team mappings.
 - Separate tracking of directory-managed and local memberships.
-- Manual, dry-run, and scheduled LDAP directory synchronization.
+- Administrator-only, dry-run-capable full LDAP user/profile provisioning;
+  scheduled synchronization refreshes known identities without bulk creation.
 - Directory sync updates linked users’ profile attributes, reporting manager,
   account state, safe directory metadata, and mapped team memberships; tenant
   failures are isolated in the worker.
@@ -292,8 +293,10 @@ global-search results, analytics, and overdue reporting where applicable.
   summary behavior.
 - Team/owner resolution and protection of NetBox-governed records.
 - NetBox synchronization for devices and virtual machines, including
-  interfaces, ports, power ports, inventory, location, IPv4/IPv6, out-of-band
-  IP, vendor, platform, and additional attributes when supplied.
+  physical/virtual interfaces, VLAN/cable context, console/power/cooling
+  components, modules/bays, inventory, virtual disks, rack metadata, location,
+  assigned IPv4/IPv6 with DNS/VRF context, out-of-band IP, owner, coordinates,
+  configuration context, timestamps, vendor, platform, and custom attributes.
 - Schema-aware NetBox reconciliation: typed external IDs keep device and VM
   namespaces separate; server-capped pagination is complete; removed source
   values are cleared; v1 and v2 API tokens are supported; operational status,
