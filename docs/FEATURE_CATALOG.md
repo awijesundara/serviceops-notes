@@ -105,8 +105,9 @@ unverified capabilities are listed under “Explicit boundaries.”
 - Authorization actions resolved from validated governed policy.
 - Multi-role grants and user-selected acting role without privilege creation.
 - Directory-managed/locked role grants.
-- Server-recorded browser session inventory with creation, last seen, client,
-  and revocation data.
+- Server-recorded browser session inventory with creation, last seen, source
+  IP, parsed device/browser, browser language, optional forward-confirmed
+  reverse-DNS hostname, and revocation data.
 - Self-service and tenant-administrator session revocation.
 - Authentication-version invalidation after security-sensitive changes.
 - Tenant model and tenant-aware user, operational, CMDB, service, workflow,
@@ -124,6 +125,8 @@ unverified capabilities are listed under “Explicit boundaries.”
 - User self-service profile and personal-data export.
 - Governed erasure/anonymization that preserves required record/audit integrity.
 - Support groups/teams, membership, and manager designation.
+- Administrator UI for creating, renaming, activating/deactivating, assigning
+  managers to, and manually allocating users among tenant-scoped teams.
 - Team-scoped assignee selection and explicit team reassignment.
 - Team aliases for spelling, historical, and imported names; safe duplicate
   team merge through alias governance.
@@ -131,7 +134,20 @@ unverified capabilities are listed under “Explicit boundaries.”
 - Separate tracking of directory-managed and local memberships.
 - Manual, dry-run, and scheduled LDAP directory synchronization.
 - Directory sync updates linked users’ profile attributes, reporting manager,
-  and mapped team memberships; tenant failures are isolated in the worker.
+  account state, safe directory metadata, and mapped team memberships; tenant
+  failures are isolated in the worker.
+- Bounded directory-profile intelligence: friendly group names, name/UPN,
+  organization, employee, office/contact, account-state/expiry, timestamps and
+  Unix identity fields are retained; certificate, password, SID and raw
+  security-descriptor material is excluded.
+- Optional conservative team discovery from a configured directory team
+  attribute. New teams are tenant-scoped, and their manager is inferred only
+  when all active members resolve to one active line manager.
+- Automatic manager capability for users with active direct reports or a
+  managed team, recalculated after the full reporting graph is synchronized.
+- Time-bounded upward approval coverage during manager absence, with no initial
+  notification to the backup, unchanged freeze controls, and dual attribution
+  of the acting and accountable approvers.
 
 ## 4. Shared work and ticket behavior
 
