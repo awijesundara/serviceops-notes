@@ -1196,6 +1196,14 @@ fields (`title`,
 `mobile_phone`, `location`), bounded directory details shown on the profile,
 the manager reporting chain (`User.manager_id`), account enabled/disabled state,
 and AD-group-driven team membership.
+The safe detail snapshot also normalizes the directory OU and DNS domain,
+website, Unix username/UID/GID/home/shell, NIS domain, account type, and useful
+security timestamps such as the last bad-password attempt and lockout time.
+Group DNs are reduced to friendly names and summarized by their OU purpose;
+team-like names are shown as administrator-review suggestions but are never
+silently assigned. Both the self-service profile and administrator user record
+connect the identity to assigned assets and personally owned CIs, and the GDPR
+data export includes those operational relationships.
 This is implemented in `serviceops_core/ldap_sync.py::sync_directory`. The
 bulk-provisioning mode is passed only by the administrator route; the worker
 does not receive authority to create the entire directory.
@@ -1227,7 +1235,7 @@ Relevant settings (Administration home → Platform settings → Sign-in and dir
 
 | Setting | Purpose |
 |---|---|
-| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username/directory-detail fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults cover the bounded fields documented above, including `business_phone`→`telephoneNumber`, `mobile_phone`→`mobile`, `location`→`physicalDeliveryOfficeName`, `team`→`teamName`, and `account_control`→`userAccountControl`. |
+| `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username/directory-detail fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults cover contact/location, team, website, Unix/NIS identity, account type, account-security timestamps and `account_control`→`userAccountControl`. |
 | `KEYCLOAK_ATTR_MAP` | The same shape of JSON map, applied to Keycloak/OIDC userinfo claims instead of LDAP attributes (see **Keycloak** above). Independent of `LDAP_ATTR_MAP` — a tenant can run either or both providers with their own mappings. |
 | `LDAP_SYNC_ENABLED` | Enables the scheduled sync for this tenant. Default off; manual sync is always available regardless of this flag. |
 | `LDAP_SYNC_INTERVAL_MINUTES` | Minimum minutes between scheduled sync runs per tenant (5–10080). Default 60. |

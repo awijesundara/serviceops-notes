@@ -139,7 +139,10 @@ unverified capabilities are listed under “Explicit boundaries.”
   failures are isolated in the worker.
 - Bounded directory-profile intelligence: friendly group names, name/UPN,
   organization, employee, office/contact, account-state/expiry, timestamps and
-  Unix identity fields are retained; certificate, password, SID and raw
+  Unix/NIS identity fields are retained; OU/domain context and group-purpose
+  summaries make the directory easier to interpret, while conservative team
+  candidates require administrator review. User profiles connect directory
+  identities to assigned assets and personally owned CIs. Certificate, password, SID and raw
   security-descriptor material is excluded.
 - Optional conservative team discovery from a configured directory team
   attribute. New teams are tenant-scoped, and their manager is inferred only
