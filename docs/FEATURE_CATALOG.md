@@ -519,6 +519,10 @@ global-search results, analytics, and overdue reporting where applicable.
   CycloneDX SBOM, keyless Cosign signature, SLSA/SBOM attestations, registry
   digest verification, GitHub release/tag, and generated release notes.
 - Kubernetes installer support for image-attestation admission policy.
+- Protected, opt-in post-release Kubernetes deployment with provenance
+  verification, exact tag/digest pairing, atomic Helm rollout, migration and
+  schema init gates, retained readiness-test evidence, and automatic rollback
+  of failed Kubernetes revisions.
 
 ## 23. Test and demonstration support
 

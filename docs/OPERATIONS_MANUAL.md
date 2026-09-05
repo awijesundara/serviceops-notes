@@ -1125,6 +1125,17 @@ The installer labels the namespace for Restricted Pod Security, creates secrets
 from a protected temporary file, uses `helm upgrade --install --atomic --wait`,
 waits for rollout, and runs the packaged `/ready` test.
 
+For an upgrade, provide both the release tag and verified digest; changing only
+the tag cannot update a digest-governed workload:
+
+```bash
+SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
+  ./tools/safe_update_k8s.sh v1.79.1 sha256:<verified-64-character-digest>
+```
+
+Never use `kubectl set image` for ServiceOps. It creates configuration drift,
+bypasses the migration hook, and disagrees with the Helm release record.
+
 ## 8. Kubernetes chart controls
 
 - Non-root UID/GID, RuntimeDefault seccomp, all capabilities dropped.
@@ -1137,6 +1148,10 @@ waits for rollout, and runs the packaged `/ready` test.
 - NetworkPolicy for ingress and required egress ports.
 - Persistent upload claim and optional ingress/TLS.
 - JSON schema validation and a Helm test hook.
+- A pre-install/pre-upgrade migration Job that waits for PostgreSQL.
+- Web/worker init gates that wait for connectivity and the exact Alembic head.
+- A bounded, NetworkPolicy-isolated Helm readiness test whose completed pod is
+  retained long enough for `helm test --logs` evidence collection.
 
 Tune topology keys to the labels present in the target cluster. A PDB protects
 only against voluntary disruptions; it does not protect against node, zone, or
@@ -1400,6 +1415,15 @@ and publishes only after successful validation. The resulting digest is signed
 keylessly with GitHub OIDC and receives GitHub SLSA build-provenance and SBOM
 attestations. Registry digest inspection and `gh attestation verify` must both
 succeed.
+
+The opt-in protected production workflow
+`.github/workflows/deploy-kubernetes.yml` runs after a successful governed
+release when `KUBERNETES_DEPLOY_ENABLED=true`. It consumes protected
+`KUBE_CONFIG_B64` and `KUBERNETES_VALUES_B64` environment secrets, verifies the
+released image provenance and digest, lints/renders the chart, performs
+`helm upgrade --install --atomic --wait`, verifies both Deployments, and runs
+the packaged readiness test. GitHub production-environment reviewers remain a
+separate human authorization boundary.
 
 Kubernetes values must provide `image.digest`; application, worker and
 migration workloads use `repository@sha256:digest`, never a mutable tag. The
