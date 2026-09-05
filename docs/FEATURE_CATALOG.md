@@ -132,8 +132,9 @@ unverified capabilities are listed under “Explicit boundaries.”
   team merge through alias governance.
 - Directory group-to-team mappings.
 - Separate tracking of directory-managed and local memberships.
-- Administrator-only, dry-run-capable full LDAP user/profile provisioning;
-  scheduled synchronization refreshes known identities without bulk creation.
+- Just-in-time LDAP user provisioning after successful authentication; no
+  directory-wide provisioning action. Scheduled, scope-filtered and paged
+  reconciliation refreshes known identities and required manager links.
 - Directory sync updates linked users’ profile attributes, reporting manager,
   account state, safe directory metadata, and mapped team memberships; tenant
   failures are isolated in the worker.
