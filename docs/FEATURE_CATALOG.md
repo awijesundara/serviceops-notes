@@ -521,8 +521,9 @@ global-search results, analytics, and overdue reporting where applicable.
 - Kubernetes installer support for image-attestation admission policy.
 - Protected, opt-in post-release Kubernetes deployment with provenance
   verification, exact tag/digest pairing, atomic Helm rollout, migration and
-  schema init gates, retained readiness-test evidence, and automatic rollback
-  of failed Kubernetes revisions.
+  schema init gates, digest-pinned and egress-isolated readiness-test evidence,
+  explicit ingress namespace trust, and automatic rollback of failed
+  Kubernetes revisions.
 
 ## 23. Test and demonstration support
 
