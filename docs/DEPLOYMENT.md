@@ -145,11 +145,52 @@ Set `image.repository` and the verified `image.digest` from the successful
 tagged supply-chain workflow, then export
 `SERVICEOPS_GITHUB_ORGANIZATION`. Tags are descriptive only; every workload
 uses `repository@sha256:digest`. Chart validation rejects a missing digest, a
-single application replica, and bundled PostgreSQL. The installer deploys the
+single application replica, disabled persistent upload storage, and bundled PostgreSQL. The installer deploys the
 pinned Sigstore policy controller and GitHub trust policy, enables attestation
 enforcement on the namespace, uses atomic Helm deployment, waits for rollout,
 and runs the packaged health test. The optional bundled PostgreSQL StatefulSet
 is not an approved production database architecture.
+
+The migration Job first waits for PostgreSQL and then applies the schema once.
+Web and worker pods use a separate init gate that waits for both connectivity
+and the exact Alembic head, leaving a clear `Init` state instead of repeatedly
+crashing while the database is unavailable or behind. The packaged Helm test
+has a bounded connection/total timeout and is outside the web pod egress
+NetworkPolicy selector; its completed pod is retained until the next test so
+`helm test --logs` can collect evidence.
+
+Do not use `kubectl set image`. Workloads consume `repository@digest`, so a tag
+override alone is intentionally ineffective. Use:
+
+```bash
+SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
+  ./tools/safe_update_k8s.sh v1.79.1 sha256:<verified-64-character-digest>
+```
+
+This changes the descriptive tag and governed digest together, uses
+`helm upgrade --atomic --wait`, waits for the web rollout, and runs the
+packaged readiness test. Atomic rollback restores Kubernetes resources when a
+hook, image pull, or readiness check fails; it does not reverse a database
+migration. A verified pre-migration backup and migration rehearsal remain
+mandatory.
+
+### Protected CI/CD deployment
+
+`.github/workflows/deploy-kubernetes.yml` can deploy automatically after the
+governed release reaches terminal success, or by explicit manual dispatch. It
+is disabled by default. Configure the repository variable
+`KUBERNETES_DEPLOY_ENABLED=true`; optionally configure
+`KUBERNETES_NAMESPACE`, `KUBERNETES_RELEASE`, and
+`KUBERNETES_IMAGE_REPOSITORY`; and store base64-encoded kubeconfig and values
+content in the protected production environment secrets `KUBE_CONFIG_B64` and
+`KUBERNETES_VALUES_B64`. The values file references existing Kubernetes
+Secrets and must not contain plaintext application credentials.
+
+The job checks out the immutable release tag, resolves the corresponding GHCR
+manifest digest, verifies GitHub provenance, lints and renders the exact chart,
+and performs an atomic install/upgrade followed by both rollout checks and
+`helm test --logs`. Keep required reviewers and deployment-branch protection
+enabled on the GitHub `production` environment.
 
 ## Web Installation Center
 
