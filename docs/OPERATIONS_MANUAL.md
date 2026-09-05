@@ -679,8 +679,12 @@ fields — it remains upsert-by-name over the original five fields only, so
 richer CI data must currently be entered through the web UI. Migration:
 `20260729_0023_cmdb_enrichment.py`.
 
-Administrators can run **CMDB → Import → Sync from NetBox** as a dry-run
-preview before applying any reconciliation. ServiceOps treats the NetBox
+Administrators queue **CMDB → Import → Sync from NetBox** as a dry-run preview
+before applying reconciliation. The dedicated worker reads configurable
+bounded pages (100 records by default), permits only one tenant job at a time,
+persists progress and terminal evidence, and checks cancellation between API
+pages. The page displays live phase/count/progress and a safe Cancel control;
+closing the browser does not stop or lose the job. ServiceOps treats the NetBox
 inventory schema conservatively:
 
 - device name, serial, device-type manufacturer/model, primary management IP,
@@ -1211,9 +1215,10 @@ previous login already set.
 
 ### LDAP directory synchronization
 
-In addition to interactive AD/LDAP login, ServiceOps provides an
-administrator-only full synchronization that creates an LDAP-backed profile
-for every valid directory entry before first login. It also enriches profile
+ServiceOps deliberately does not provide a one-click full-directory import.
+Successful LDAP authentication provisions the user just in time. Scheduled,
+tenant-scoped reconciliation enriches existing profiles and creates only a
+missing manager needed to preserve an approval chain. It enriches profile
 fields (`title`,
 `department`, `division`, `employee_id`, `employee_type`, `business_phone`,
 `mobile_phone`, `location`), bounded directory details shown on the profile,
@@ -1227,19 +1232,10 @@ team-like names are shown as administrator-review suggestions but are never
 silently assigned. Both the self-service profile and administrator user record
 connect the identity to assigned assets and personally owned CIs, and the GDPR
 data export includes those operational relationships.
-This is implemented in `serviceops_core/ldap_sync.py::sync_directory`. The
-bulk-provisioning mode is passed only by the administrator route; the worker
-does not receive authority to create the entire directory.
+This is implemented in `serviceops_core/ldap_sync.py::sync_directory`. It has
+no bulk-provisioning mode or manual HTTP trigger.
 
-Two ways to run it:
-
-- **Manual**: Administration → Platform settings → Sign-in and directory →
-  **Sync all LDAP users** triggers an immediate administrator-only synchronous
-  run (with a dry-run preview option) for
-  the current tenant and shows a result summary (entries read, users
-  updated, managers resolved, memberships added/removed, unmatched entries,
-  errors).
-- **Scheduled**: the `worker` container's existing in-process polling loop
+The `worker` container's existing in-process polling loop
   (`tools/outbox_worker.py`, the same loop that already processes SLA
   breaches, workflow schedules/jobs, and the outbox) also calls
   `app.process_ldap_sync_schedule()` on every pass. For each **active**
@@ -1251,8 +1247,10 @@ Two ways to run it:
   no default or fallback tenant — iteration is always by explicit,
   individually-flagged tenant, consistent with the platform's fail-closed
   tenant policy.
-  Scheduled runs refresh linked users and reporting managers but never enable
-  full-directory account creation.
+  Runs use the configured LDAP scope, RFC 2696 pages, an entry safety ceiling,
+  and at least a 15-minute cadence. Failures cool the tenant down to four times
+  the configured interval. Runs refresh linked users and reporting managers
+  but never enable full-directory account creation.
 
 Relevant settings (Administration home → Platform settings → Sign-in and directory):
 
@@ -1260,8 +1258,10 @@ Relevant settings (Administration home → Platform settings → Sign-in and dir
 |---|---|
 | `LDAP_ATTR_MAP` | JSON map from ServiceOps profile/manager/email/username/directory-detail fields to the directory's actual attribute names (e.g. AD `employeeID` vs. an OpenLDAP equivalent). Defaults cover contact/location, team, website, Unix/NIS identity, account type, account-security timestamps and `account_control`→`userAccountControl`. |
 | `KEYCLOAK_ATTR_MAP` | The same shape of JSON map, applied to Keycloak/OIDC userinfo claims instead of LDAP attributes (see **Keycloak** above). Independent of `LDAP_ATTR_MAP` — a tenant can run either or both providers with their own mappings. |
-| `LDAP_SYNC_ENABLED` | Enables the scheduled sync for this tenant. Default off; manual sync is always available regardless of this flag. |
-| `LDAP_SYNC_INTERVAL_MINUTES` | Minimum minutes between scheduled sync runs per tenant (5–10080). Default 60. |
+| `LDAP_SYNC_ENABLED` | Enables scheduled reconciliation for this tenant. Default off. |
+| `LDAP_SYNC_INTERVAL_MINUTES` | Minimum minutes between runs per tenant (15–10080). Default 60. |
+| `LDAP_SYNC_PAGE_SIZE` | RFC 2696 page size (25–500). Default 100. Keep it below the directory server's configured maximum. |
+| `LDAP_SYNC_MAX_ENTRIES` | Hard per-run safety ceiling (100–50000). Default 5000; reaching it warns the administrator to narrow `LDAP_USER_FILTER`. |
 | `LDAP_AUTO_CREATE_TEAMS` | Conservatively creates a tenant-scoped team only from the configured single-valued team attribute. Default off. It never turns every `memberOf` group into a ServiceOps team. |
 | `LDAP_SYNC_ACCOUNT_STATUS` | Deactivates a linked ServiceOps account when AD marks it disabled, revoking its sessions. Default on. Re-enablement remains an explicit administrative decision. |
 | `CLIENT_HOSTNAME_LOOKUP` | Optionally records a forward-confirmed reverse-DNS name for a login source IP. Default off. The result is informational and never an identity or authorization input. |
