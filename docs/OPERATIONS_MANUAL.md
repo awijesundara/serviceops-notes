@@ -1121,16 +1121,22 @@ balancer in front of the loopback-bound application and terminate TLS there.
 6. Confirm rollout, Helm test, ingress TLS, login, record creation, upload,
    approval, notification, and audit behavior.
 
-The installer labels the namespace for Restricted Pod Security, creates secrets
-from a protected temporary file, uses `helm upgrade --install --atomic --wait`,
-waits for rollout, and runs the packaged `/ready` test.
+The installer labels the namespace for Restricted Pod Security and creates
+separate operator-managed runtime and bootstrap Secrets from mode-`0600`
+temporary files on the first install. It preserves both on upgrades and fails
+closed if only one exists; the chart itself never renders plaintext credentials
+into Helm release state. Escrow the runtime Secret before deployment because
+rotating its encryption, audit-integrity, or token-pepper keys can break data or
+verification continuity. The installer then uses
+`helm upgrade --install --atomic --wait`, waits for rollout, and runs the
+packaged `/ready` test.
 
 For an upgrade, provide both the release tag and verified digest; changing only
 the tag cannot update a digest-governed workload:
 
 ```bash
 SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
-  ./tools/safe_update_k8s.sh v1.79.1 sha256:<verified-64-character-digest>
+  ./tools/safe_update_k8s.sh <stable-tag> sha256:<verified-64-character-digest>
 ```
 
 Never use `kubectl set image` for ServiceOps. It creates configuration drift,
@@ -1145,13 +1151,15 @@ bypasses the migration hook, and disagrees with the Helm release record.
 - Topology spreading across zones and hosts.
 - PodDisruptionBudget and optional HPA.
 - Resource requests and limits.
-- NetworkPolicy for ingress and required egress ports.
+- NetworkPolicy for ingress and required egress ports; production ingress
+  requires an explicit trusted namespace selector.
 - Persistent upload claim and optional ingress/TLS.
 - JSON schema validation and a Helm test hook.
 - A pre-install/pre-upgrade migration Job that waits for PostgreSQL.
 - Web/worker init gates that wait for connectivity and the exact Alembic head.
-- A bounded, NetworkPolicy-isolated Helm readiness test whose completed pod is
-  retained long enough for `helm test --logs` evidence collection.
+- A bounded, NetworkPolicy-isolated Helm readiness test using a digest-pinned
+  helper image; it may reach only DNS and ServiceOps web pods, and its
+  completed pod is retained long enough for `helm test --logs` evidence.
 
 Tune topology keys to the labels present in the target cluster. A PDB protects
 only against voluntary disruptions; it does not protect against node, zone, or

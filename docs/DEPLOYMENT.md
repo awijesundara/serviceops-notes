@@ -132,7 +132,10 @@ traffic.
 The supported enterprise topology is the Helm chart in `charts/serviceops`
 with an immutable application image, two or more replicas, external HA
 PostgreSQL, RWX upload storage, ingress TLS, Restricted Pod Security,
-NetworkPolicy, probes, topology spreading, and disruption protection.
+NetworkPolicy, probes, topology spreading, and disruption protection. When
+ingress is enabled, set `networkPolicy.ingressNamespaceSelector` to the trusted
+ingress-controller namespace; an empty selector is rejected instead of
+silently trusting every namespace.
 
 ```bash
 cp deploy/kubernetes/values-production.example.yaml \
@@ -151,20 +154,30 @@ enforcement on the namespace, uses atomic Helm deployment, waits for rollout,
 and runs the packaged health test. The optional bundled PostgreSQL StatefulSet
 is not an approved production database architecture.
 
+The chart never creates plaintext application credentials or stores them in a
+Helm release. It requires operator-managed `existingSecret` and
+`existingBootstrapSecret` objects. On a first guided install, the installer
+creates those two Secrets from separate mode-`0600` temporary files; on an
+upgrade it preserves both without rotation. A partial state (only one Secret)
+fails closed for operator recovery. Back up the runtime Secret in the approved
+vault: changing its settings-encryption, audit-integrity, or API-token keys can
+make encrypted configuration unreadable or break verification continuity.
+
 The migration Job first waits for PostgreSQL and then applies the schema once.
 Web and worker pods use a separate init gate that waits for both connectivity
 and the exact Alembic head, leaving a clear `Init` state instead of repeatedly
 crashing while the database is unavailable or behind. The packaged Helm test
-has a bounded connection/total timeout and is outside the web pod egress
-NetworkPolicy selector; its completed pod is retained until the next test so
-`helm test --logs` can collect evidence.
+has a bounded connection/total timeout, a digest-pinned helper image, and its
+own deny-by-default policy permitting only DNS and the web pods' application
+port. Its completed pod is retained until the next test so `helm test --logs`
+can collect evidence.
 
 Do not use `kubectl set image`. Workloads consume `repository@digest`, so a tag
 override alone is intentionally ineffective. Use:
 
 ```bash
 SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
-  ./tools/safe_update_k8s.sh v1.79.1 sha256:<verified-64-character-digest>
+  ./tools/safe_update_k8s.sh <stable-tag> sha256:<verified-64-character-digest>
 ```
 
 This changes the descriptive tag and governed digest together, uses
