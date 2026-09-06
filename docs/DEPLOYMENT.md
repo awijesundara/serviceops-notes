@@ -164,6 +164,11 @@ vault: changing its settings-encryption, audit-integrity, or API-token keys can
 make encrypted configuration unreadable or break verification continuity.
 
 The migration Job first waits for PostgreSQL and then applies the schema once.
+It invokes the supported application-context migration entrypoint, serializes
+PostgreSQL schema writers with an advisory lock, and remains available as
+evidence until the next upgrade replaces it. Never run raw `alembic` commands,
+manually update `alembic_version`, or delete a database/PVC to resolve a schema
+mismatch.
 Web and worker pods use a separate init gate that waits for both connectivity
 and the exact Alembic head, leaving a clear `Init` state instead of repeatedly
 crashing while the database is unavailable or behind. The packaged Helm test
@@ -176,6 +181,7 @@ Do not use `kubectl set image`. Workloads consume `repository@digest`, so a tag
 override alone is intentionally ineffective. Use:
 
 ```bash
+export SERVICEOPS_BACKUP_REFERENCE="snapshot-YYYYMMDD-HHMM-before-serviceops-upgrade"
 SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
   ./tools/safe_update_k8s.sh <stable-tag> sha256:<verified-64-character-digest>
 ```
@@ -185,7 +191,8 @@ This changes the descriptive tag and governed digest together, uses
 packaged readiness test. Atomic rollback restores Kubernetes resources when a
 hook, image pull, or readiness check fails; it does not reverse a database
 migration. A verified pre-migration backup and migration rehearsal remain
-mandatory.
+mandatory. The updater fails closed unless the backup reference is supplied;
+the chart records it on the migration Job and application pods.
 
 ### Protected CI/CD deployment
 
@@ -194,7 +201,9 @@ governed release reaches terminal success, or by explicit manual dispatch. It
 is disabled by default. Configure the repository variable
 `KUBERNETES_DEPLOY_ENABLED=true`; optionally configure
 `KUBERNETES_NAMESPACE`, `KUBERNETES_RELEASE`, and
-`KUBERNETES_IMAGE_REPOSITORY`; and store base64-encoded kubeconfig and values
+`KUBERNETES_IMAGE_REPOSITORY`. Set `KUBERNETES_BACKUP_REFERENCE` to the
+completed, restore-tested provider snapshot or dump identifier for each
+upgrade; and store base64-encoded kubeconfig and values
 content in the protected production environment secrets `KUBE_CONFIG_B64` and
 `KUBERNETES_VALUES_B64`. The values file references existing Kubernetes
 Secrets and must not contain plaintext application credentials.
