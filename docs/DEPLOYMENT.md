@@ -194,6 +194,37 @@ migration. A verified pre-migration backup and migration rehearsal remain
 mandatory. The updater fails closed unless the backup reference is supplied;
 the chart records it on the migration Job and application pods.
 
+### Stateless, progressive and GitOps operation
+
+ServiceOps web replicas keep durable state in external PostgreSQL and shared
+RWX or S3-compatible attachment storage. Signed cookie sessions are
+replica-independent; revocation evidence is stored in PostgreSQL. Root
+filesystems are read-only. Non-secret configuration is a checksummed ConfigMap
+and secrets remain operator-managed Secret references.
+
+Native rolling delivery defaults to `maxUnavailable: 0`, `maxSurge: 1`,
+database/schema-aware readiness, startup/liveness probes, preStop drain and an
+explicit termination grace period. Argo Rollouts is opt-in with
+`progressiveDelivery.enabled=true`; optional Prometheus analysis aborts an
+unhealthy canary. Install and rehearse its controller/CRDs before enabling it.
+`featureFlags.netbox_sync=false` stops new NetBox synchronization jobs without
+rolling back the image.
+
+Use `deploy/gitops/application.example.yaml` to bootstrap Argo CD against a
+separate protected environment repository. Promotions are reviewed commits
+changing image tag, digest and backup reference. Self-heal is enabled while
+automatic prune is disabled to protect stateful resources.
+
+All supported REST routes are below `/api/v1`. Alembic changes use separate
+expand, compatible-code/backfill and contract releases. CI blocks destructive
+expand operations and requires contract revisions to state the minimum safe
+application version.
+
+Enable Prometheus Operator discovery with
+`observability.serviceMonitor.enabled=true`. OpenTelemetry instrumentation is
+available through an existing Operator Instrumentation resource; enable it
+only after the Collector, egress and data-governance policy are verified.
+
 ### Protected CI/CD deployment
 
 `.github/workflows/deploy-kubernetes.yml` can deploy automatically after the
