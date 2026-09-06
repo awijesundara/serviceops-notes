@@ -1514,6 +1514,29 @@ readiness, database health, and queues. `--atomic` rolls Kubernetes resources
 back when the upgrade fails, but database schema/data rollback still requires a
 release-specific tested procedure.
 
+### Kubernetes promotion policy
+
+Keep the native rolling Deployment unless Argo Rollouts has been installed and
+rehearsed. Set surge, unavailable count, drain delay and termination grace from
+measured capacity and longest request duration. For risky releases, enable
+canary delivery and Prometheus analysis; use strict feature flags as kill
+switches independent of rollback.
+
+Production desired state belongs in a protected environment repository managed
+by Argo CD. Promote by committing the immutable image tag/digest and unique
+restore-tested backup reference. Keep automatic pruning disabled for this
+stateful application. A Git revert restores Kubernetes resources but does not
+reverse an applied database migration.
+
+Schema delivery is expand, compatible application/backfill, then contract in
+separate releases. Never rename/drop a live field or tighten a constraint in
+the expand release. CI enforces phase metadata on new Alembic revisions.
+
+Enable ServiceMonitor and OpenTelemetry injection only after their CRDs,
+collectors, egress, retention and access controls are tested. Alert on
+readiness, 5xx ratio, latency, worker heartbeat and backup age before enabling
+automated canary promotion.
+
 ## 14. Monitoring and SLOs
 
 Monitor availability, request rate, latency percentiles, HTTP errors, worker
