@@ -1139,12 +1139,19 @@ For an upgrade, provide both the release tag and verified digest; changing only
 the tag cannot update a digest-governed workload:
 
 ```bash
+export SERVICEOPS_BACKUP_REFERENCE="snapshot-YYYYMMDD-HHMM-before-serviceops-upgrade"
 SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
   ./tools/safe_update_k8s.sh <stable-tag> sha256:<verified-64-character-digest>
 ```
 
 Never use `kubectl set image` for ServiceOps. It creates configuration drift,
 bypasses the migration hook, and disagrees with the Helm release record.
+The updater refuses a production upgrade until a completed, restore-tested
+backup reference is supplied. The supported migration Job uses the Flask
+application context, serializes PostgreSQL migration writers, commits Alembic's
+schema and revision lifecycle normally, and stays available for inspection
+until the next upgrade. Never edit `alembic_version` directly or delete a
+database/PVC to resolve a migration mismatch.
 
 ## 8. Kubernetes chart controls
 
@@ -1160,6 +1167,8 @@ bypasses the migration hook, and disagrees with the Helm release record.
 - Persistent upload claim and optional ingress/TLS.
 - JSON schema validation and a Helm test hook.
 - A pre-install/pre-upgrade migration Job that waits for PostgreSQL.
+- Required pre-upgrade backup evidence recorded on migration and application pods.
+- Explicit Retain policy for bundled non-production PostgreSQL claims.
 - Web/worker init gates that wait for connectivity and the exact Alembic head.
 - A bounded, NetworkPolicy-isolated Helm readiness test using a digest-pinned
   helper image; it may reach only DNS and ServiceOps web pods, and its
