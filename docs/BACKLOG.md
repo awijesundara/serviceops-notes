@@ -22,6 +22,22 @@ volume: downgrade returned the database to `20260812_0078` and removed all 18
 indexes; the application migration path restored `20260813_0079` and all 18
 indexes. The disposable containers and volumes were then deleted.
 
+**B-350 verification supplement (2026-09-06):** the isolated application suite
+passed `589 passed, 33 skipped`; Ruff, compilation, Helm lint/render, the
+required-backup negative render, browser/accessibility, dependency, image
+vulnerability and supply-chain gates passed. A disposable PostgreSQL rehearsal
+downgraded from `20260905_0086` to `20260904_0085` and upgraded back with all
+14,724 existing and 100 synthetic records preserved. Hosted runs
+[34005873324](https://github.com/awijesundara/ServiceOps/actions/runs/34005873324),
+[34005873314](https://github.com/awijesundara/ServiceOps/actions/runs/34005873314),
+and [34006306383](https://github.com/awijesundara/ServiceOps/actions/runs/34006306383)
+completed successfully. Sole stable release
+[v1.80.2](https://github.com/awijesundara/ServiceOps/releases/tag/v1.80.2)
+contains five install-tested RPMs and five checksum sidecars; every checksum and
+RPM provenance attestation passed independent verification. The exact release
+commit is locally healthy and ready with migration `20260905_0086`; recent app
+and worker logs contain no error, exception, critical, fatal or traceback event.
+
 | ID | Priority | State | Work and acceptance criteria |
 |---|---|---|---|
 | B-350 | P0 | Implemented | Kubernetes database-loss prevention and truthful settings cleanup. Confirmed the current chart already had a pre-install/pre-upgrade migration hook, so the screenshot's claim that it was absent was stale; hardened the remaining bypass and recovery risks instead. Production upgrades now fail closed unless the operator supplies the identifier of a completed, restore-tested database backup. That reference is recorded on the migration Job and application pods. The supported migration module runs inside the Flask application context, PostgreSQL migration writers are serialized with a session advisory lock without interfering with Alembic's transaction, and the completed migration Job is retained until the next upgrade for evidence. Bundled non-production PostgreSQL explicitly retains PVCs on StatefulSet deletion and scale-down; Production continues to reject bundled PostgreSQL. The installer, safe updater, protected workflow, example values, README and runbooks use the same backup-reference contract and forbid `kubectl set image`, raw Alembic CLI, manual `alembic_version` stamping, and database/PVC deletion as repair methods. Removed the non-actionable Directory reconciliation panel and audited nearby conditional notices: retained only notices that lead to implemented configuration and tested execution paths. Acceptance requires negative Helm rendering without backup evidence, successful render with evidence, migration transaction/revision verification against disposable PostgreSQL, full application/browser/security QA, and the governed release lifecycle. |
