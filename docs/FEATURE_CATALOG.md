@@ -395,11 +395,15 @@ global-search results, analytics, and overdue reporting where applicable.
 ### Durable integrations and external adapters
 
 - Administrator integration connections with encrypted secrets.
-- Signed webhook, Microsoft Teams, and immutable audit/SIEM connection types.
+- Signed webhook, Google Chat, Microsoft Teams, and immutable audit/SIEM connection types.
+- Exact/glob event subscriptions, connection enable/disable controls, and
+  domain subtypes for approval notifications and audit actions.
 - Durable outbox events, delivery evidence, retryable worker processing, and
   manual processing trigger.
 - Tenant-scoped monitoring sources with one-time API tokens and assignment to
   an active IT fulfillment team.
+- Google Workspace SMTP relay, app-password and OAuth 2.0 email delivery,
+  including encrypted credentials, sender identity, Reply-To and TLS policy.
 - LDAP/AD authentication and sync; Keycloak OIDC; NetBox sync; RT migration;
   monitoring ingestion; and configured SMTP email delivery.
 - RT import supports URL/token/CA/query/status mapping, dry run, queued job,
