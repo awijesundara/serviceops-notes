@@ -395,9 +395,13 @@ global-search results, analytics, and overdue reporting where applicable.
 ### Durable integrations and external adapters
 
 - Administrator integration connections with encrypted secrets.
-- Signed webhook, Google Chat, Microsoft Teams, and immutable audit/SIEM connection types.
-- Exact/glob event subscriptions, connection enable/disable controls, and
+- Guided Google Chat, Telegram bot, Slack, Microsoft Teams, Discord, signed
+  webhook, and immutable audit/SIEM connection types, including real test sends.
+- Exact/glob event subscriptions, connection pause/resume controls, and
   domain subtypes for approval notifications and audit actions.
+- Provider URL credentials, Telegram bot tokens and destination settings, and
+  signing secrets are encrypted at rest; network exceptions are redacted before
+  delivery evidence is persisted.
 - Durable outbox events, delivery evidence, retryable worker processing, and
   manual processing trigger.
 - Tenant-scoped monitoring sources with one-time API tokens and assignment to

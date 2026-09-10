@@ -1451,6 +1451,16 @@ released image provenance and digest, lints/renders the chart, performs
 the packaged readiness test. GitHub production-environment reviewers remain a
 separate human authorization boundary.
 
+For the maintained ServiceOps instance, the acceptance target is the local
+MicroK8s cluster in namespace `operations`, served at
+`serviceops.wijesundara.com`. Its non-secret environment values are maintained
+in `/Users/anushka/Github/k8s/serviceops-values-microk8s.yaml`. A disposable
+Compose run is QA only. After every governed release, take and restore-test a
+PostgreSQL backup, resolve and verify the immutable release digest, use the
+repository's atomic Helm updater, and verify both Deployments, the migration
+head, retained Helm test, `/health`, `/ready`, Cloudflare Access, and recent
+web/worker logs.
+
 Kubernetes values must provide `image.digest`; application, worker and
 migration workloads use `repository@sha256:digest`, never a mutable tag. The
 installer requires `SERVICEOPS_GITHUB_ORGANIZATION`, installs the pinned
