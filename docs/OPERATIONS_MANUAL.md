@@ -240,22 +240,31 @@ each attempt, retries with bounded exponential delay, and moves an event to
 `Dead` after five failed processing attempts. A successful channel is not sent
 again during retries of another channel.
 
-SMTP is configured post-installation under platform settings. STARTTLS is
-enabled by default; hostname, port, account, encrypted password, and from
-address remain administrator-controlled. Signed webhooks use HTTPS and carry
+SMTP is configured post-installation under platform settings. Generic SMTP and
+Google Workspace relay, app-password, and OAuth 2.0 modes are supported.
+STARTTLS is enabled by default, with optional implicit TLS; hostname, port,
+authentication, sender name, From, Reply-To, timeout, encrypted passwords, and
+encrypted OAuth credentials remain administrator-controlled. Google Workspace
+SMTP relay is the preferred server-to-server mode and must be restricted to the
+deployment's public egress IP and approved senders in Google Admin. Signed
+webhooks use HTTPS and carry
 event ID, timestamp, and `HMAC-SHA-256` signature headers. Teams connections
-use the same durable worker with Teams-compatible message payloads. Literal
+and Google Chat incoming webhooks use the same durable worker with native text
+payloads. Every connection can subscribe to exact or globbed envelope/domain
+events and can be disabled without deleting its configuration. Literal
 loopback, private, link-local, and non-HTTPS webhook targets are rejected at
 configuration time. At delivery time the application re-resolves the
 destination hostname and rejects it if it now resolves to a non-global
 address, disables automatic redirect-following, and manually re-validates and
 re-resolves the target on every redirect hop (up to three), closing most of
 the DNS-rebinding/redirect-SSRF gap without relying solely on network egress
-controls. A narrow TOCTOU window remains between that re-resolution and the
-HTTP client's own connection-time DNS lookup; true IP pinning or a controlled
-outbound proxy is tracked as future work. Defense-in-depth egress
-firewall/DNS controls at the network layer are still recommended in
-production.
+controls. The validated addresses are pinned for the HTTP client's
+connection-time lookup, closing the DNS time-of-check/time-of-use gap.
+Full destination URLs are encrypted and only query-stripped URLs are displayed,
+preventing Google Chat and Teams webhook tokens from appearing in the UI or a
+plaintext database field.
+Defense-in-depth egress firewall/DNS controls at the network layer are still
+recommended in production.
 
 Administrators create monitoring sources under **Integrations** and bind each
 source to an active IT fulfillment team. The source token is displayed once
