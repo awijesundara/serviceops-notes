@@ -192,6 +192,71 @@ Required scope: `tickets:read`
 Ticket numbers are case-insensitive. A record outside the caller's tenant or
 visibility policy returns `404`, preventing record-existence disclosure.
 
+## 5a. List a change's tasks (CTASKs)
+
+```http
+GET /api/v1/tickets/CHG0000041/ctasks
+Authorization: Bearer sop_REDACTED
+```
+
+Required scope: `tickets:read`
+
+Returns the change tasks (CTASKs) belonging to a change ticket, ordered by
+`sequence`:
+
+```json
+{
+  "data": [
+    {
+      "number": "CTASK0000001",
+      "title": "Snapshot database",
+      "taskType": "Implementation",
+      "state": "Open",
+      "required": true,
+      "sequence": 1,
+      "assignmentGroup": "Unix",
+      "assignee": null,
+      "plannedStart": null,
+      "plannedEnd": null,
+      "workNotes": ""
+    }
+  ],
+  "meta": { "count": 1, "request_id": "..." }
+}
+```
+
+`state` follows the change-task lifecycle: `Open`, `Work in Progress`,
+`Pending`, `Closed Complete`, `Closed Incomplete`, `Cancelled`. Calling this
+against a non-change ticket returns `400`. A ticket outside the caller's
+tenant or visibility policy, or an unknown ticket number, returns `404`.
+
+## 5b. Update a single change task (CTASK)
+
+```http
+PATCH /api/v1/tickets/CHG0000041/ctasks/CTASK0000001
+Authorization: Bearer sop_REDACTED
+Content-Type: application/json
+Idempotency-Key: <caller-generated>
+
+{
+  "state": "Closed Complete",
+  "work_notes": "Verified by the linked runbook"
+}
+```
+
+Required scope: `tickets:update`. The caller must also be able to manage the
+parent change ticket (owning group membership/management, or `admin`) — the
+same authorization rule `PATCH /api/v1/tickets/{number}` already enforces.
+Both fields are optional but at least one field is required; `state` must be
+a valid transition from the task's current state under the same change-task
+lifecycle listed above (an invalid transition returns `409`, matching the UI's
+own task-update behavior — including the change-task gating rules, e.g. a
+Review task cannot close while required Implementation/Testing tasks remain
+open). Returns the updated CTASK using the same shape as 5a's list endpoint.
+An idempotency key is required, as with every mutating endpoint in this
+reference. A non-change ticket, unknown ticket, or unknown CTASK number
+returns `400`/`404` as appropriate.
+
 ## 6. Create an incident
 
 ```http
@@ -415,6 +480,41 @@ print(response.json()["data"]["number"])
 
 Always set connect/read timeouts, validate TLS, keep tokens in a secret
 manager, and log request IDs rather than credentials or full sensitive bodies.
+
+## 13a. Outbound webhook: change ticket state transitions
+
+Administration → Integrations webhook connections (`kind: "webhook"`) can
+subscribe to `change.state_changed`, delivered whenever a change ticket's
+`state` transitions (create-time state is not an event). The connection's
+event-pattern list (fnmatch-style, e.g. `"change.state_changed"`, `"change.*"`,
+or `"*"`) controls whether it receives this event; an empty pattern list
+receives everything.
+
+```json
+{
+  "id": "8f9c9e2e-...-outbox-event-id",
+  "type": "change.state_changed",
+  "created_at": "2026-09-12T03:14:00+00:00",
+  "data": {
+    "number": "CHG0000961",
+    "kind": "change",
+    "state": "In Progress",
+    "previous_state": "Approved",
+    "priority": "P3",
+    "impact": "Medium",
+    "urgency": "Medium",
+    "category": "Software"
+  }
+}
+```
+
+Delivery is signed exactly like every other webhook event (`X-ServiceOps-
+Signature: sha256=<HMAC-SHA256 of the raw body using the connection's
+secret>`, plus `X-ServiceOps-Timestamp` and `X-ServiceOps-Event-ID`) and goes
+through the same SSRF-hardened delivery worker (DNS pinning, private-address
+rejection, bounded redirects) as every other outbound event. There is
+currently no equivalent event for CTASK state changes — poll `GET
+/api/v1/tickets/{number}/ctasks` (§5a) for that.
 
 ## 14. Current compatibility boundary
 
