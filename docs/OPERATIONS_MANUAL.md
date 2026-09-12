@@ -20,6 +20,8 @@ The ServiceOps production standard therefore uses prevention, validation,
 observability, tested recovery, least privilege, immutable releases, and
 documented rollback rather than claiming infallibility.
 
+![System architecture: browser and iOS clients call the stateless Flask application over HTTPS; the application reads and writes PostgreSQL and the uploads store, and hands scheduled/event work to a worker process that delivers notifications, SLA breaches, and workflow automation, with AD/LDAP, Keycloak, SMTP, webhooks, and chat integrations as optional adapters.](diagrams/architecture.png)
+
 ## 2. Roles and teams
 
 | Role | Normal responsibilities |
@@ -240,39 +242,53 @@ each attempt, retries with bounded exponential delay, and moves an event to
 `Dead` after five failed processing attempts. A successful channel is not sent
 again during retries of another channel.
 
-SMTP is configured post-installation under platform settings. Generic SMTP and
-Google Workspace relay, app-password, and OAuth 2.0 modes are supported.
-STARTTLS is enabled by default, with optional implicit TLS; hostname, port,
-authentication, sender name, From, Reply-To, timeout, encrypted passwords, and
-encrypted OAuth credentials remain administrator-controlled. Google Workspace
-SMTP relay is the preferred server-to-server mode and must be restricted to the
-deployment's public egress IP and approved senders in Google Admin. Signed
-webhooks use HTTPS and carry
-event ID, timestamp, and `HMAC-SHA-256` signature headers. Teams connections
-and Google Chat incoming webhooks use the same durable worker with native text
-payloads. Every connection can subscribe to exact or globbed envelope/domain
-events and can be disabled without deleting its configuration. Literal
-loopback, private, link-local, and non-HTTPS webhook targets are rejected at
-configuration time. At delivery time the application re-resolves the
-destination hostname and rejects it if it now resolves to a non-global
-address, disables automatic redirect-following, and manually re-validates and
-re-resolves the target on every redirect hop (up to three), closing most of
-the DNS-rebinding/redirect-SSRF gap without relying solely on network egress
-controls. The validated addresses are pinned for the HTTP client's
-connection-time lookup, closing the DNS time-of-check/time-of-use gap.
-Full destination URLs are encrypted and only query-stripped URLs are displayed,
-preventing Google Chat and Teams webhook tokens from appearing in the UI or a
-plaintext database field.
+**Email (SMTP)** — configured post-installation under Platform settings:
+
+| Mode | Use when | Notes |
+|---|---|---|
+| Generic SMTP | Any standard mail server | STARTTLS by default; implicit TLS supported |
+| Google Workspace relay | Server-to-server, no per-user auth | Preferred mode; restrict to the deployment's public egress IP and approved senders in Google Admin |
+| Google Workspace app password | Per-mailbox sending | Simpler setup, weaker isolation than relay |
+| Google Workspace OAuth 2.0 | Per-mailbox sending with rotating credentials | Credentials encrypted at rest |
+
+Hostname, port, authentication mode, sender name, From, Reply-To, timeout,
+passwords, and OAuth credentials are all administrator-controlled and
+encrypted where sensitive.
+
+**Webhooks and chat connections** (signed webhooks, Teams, Google Chat):
+
+- Every payload is HTTPS-only and carries event ID, timestamp, and an
+  `HMAC-SHA-256` signature header.
+- Each connection subscribes to exact or globbed envelope/domain events and
+  can be disabled without deleting its configuration.
+- A loopback, private, link-local, or non-HTTPS target is rejected at
+  configuration time.
+- At delivery time the application re-resolves the destination hostname,
+  rejects a now-non-global address, disables automatic redirect-following,
+  and re-validates/re-resolves the target on every redirect hop (up to
+  three) -- closing most of the DNS-rebinding/redirect-SSRF gap.
+- Validated addresses are pinned for the HTTP client's own connection-time
+  lookup, closing the DNS time-of-check/time-of-use gap.
+- Full destination URLs are encrypted at rest; only a query-stripped URL is
+  ever displayed, so Google Chat/Teams webhook tokens never appear in the UI
+  or a plaintext database field.
+
 Defense-in-depth egress firewall/DNS controls at the network layer are still
 recommended in production.
 
-Administrators create monitoring sources under **Integrations** and bind each
-source to an active IT fulfillment team. The source token is displayed once
-and stored only as a hash. `POST /api/v1/monitoring/{source_id}/events` requires
-that bearer token, validates severity and payload limits, deduplicates by
-source/external ID, creates an EVT record, assigns an EVTASK investigation to
-the configured team, maps critical/high/medium/low severity to P1/P2/P3/P4,
-and records ingestion in the append-only audit chain.
+**Monitoring event ingestion:**
+
+1. An administrator creates a monitoring source under **Integrations** and
+   binds it to an active IT fulfillment team; the source token is shown once
+   and stored only as a hash.
+2. The monitoring tool calls `POST /api/v1/monitoring/{source_id}/events`
+   with that bearer token.
+3. ServiceOps validates severity and payload limits, then deduplicates by
+   source/external ID.
+4. A matching event creates an EVT record and assigns an EVTASK investigation
+   to the configured team, mapping critical/high/medium/low severity to
+   P1/P2/P3/P4.
+5. Ingestion is recorded in the append-only audit chain.
 
 ### Sign in
 
@@ -606,6 +622,8 @@ window, implementation plan, test plan, and executable backout plan. Review
 conflicts before approval. CCB approval is authorization, not a substitute for
 technical validation or membership in the owning implementation team.
 
+![Normal change governance flow: Draft, then Team or manager approval, then CCB approval, then Approved, then Implementation with change tasks, then Post-implementation review. A material change made after Approved -- to scope, plan, risk, affected CIs, schedule, or assignment group -- invalidates the current approval chain and restarts the record at Draft.](diagrams/change_governance.png)
+
 A change can affect more than one Configuration Item. The New Change form
 captures a primary CI (used for risk scoring and conflict/freeze detection
 against overlapping changes) plus an optional, repeatable **Additional
@@ -626,21 +644,24 @@ audited and role controlled.
 
 **Agentless discovery** (Administration → CMDB → Discovery) finds
 Configuration Items and their connections from switches and other
-SNMP-speaking devices, without installing anything on the target — an
-administrator configures a discovery target (a single host or a CIDR subnet)
-with its own SNMP version/port/community string, encrypted at rest the same
-way other per-integration secrets are. A target can be run on demand or on a
-schedule (the same in-process worker loop that handles SLA breaches and LDAP
-sync). Each run reads standard MIB-II/IF-MIB system and interface facts, the
-device's ARP table, and LLDP neighbor advertisements for anything that
-answers SNMP. Most consumer and office devices — phones, laptops, most
-routers, smart-home gear — don't run an SNMP agent at all, so a device that
-doesn't answer SNMP is still checked for basic reachability (a handful of
-common TCP ports, never a port scan) and, if alive, recorded as a bare
-result — IP address plus a best-effort reverse-DNS name where the network's
-own DNS/router setup supports it — rather than being silently invisible;
-on a typical network expect far more devices found this second way than the
-first.
+SNMP-speaking devices, without installing anything on the target:
+
+1. An administrator configures a discovery target — a single host or a CIDR
+   subnet — with its own SNMP version/port/community string, encrypted at
+   rest the same way other per-integration secrets are.
+2. The target runs on demand or on a schedule (the same in-process worker
+   loop that handles SLA breaches and LDAP sync).
+3. For anything that answers SNMP, the run reads standard MIB-II/IF-MIB
+   system and interface facts, the device's ARP table, and LLDP neighbor
+   advertisements.
+4. For anything that doesn't answer SNMP — most consumer and office devices,
+   including phones, laptops, most routers, and smart-home gear — the run
+   falls back to basic reachability (a handful of common TCP ports, never a
+   port scan). If the device is alive, it is recorded as a bare result: IP
+   address plus a best-effort reverse-DNS name where the network's own
+   DNS/router setup supports it, rather than being silently invisible. On a
+   typical network, expect far more devices found this second way than the
+   first.
 
 **A run never creates a CI by itself.** It stages every device found as a
 reviewable candidate; the discovery list shows a "Review N devices" link
@@ -1101,6 +1122,8 @@ configured here rather than the account's normal password.
 
 Production Kubernetes must use an externally operated, highly available PostgreSQL service.
 
+![Three deployment topologies side by side: a single server with bundled PostgreSQL and a Docker volume for evaluation or one-server production; a single server with external PostgreSQL and Docker volume plus backups for separate backup ownership; and Kubernetes with three or more application replicas, external HA PostgreSQL, and RWX or S3 storage for high availability and horizontal scale.](diagrams/deployment_topology.png)
+
 ## 5. Docker installation
 
 Run `./serviceops install web`, open `http://127.0.0.1:8090`, configure the profile,
@@ -1188,6 +1211,8 @@ only against voluntary disruptions; it does not protect against node, zone, or
 application failure.
 
 ## 9. Identity configuration
+
+![Identity sign-in and directory reconciliation: local administrator, AD/LDAP bind and search, or Keycloak OIDC code flow all lead to an authenticated session. A first successful LDAP or Keycloak login just-in-time provisions the account; a scheduled per-tenant reconciliation loop then refreshes the profile and manager chain on a repeating cycle. There is no bulk "sync all users" action.](diagrams/identity_flow.png)
 
 ### Local administrator
 
@@ -1499,6 +1524,8 @@ enforcement remain required before organizational production approval.
 
 ## 12. Backup and recovery
 
+![Backup, upgrade, and rollback safety flow: serviceops backup, then rehearse-recovery or rehearse-upgrade, then deploy or serviceops update, then verify health, login, and workflows. If verification fails, atomic rollback restores the prior release, but database migrations are never auto-reversed -- restore from the verified backup instead. A pre-upgrade backup reference is mandatory.](diagrams/backup_upgrade_flow.png)
+
 Back up PostgreSQL and uploads as one recovery set. Encrypt backups, store them
 outside the cluster, apply retention and immutability, and record restore test
 evidence. For managed PostgreSQL enable PITR. Snapshotting a running database
@@ -1524,14 +1551,20 @@ ServiceOps integrity checks pass.
 
 ## 13. Upgrades and rollback
 
-Run `./serviceops rehearse-upgrade` first. It creates a verified rollback set
-and validates the candidate image and migration against an isolated clone while
-the source remains healthy. Back up first. Review release notes and schema compatibility. Render and lint
-the Helm chart, deploy to staging, run workflow regression and load tests, then
-use `helm upgrade --install --atomic --wait`. Observe error rate, latency,
-readiness, database health, and queues. `--atomic` rolls Kubernetes resources
-back when the upgrade fails, but database schema/data rollback still requires a
-release-specific tested procedure.
+1. Take a verified backup.
+2. Run `./serviceops rehearse-upgrade`. It creates a verified rollback set and
+   validates the candidate image and migration against an isolated clone while
+   the source database remains untouched and healthy.
+3. Review the release notes and schema compatibility.
+4. Render and lint the Helm chart, then deploy to staging.
+5. Run workflow regression and load tests against staging.
+6. Deploy with `helm upgrade --install --atomic --wait`.
+7. Observe error rate, latency, readiness, database health, and queue depth.
+
+`--atomic` rolls Kubernetes resources back automatically when the upgrade
+fails, but database schema/data rollback still requires a release-specific
+tested procedure -- restoring from the backup taken in step 1, not an
+automatic reversal.
 
 ### Kubernetes promotion policy
 
@@ -1558,18 +1591,33 @@ automated canary promotion.
 
 ## 14. Monitoring and SLOs
 
-Monitor availability, request rate, latency percentiles, HTTP errors, worker
-saturation, pod restarts, readiness, CPU/memory throttling, database connection
-usage, query latency, replication/backup health, volume capacity, login errors,
-notification failures, and SLA breach rate. Define business-approved SLOs and
-page only on actionable symptoms.
+Monitor:
+
+- Availability, request rate, and latency percentiles
+- HTTP error rate
+- Worker saturation and pod restarts
+- Readiness and CPU/memory throttling
+- Database connection usage, query latency, and replication/backup health
+- Volume capacity
+- Login errors and notification-delivery failures
+- SLA breach rate
+
+Define business-approved SLOs from these signals and page only on actionable
+symptoms -- a metric crossing a threshold with no available corrective action
+is a dashboard entry, not a page.
 
 ## 15. Incident response
 
-Declare severity and incident commander, preserve evidence, stabilize service,
-communicate on a fixed cadence, use tested rollback/failover, validate recovery,
-and create a blameless problem record with corrective actions. Never delete
-audit or operational evidence during response.
+1. Declare severity and name an incident commander.
+2. Preserve evidence (logs, audit records, database state) before changing anything.
+3. Stabilize service -- mitigate first, root-cause later.
+4. Communicate status on a fixed cadence to stakeholders.
+5. Use a tested rollback or failover procedure rather than an improvised fix.
+6. Validate recovery against real user workflows, not just health checks.
+7. Create a blameless problem record with corrective actions once service is stable.
+
+Never delete audit or operational evidence during response, even evidence that
+is inconvenient or implicates a specific change.
 
 ## 16. Production acceptance checklist
 

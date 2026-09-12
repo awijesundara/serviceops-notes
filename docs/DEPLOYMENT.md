@@ -2,6 +2,72 @@
 
 > For the complete zero-PostgreSQL profile, including upgrade, recovery and
 > limitations, see [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md).
+>
+> For the full user, administrator, identity, Kubernetes, security,
+> monitoring, backup, recovery, upgrade, rollback, and incident-response
+> runbook with diagrams and screenshots, see the
+> [complete platform manual](OPERATIONS_MANUAL.md).
+
+## Contents
+
+**Choose and install**
+[Deployment topologies](#deployment-topologies) ·
+[Fast installation](#fast-installation) ·
+[Architecture A: bundled PostgreSQL](#architecture-a-bundled-postgresql) ·
+[Architecture B: external PostgreSQL](#architecture-b-external-postgresql) ·
+[RPM packaging](#rpm-packaging-linux-distribution) ·
+[Kubernetes production deployment](#kubernetes-production-deployment) ·
+[Web Installation Center](#web-installation-center) ·
+[Air-gapped deployment boundary](#air-gapped-deployment-boundary)
+
+**Configure identity and access**
+[AD and LDAP](#ad-and-ldap) ·
+[Keycloak](#keycloak) ·
+[Passkeys and Apple Associated Domains](#passkeys-and-apple-associated-domains) ·
+[Apple push notification configuration](#apple-push-notification-configuration)
+
+**Expose and monitor**
+[HTTPS and network exposure](#https-and-network-exposure) ·
+[Service health and monitoring](#service-health-and-monitoring) ·
+[Immutable recovery and object storage](#immutable-recovery-and-object-storage)
+
+**Operate**
+[Operations](#operations) ·
+[Recovery objectives](#recovery-objectives) ·
+[Upgrades](#upgrades) ·
+[Account and emergency recovery](#account-and-emergency-recovery)
+
+**Secure and scale**
+[Security checklist](#security-checklist) ·
+[Scaling](#scaling)
+
+**Maintainer and CI notes**
+[Mandatory browser quality gate](#mandatory-browser-quality-gate) ·
+[Local development deployment convention](#local-development-deployment-convention)
+
+## Deployment topologies
+
+| Environment | Application | Database | Upload storage | Use when |
+|---|---|---|---|---|
+| Single server | Docker Compose | Bundled PostgreSQL | Docker volume | Evaluation or one-server production |
+| Single server, external DB | Docker Compose | External PostgreSQL | Docker volume + backups | Separate backup ownership, managed database |
+| Kubernetes | Helm, 3+ replicas | External HA PostgreSQL | RWX CSI volume or S3-compatible | High availability, horizontal scale |
+
+```mermaid
+flowchart LR
+    subgraph A["Single server"]
+        A1["ServiceOps app"] --> A2["Bundled PostgreSQL"] --> A3["Docker volume"]
+    end
+    subgraph B["Single server, external DB"]
+        B1["ServiceOps app"] --> B2["External PostgreSQL"] --> B3["Docker volume + backups"]
+    end
+    subgraph C["Kubernetes"]
+        C1["ServiceOps app x3+"] --> C2["External HA PostgreSQL"] --> C3["RWX / S3 storage"]
+    end
+```
+
+Production Kubernetes must use an externally operated, highly available
+PostgreSQL service — the chart rejects a configuration that omits it.
 
 ## Passkeys and Apple Associated Domains
 
@@ -132,50 +198,62 @@ traffic.
 The supported enterprise topology is the Helm chart in `charts/serviceops`
 with an immutable application image, two or more replicas, external HA
 PostgreSQL, RWX upload storage, ingress TLS, Restricted Pod Security,
-NetworkPolicy, probes, topology spreading, and disruption protection. When
-ingress is enabled, set `networkPolicy.ingressNamespaceSelector` to the trusted
-ingress-controller namespace; an empty selector is rejected instead of
-silently trusting every namespace.
+NetworkPolicy, probes, topology spreading, and disruption protection.
 
-```bash
-cp deploy/kubernetes/values-production.example.yaml \
-   deploy/kubernetes/values-production.yaml
-./serviceops install kubernetes --preflight
-./serviceops install kubernetes
-```
+1. Copy the example values file:
 
-Set `image.repository` and the verified `image.digest` from the successful
-tagged supply-chain workflow, then export
-`SERVICEOPS_GITHUB_ORGANIZATION`. Tags are descriptive only; every workload
-uses `repository@sha256:digest`. Chart validation rejects a missing digest, a
-single application replica, disabled persistent upload storage, and bundled PostgreSQL. The installer deploys the
-pinned Sigstore policy controller and GitHub trust policy, enables attestation
-enforcement on the namespace, uses atomic Helm deployment, waits for rollout,
-and runs the packaged health test. The optional bundled PostgreSQL StatefulSet
-is not an approved production database architecture.
+   ```bash
+   cp deploy/kubernetes/values-production.example.yaml \
+      deploy/kubernetes/values-production.yaml
+   ```
 
-The chart never creates plaintext application credentials or stores them in a
-Helm release. It requires operator-managed `existingSecret` and
-`existingBootstrapSecret` objects. On a first guided install, the installer
-creates those two Secrets from separate mode-`0600` temporary files; on an
-upgrade it preserves both without rotation. A partial state (only one Secret)
-fails closed for operator recovery. Back up the runtime Secret in the approved
-vault: changing its settings-encryption, audit-integrity, or API-token keys can
-make encrypted configuration unreadable or break verification continuity.
+2. Set `image.repository` and the verified `image.digest` from the successful
+   tagged supply-chain workflow, then export `SERVICEOPS_GITHUB_ORGANIZATION`.
+3. If ingress is enabled, set `networkPolicy.ingressNamespaceSelector` to the
+   trusted ingress-controller namespace — an empty selector is rejected
+   instead of silently trusting every namespace.
+4. Run the preflight check, then install:
 
-The migration Job first waits for PostgreSQL and then applies the schema once.
-It invokes the supported application-context migration entrypoint, serializes
-PostgreSQL schema writers with an advisory lock, and remains available as
-evidence until the next upgrade replaces it. Never run raw `alembic` commands,
-manually update `alembic_version`, or delete a database/PVC to resolve a schema
-mismatch.
-Web and worker pods use a separate init gate that waits for both connectivity
-and the exact Alembic head, leaving a clear `Init` state instead of repeatedly
-crashing while the database is unavailable or behind. The packaged Helm test
-has a bounded connection/total timeout, a digest-pinned helper image, and its
-own deny-by-default policy permitting only DNS and the web pods' application
-port. Its completed pod is retained until the next test so `helm test --logs`
-can collect evidence.
+   ```bash
+   ./serviceops install kubernetes --preflight
+   ./serviceops install kubernetes
+   ```
+
+Tags are descriptive only; every workload runs `repository@sha256:digest`.
+Chart validation rejects a missing digest, a single application replica,
+disabled persistent upload storage, and bundled PostgreSQL — the optional
+bundled PostgreSQL StatefulSet is not an approved production database
+architecture. The installer additionally deploys the pinned Sigstore policy
+controller and GitHub trust policy, enables attestation enforcement on the
+namespace, uses atomic Helm deployment, waits for rollout, and runs the
+packaged health test.
+
+**What the chart guarantees:**
+
+- **Credentials.** The chart never creates plaintext application credentials
+  or stores them in a Helm release; it requires operator-managed
+  `existingSecret` and `existingBootstrapSecret` objects. A first guided
+  install creates both from separate mode-`0600` temporary files; an upgrade
+  preserves both without rotation. A partial state (only one Secret) fails
+  closed for operator recovery. Back up the runtime Secret in the approved
+  vault — changing its settings-encryption, audit-integrity, or API-token
+  keys can make encrypted configuration unreadable or break verification
+  continuity.
+- **Migrations.** The migration Job waits for PostgreSQL, then applies the
+  schema exactly once through the supported application-context entrypoint,
+  serializing PostgreSQL schema writers with an advisory lock, and stays
+  available as evidence until the next upgrade replaces it. Never run raw
+  `alembic` commands, manually update `alembic_version`, or delete a
+  database/PVC to resolve a schema mismatch.
+- **Startup ordering.** Web and worker pods use a separate init gate that
+  waits for both connectivity and the exact Alembic head, leaving a clear
+  `Init` state instead of repeatedly crashing while the database is
+  unavailable or behind.
+- **Readiness evidence.** The packaged Helm test has a bounded
+  connection/total timeout, a digest-pinned helper image, and its own
+  deny-by-default policy permitting only DNS and the web pods' application
+  port. Its completed pod is retained until the next test so
+  `helm test --logs` can collect evidence.
 
 Do not use `kubectl set image`. Workloads consume `repository@digest`, so a tag
 override alone is intentionally ineffective. Use:
@@ -415,14 +493,12 @@ checkout.
 
 Choose this for one-server installations and straightforward backups.
 
-```text
-Internet → HTTPS proxy → ServiceOps app
-                            │
-                            └── private Compose network → PostgreSQL
-
-Persistent volumes:
-  serviceops_postgres_data
-  serviceops_uploads
+```mermaid
+flowchart LR
+    I["Internet"] -- HTTPS --> P["HTTPS proxy"] --> S["ServiceOps app"]
+    S -- private Compose network --> D[("PostgreSQL")]
+    S --> U[["serviceops_uploads volume"]]
+    D --> V[["serviceops_postgres_data volume"]]
 ```
 
 PostgreSQL is not published to the host network. The installer generates its password and starts it with a health gate before the application starts.
@@ -570,6 +646,13 @@ Define and test:
 The database and uploads must be recovered from the same logical backup window.
 
 ## Upgrades
+
+```mermaid
+flowchart LR
+    A["serviceops backup"] --> B["rehearse-upgrade"] --> C["deploy / serviceops update"] --> D["verify health, login, workflows"]
+    D -- failed --> E["atomic rollback restores prior release"]
+    E -. "DB migrations are never auto-reversed" .-> F["restore from the verified backup"]
+```
 
 Supported application upgrades move one released minor version at a time.
 Skipping versions requires rehearsing every intervening database migration.
