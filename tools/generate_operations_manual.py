@@ -61,6 +61,32 @@ styles = {
 TOC_LEVELS = {"ManualChapter": 0, "ManualSection": 1}
 
 IMAGE_RE = re.compile(r"^!\[(.*?)\]\((.*?)\)$")
+BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\)")
+INLINE_CODE_RE = re.compile(r"`([^`]+?)`")
+
+
+def _render_link(match):
+    label, target = match.group(1), match.group(2)
+    if target.startswith(("http://", "https://")):
+        return f'<link href="{target}" color="#0C5A66"><u>{label}</u></link>'
+    # A relative path (e.g. another Markdown file in this private docs repo)
+    # isn't reachable from the shipped PDF at all -- rendering it as a live
+    # link would promise a click that goes nowhere. Fall back to plain text.
+    return label
+
+
+def inline(text):
+    """Escapes text for reportlab's paragraph markup, then converts Markdown
+    **bold** spans, [text](url) links, and `inline code` to real reportlab
+    tags. Applied after escape() specifically so a literal '*', '[' or '`' in
+    source text can't be misread as markup -- only genuine matched pairs
+    survive escaping intact enough to match. Without this, all three
+    rendered as literal punctuation in the PDF instead of formatting."""
+    escaped = escape(text)
+    escaped = LINK_RE.sub(_render_link, escaped)
+    escaped = INLINE_CODE_RE.sub(r'<font face="Courier" color="#002F3A">\1</font>', escaped)
+    return BOLD_RE.sub(r"<b>\1</b>", escaped)
 
 
 def image_flowable(alt_text, rel_path):
@@ -82,7 +108,7 @@ def image_flowable(alt_text, rel_path):
         width = height / aspect
     return KeepTogether([
         Image(str(path), width=width, height=height),
-        Paragraph(escape(alt_text), styles["caption"]),
+        Paragraph(inline(alt_text), styles["caption"]),
     ])
 
 
@@ -95,7 +121,7 @@ def table_flowable(rows):
     data = []
     for i, row in enumerate(rows):
         style = header_style if i == 0 else cell_style
-        data.append([Paragraph(escape(cell), style) for cell in row])
+        data.append([Paragraph(inline(cell), style) for cell in row])
     col_count = max(len(row) for row in rows)
     col_width = CONTENT_WIDTH / col_count
     table = Table(data, colWidths=[col_width] * col_count, repeatRows=1)
@@ -152,7 +178,7 @@ def build():
 
     def flush_paragraph():
         if paragraph:
-            story.append(Paragraph(escape(" ".join(paragraph)), styles["body"]))
+            story.append(Paragraph(inline(" ".join(paragraph)), styles["body"]))
             paragraph.clear()
 
     def flush_table():
@@ -203,15 +229,15 @@ def build():
             flush_paragraph()
             flush_table()
             mark = "□" if "[ ]" in line else "■"
-            story.append(Paragraph(f"{mark} {escape(line[6:])}", styles["bullet"]))
+            story.append(Paragraph(f"{mark} {inline(line[6:])}", styles["bullet"]))
         elif line.startswith("- "):
             flush_paragraph()
             flush_table()
-            story.append(Paragraph(f"• {escape(line[2:])}", styles["bullet"]))
+            story.append(Paragraph(f"• {inline(line[2:])}", styles["bullet"]))
         elif line.startswith(tuple(f"{n}. " for n in range(1, 10))):
             flush_paragraph()
             flush_table()
-            story.append(Paragraph(escape(line), styles["bullet"]))
+            story.append(Paragraph(inline(line), styles["bullet"]))
         elif line.startswith("|"):
             flush_paragraph()
             if "---" not in line:
