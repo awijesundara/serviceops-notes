@@ -126,6 +126,104 @@ apply approved removable-media scanning and chain-of-custody controls, then use
 the normal packaged setup, systemd, health, readiness, backup, and restore
 procedures inside the restricted network.
 
+### Outbound proxy for notifications, email, and update checks
+
+The application itself still makes a handful of outbound HTTPS/SMTP calls at
+runtime -- Google Chat, Telegram, Slack, Teams, and Discord notification
+channels; SMTP mail relay (including Google Workspace's OAuth2 token
+endpoint); and an optional daily GitHub release check. Air-gapped and
+firewalled deployments route all of these through **Administration →
+Connections & channels → Outbound proxy & updates**
+(`OUTBOUND_PROXY_URL`), or the `OUTBOUND_PROXY_URL` environment variable as
+its seeded default (an admin-saved value in Settings always wins over the
+env var once one is saved, matching every other platform setting's
+precedence).
+
+Every individual notification channel can also override the platform
+default from its own **Settings** page (`Outbound proxy`: use the default,
+no proxy, or a proxy specific to that one channel) -- useful when only some
+destinations are reachable through a given egress path. Email delivery has
+the same three-state override (`SMTP_PROXY_MODE`/`SMTP_PROXY_URL`) on the
+same settings page.
+
+`OUTBOUND_PROXY_URL` and a channel's custom proxy are plain `http://` or
+`https://` proxy URLs (optionally with `user:pass@` credentials), used
+directly as `requests`' proxy for webhook/chat/GitHub calls. SMTP has no
+native HTTP-proxy support (SMTP isn't HTTP), so the same URL is instead used
+to tunnel the raw SMTP connection through the proxy's `CONNECT` method --
+the standard technique browsers use for HTTPS through an HTTP proxy --
+implemented in `serviceops_core/proxy_tunnel.py`. A SOCKS proxy is not
+supported; if the only available egress path is SOCKS, front it with a
+local `http://` CONNECT-capable proxy (e.g. a small `squid`/`privoxy`
+sidecar) and point `OUTBOUND_PROXY_URL` at that instead.
+
+When a channel or the update check has a proxy configured, ServiceOps
+deliberately skips its own DNS-pinning/private-address pre-check for that
+destination (see `deliver_webhook()`'s comment in `app.py`) -- the proxy
+resolves the destination on its own side, not this host, so there is
+nothing meaningful to pre-validate locally, and the check would otherwise
+simply fail closed in a network where the destination hostname can't
+resolve at all without going through the proxy. The configured proxy (and
+whatever firewall/egress policy controls what it's allowed to reach) is the
+trust boundary in that configuration, the same way this chart's Kubernetes
+NetworkPolicy egress rules already are.
+
+### Interactive Google Chat bot (/ack, /escalate)
+
+Beyond the one-way notification channel above (an incoming webhook, alert
+out only), ServiceOps can run an **interactive** Google Chat app that reads
+`/ack` and `/escalate <team>` typed as threaded replies to an alert and
+acts on the record it was sent about -- reusing the exact ticket
+transition/reassignment rules the web UI already enforces, not a parallel
+implementation. It requires no internet-facing endpoint: events are
+delivered via **Cloud Pub/Sub** (ServiceOps pulls, it never receives an
+inbound call), which is what makes this workable for an internal-only
+deployment.
+
+**One-time Google Cloud setup:**
+
+1. Create or select a Google Cloud project. Enable the **Google Chat API**
+   and the **Cloud Pub/Sub API**.
+2. Chat API -> Configuration: set the app name/icon/description, enable
+   "Join spaces and group conversations". Under **Connection settings**,
+   choose **Cloud Pub/Sub topic** (not HTTP endpoint URL) and create/select
+   a topic, e.g. `projects/<project>/topics/serviceops-chat-events`.
+3. Create a **Pub/Sub subscription** on that topic (Pub/Sub -> Subscriptions
+   -> Create), pull delivery type. Note its subscription ID.
+4. Create a **Service Account** (IAM -> Service Accounts) for the app, grant
+   it the **Pub/Sub Subscriber** role on that subscription and the
+   **Chat App** role (or equivalent Chat API posting permission), and
+   download its JSON key. This one key is used both to pull events and to
+   post replies (`https://www.googleapis.com/auth/pubsub` and
+   `https://www.googleapis.com/auth/chat.bot` scopes, exchanged for a
+   short-lived access token via the standard JWT-bearer grant --
+   `app.py`'s `_google_service_account_access_token()`, implemented with
+   `joserfc` rather than adding a Google Cloud SDK dependency).
+5. Add the bot to the target Space (search its name in Chat, add like any
+   member).
+
+**ServiceOps side** (Administration -> Connections & channels -> Google
+Chat bot, and the notification channel's own settings):
+
+1. **Administration -> Google Chat bot**: enable the app, set the Google
+   Cloud project ID, the Pub/Sub subscription ID from step 3, and paste
+   the service-account JSON key from step 4.
+2. **Add a Google Chat notification channel** for the Space that should
+   receive alerts and accept replies, with **Delivery mode: Interactive
+   app** -- give it the Space resource name (`spaces/AAAAxxxxx`, from the
+   Chat API or the Space's own settings) and the *same* service-account
+   JSON key. (Delivery mode: Incoming webhook remains available as the
+   simpler, non-interactive, lower-configuration option for channels that
+   only need one-way alerts.)
+
+The worker process polls the subscription on every cycle (same loop as
+`process_outbox()` and every other `process_*_schedule` function --
+`tools/outbox_worker.py`), so a reply is picked up within one worker tick,
+not on a fixed daily/hourly schedule like the GitHub update check. A
+message it can't act on (no thread match, sender email not matching an
+active ServiceOps user, an ordinary non-command chat message) is
+acknowledged and otherwise ignored rather than left to redeliver.
+
 ## Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker
