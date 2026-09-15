@@ -17,6 +17,7 @@
 [Architecture B: external PostgreSQL](#architecture-b-external-postgresql) ·
 [RPM packaging](#rpm-packaging-linux-distribution) ·
 [Kubernetes production deployment](#kubernetes-production-deployment) ·
+[Private registry mirrors (Nexus and similar proxies)](#private-registry-mirrors-nexus-and-similar-proxies) ·
 [Web Installation Center](#web-installation-center) ·
 [Air-gapped deployment boundary](#air-gapped-deployment-boundary)
 
@@ -219,7 +220,14 @@ NetworkPolicy, probes, topology spreading, and disruption protection.
    ./serviceops install kubernetes
    ```
 
-Tags are descriptive only; every workload runs `repository@sha256:digest`.
+By default, tags are descriptive only and every workload runs
+`repository@sha256:digest` (`image.pinning: digest` in `values.yaml`, the
+default). If your registry cannot serve manifests by digest reference, see
+[Private registry mirrors](#private-registry-mirrors-nexus-and-similar-proxies)
+below for the `image.pinning: tag` alternative — the digest requirement and
+its verification are unchanged either way, only the runtime pull reference
+differs.
+
 Chart validation rejects a missing digest, a single application replica,
 disabled persistent upload storage, and bundled PostgreSQL — the optional
 bundled PostgreSQL StatefulSet is not an approved production database
@@ -255,8 +263,12 @@ packaged health test.
   port. Its completed pod is retained until the next test so
   `helm test --logs` can collect evidence.
 
-Do not use `kubectl set image`. Workloads consume `repository@digest`, so a tag
-override alone is intentionally ineffective. Use:
+Do not use `kubectl set image`. In the default `image.pinning: digest` mode,
+workloads consume `repository@digest`, so a tag override alone is
+intentionally ineffective. In `image.pinning: tag` mode the workload does
+consume `repository:tag`, but `kubectl set image` still bypasses the backup,
+lint, supply-chain, and health-test gates below — always deploy through the
+updater. Use:
 
 ```bash
 export SERVICEOPS_BACKUP_REFERENCE="snapshot-YYYYMMDD-HHMM-before-serviceops-upgrade"
@@ -322,6 +334,76 @@ manifest digest, verifies GitHub provenance, lints and renders the exact chart,
 and performs an atomic install/upgrade followed by both rollout checks and
 `helm test --logs`. Keep required reviewers and deployment-branch protection
 enabled on the GitHub `production` environment.
+
+## Private registry mirrors (Nexus and similar proxies)
+
+Some organizations don't let the cluster pull directly from GHCR and instead
+mirror images through an internal proxy such as Sonatype Nexus Repository.
+Many Nexus Docker proxy/hosted repository configurations only serve manifests
+by tag (`GET /v2/<name>/manifests/<tag>`) and reject a digest-only pull
+(`GET /v2/<name>/manifests/sha256:<digest>`) for images they haven't already
+cached under that tag — the chart's default `repository@digest` workload
+reference then fails to pull, surfacing as a pod stuck in `ImagePullBackOff`
+(or, if you instead tried to work around it by leaving `image.digest` blank,
+as the `image.digest` Helm schema validation error, since the chart requires
+a well-formed digest regardless of pull mode — see below for why).
+
+**This is a pull-mechanism limitation, not a reason to skip verification.**
+The digest is still what proves the image is the one that passed the
+supply-chain workflow; it's only the *runtime pull reference* that Nexus
+can't use. `charts/serviceops/values.yaml` has an `image.pinning` field for
+exactly this:
+
+- `image.pinning: digest` (default) — workloads run `repository@sha256:digest`.
+  Use this when pulling directly from GHCR or from a registry/proxy that does
+  support digest-based manifest requests.
+- `image.pinning: tag` — workloads run `repository:tag` instead. Use this
+  when the target registry (Nexus or similar) only serves by tag. `digest` is
+  still a required field in the chart schema in this mode too, and
+  `tools/safe_update_k8s.sh` still requires you to pass the digest you
+  verified against GHCR (`gh attestation verify oci://ghcr.io/<org>/serviceops@<digest> --repo <org>/serviceops`)
+  as its second argument.
+
+**Set up the mirror once:**
+
+1. Pull and re-tag the verified image, then push it into Nexus under an
+   immutable, never-reused tag (the same descriptive version tag ServiceOps
+   already cuts per release, e.g. `1.88.0` — never `latest` or a tag that
+   gets overwritten):
+   ```bash
+   docker pull ghcr.io/<org>/serviceops@sha256:<verified-digest>
+   docker tag ghcr.io/<org>/serviceops@sha256:<verified-digest> \
+     nexus.internal.example.com/serviceops:1.88.0
+   docker push nexus.internal.example.com/serviceops:1.88.0
+   ```
+2. In your values file, set `image.repository: nexus.internal.example.com/serviceops`
+   and `image.pinning: tag`. If Nexus requires authentication for pulls,
+   configure `imagePullSecrets` with a Secret holding those registry
+   credentials (`kubectl create secret docker-registry ...`) — the chart
+   already supports `imagePullSecrets` for this.
+
+**Deploy through the updater, same as always**, but with pinning switched to
+`tag`:
+
+```bash
+export SERVICEOPS_BACKUP_REFERENCE="snapshot-YYYYMMDD-HHMM-before-serviceops-upgrade"
+SERVICEOPS_VALUES=deploy/kubernetes/values-production.yaml \
+  SERVICEOPS_IMAGE_PINNING=tag \
+  ./tools/safe_update_k8s.sh 1.88.0 sha256:<verified-digest>
+```
+
+Before touching the cluster, the updater re-resolves `nexus.internal.example.com/serviceops:1.88.0`
+in the target registry (`docker buildx imagetools inspect`) and refuses to
+deploy if it doesn't currently resolve to exactly the digest you verified —
+this is what keeps `tag` mode from silently deploying a tag that moved after
+you checked it. Never push a second image under an already-used tag in
+Nexus; cut a new version tag instead, exactly as the existing release
+tagging policy already requires for GHCR.
+
+The `KUBERNETES_IMAGE_REPOSITORY` variable used by the CI/CD path
+(`### Protected CI/CD deployment` above) points at the same
+`image.repository` value; set it to your Nexus path there too if the
+automated deploy workflow also needs to go through the mirror.
 
 ## Web Installation Center
 
