@@ -224,6 +224,19 @@ message it can't act on (no thread match, sender email not matching an
 active ServiceOps user, an ordinary non-command chat message) is
 acknowledged and otherwise ignored rather than left to redeliver.
 
+**Commands must @mention the bot**: reply `@ServiceOps /ack`, not a bare
+`/ack` -- required if another Chat app (a different on-call/notification
+tool) is also a member of the same space and also reacts to plain
+`/ack`/`/close`-style text. Google Chat only ever delivers a *space's*
+messages to an app that's explicitly @-mentioned in them (unless that app
+opted into receiving every message in every space it's in, which
+ServiceOps's own Chat app configuration deliberately does not request --
+see step 2 above), so `@ServiceOps /ack` never reaches the other app and
+`@OtherApp /ack` never reaches ServiceOps. `extract_message_event()` in
+`serviceops_core/google_chat.py` also re-checks this itself (ignores any
+message without a bot-mention annotation) rather than relying solely on
+Google's delivery-side filtering.
+
 ## Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker
