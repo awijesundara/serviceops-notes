@@ -39,6 +39,21 @@ Migration rollback removes the new tables only when both are empty. If configura
 
 The AI worker purges expired run payloads; UI access also rejects expired runs. Audit events retain request/configuration/completion/cancellation metadata without prompt bodies. If the worker is stopped, database deletion waits until it resumes. Common secret patterns are redacted before inference, but this is not comprehensive PII/secret discovery.
 
+## Any provider, connected from an address and a key (1.94.0)
+
+ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Quick setup** preset):
+
+| Provider | What it covers | Address | Key | Notes |
+|---|---|---|---|---|
+| Server on your network | llama.cpp `llama-server`, Ollama, vLLM, LM Studio, LocalAI, any OpenAI-compatible server | `http://HOST:PORT` (the `/v1/chat/completions` part is added) | optional | Operator allowlist required; private addresses only; live streaming and reasoning |
+| Hosted OpenAI-compatible service | OpenRouter, Groq, Together, Mistral, Google Gemini (OpenAI-compatible endpoint), Azure-style gateways | `https://...` | required | HTTPS only; public addresses only; needs the external-processing authorization; streamed |
+| OpenAI | api.openai.com Responses API | fixed | required | Needs external-processing authorization; answer delivered in one piece (not streamed) |
+| Anthropic (Claude) | api.anthropic.com Messages API | fixed | required | Needs external-processing authorization; streamed; extended thinking is not requested |
+
+**Model detection.** After the address (and key) are entered, ServiceOps calls the server's model list (`GET /v1/models`, the same call every OpenAI-compatible server offers) and fills in the model identifier automatically, and shows the server's context window when it reports one (llama.cpp does). Detection runs on the button and shortly after the fields are filled in. It uses the same network guards as a model call (allowlist, address pinning, no redirects, size and time limits), is limited to 10 attempts per tenant per minute, sends the typed key for that one request only, and reuses the saved key only when the provider and address are unchanged. Only well-formed model identifiers are returned to the browser. Investigations need a context window of about 8192 tokens or more; start llama.cpp with `-c 8192`.
+
+**Operator allowlist.** `AI_SELF_HOSTED_ENDPOINTS` / Helm `ai.selfHostedEndpoints` accepts, comma-separated: a server (`http://192.168.68.68:8080`, covers every path on it), every port of a host (`http://192.168.68.68:*`), or one exact URL (the pre-1.94 form, still valid). Hostnames are matched case-insensitively and the scheme must match. If an address is not listed, the error names the exact entry to add. Also open the network path: add the host to `ai.extraEgress` (omit `ports` to allow every port on that host).
+
 ## Live answers, visible reasoning and the chat assistant (1.93.0, migration `20260921_0096`)
 
 **Live answers.** Investigations and chat replies are written progressively. The browser polls `GET /ai/runs/<id>/stream?after=<seq>` about every 600 ms (short polling, chosen over SSE/WebSocket because it passes the Cloudflare tunnel and gunicorn unchanged and never holds a web worker). The worker streams from the model (OpenAI-compatible SSE from llama.cpp, Ollama, vLLM), writes partial text to the run row at most every 0.4 s, and refreshes a heartbeat; a run with no heartbeat for `AI_PROVIDER_TIMEOUT_SECONDS + 60` s is marked interrupted. The hosted OpenAI adapter is not streamed: its answer arrives as one chunk. Investigations still require at least one valid `[S#]` citation; chat citations are optional.
