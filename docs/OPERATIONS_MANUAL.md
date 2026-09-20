@@ -253,3 +253,8 @@ are covered in full in the separate deployment guide. In short:
 
 See the deployment guide for the full installation walkthrough, production
 checklist, and incident-response procedure.
+
+
+## AI incident investigations
+
+The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](AI_OPERATIONS.md) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](AI_IMPLEMENTATION_PLAN.md) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.

@@ -8,6 +8,8 @@ meaningful change.
 
 | Document | Purpose |
 |---|---|
+| [AI_IMPLEMENTATION_PLAN.md](AI_IMPLEMENTATION_PLAN.md) | AI timeline, dependencies, milestone tasks and verification evidence |
+| [AI_OPERATIONS.md](AI_OPERATIONS.md) | Administrator enable/disable, self-hosted and external provider setup, worker and rollback operations |
 | [FEATURE_CATALOG.md](FEATURE_CATALOG.md) | Canonical detailed inventory of every implemented product, administration, integration, security, observability, recovery, deployment, and release feature, with explicit capability boundaries |
 | [MASTER_REFERENCE.md](MASTER_REFERENCE.md) | Single merged reference (governance, backlog, ITIL model, traceability, UI mapping, API reference, operations manual, deployment guide, plus a whole-app audit) for any AI agent or engineer to read first |
 | [API_REFERENCE.md](API_REFERENCE.md) | REST API contract: authentication, scopes, endpoints, examples, errors |
