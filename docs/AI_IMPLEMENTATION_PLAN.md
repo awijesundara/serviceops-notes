@@ -44,7 +44,7 @@ Defect found during acceptance: the Helm ConfigMap wrote AI_SELF_HOSTED_ENDPOINT
 
 Not yet verified: live model evaluation (groundedness, missing evidence, malicious ticket instructions, latency, cost) against a real configured endpoint; the hosted/self-hosted round trip with real credentials; the MicroK8s rollout of the AI worker; and the governed release, image signature, SBOM and RPM evidence. AI remains disabled until an administrator configures and enables it.
 
-## AI 2.0 delivery record (1.93.0)
+## AI 2.0 delivery record (1.93.1)
 
 Scope: streaming answers, visible reasoning, private role-scoped chat. Migration `20260921_0096`. Design and controls are documented in [AI_OPERATIONS.md](AI_OPERATIONS.md); backlog entry B-366.
 

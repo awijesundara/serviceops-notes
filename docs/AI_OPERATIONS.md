@@ -54,7 +54,7 @@ ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Qu
 
 **Operator allowlist.** `AI_SELF_HOSTED_ENDPOINTS` / Helm `ai.selfHostedEndpoints` accepts, comma-separated: a server (`http://192.168.68.68:8080`, covers every path on it), every port of a host (`http://192.168.68.68:*`), or one exact URL (the pre-1.94 form, still valid). Hostnames are matched case-insensitively and the scheme must match. If an address is not listed, the error names the exact entry to add. Also open the network path: add the host to `ai.extraEgress` (omit `ports` to allow every port on that host).
 
-## Live answers, visible reasoning and the chat assistant (1.93.0, migration `20260921_0096`)
+## Live answers, visible reasoning and the chat assistant (1.93.1, migration `20260921_0096`)
 
 **Live answers.** Investigations and chat replies are written progressively. The browser polls `GET /ai/runs/<id>/stream?after=<seq>` about every 600 ms (short polling, chosen over SSE/WebSocket because it passes the Cloudflare tunnel and gunicorn unchanged and never holds a web worker). The worker streams from the model (OpenAI-compatible SSE from llama.cpp, Ollama, vLLM), writes partial text to the run row at most every 0.4 s, and refreshes a heartbeat; a run with no heartbeat for `AI_PROVIDER_TIMEOUT_SECONDS + 60` s is marked interrupted. The hosted OpenAI adapter is not streamed: its answer arrives as one chunk. Investigations still require at least one valid `[S#]` citation; chat citations are optional.
 
