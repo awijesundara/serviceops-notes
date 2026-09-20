@@ -10,6 +10,7 @@ meaningful change.
 |---|---|
 | [AI_IMPLEMENTATION_PLAN.md](AI_IMPLEMENTATION_PLAN.md) | AI timeline, dependencies, milestone tasks and verification evidence |
 | [AI_OPERATIONS.md](AI_OPERATIONS.md) | Administrator enable/disable, self-hosted and external provider setup, worker and rollback operations |
+| [AI_SELF_HOSTED_SERVER.md](AI_SELF_HOSTED_SERVER.md) | Reference llama.cpp GPU model server (Vulkan on a Mac), measured speeds, connection steps, launchd service, troubleshooting |
 | [FEATURE_CATALOG.md](FEATURE_CATALOG.md) | Canonical detailed inventory of every implemented product, administration, integration, security, observability, recovery, deployment, and release feature, with explicit capability boundaries |
 | [MASTER_REFERENCE.md](MASTER_REFERENCE.md) | Single merged reference (governance, backlog, ITIL model, traceability, UI mapping, API reference, operations manual, deployment guide, plus a whole-app audit) for any AI agent or engineer to read first |
 | [API_REFERENCE.md](API_REFERENCE.md) | REST API contract: authentication, scopes, endpoints, examples, errors |
