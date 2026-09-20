@@ -1,17 +1,17 @@
 # ServiceOps AI implementation plan
 
 Baseline: 2026-09-20. Owner: ServiceOps engineering; provider/data policy owner: tenant administrator.
-Status: read-only release implemented and verified locally; acceptance rollout pending. Estimates are engineering effort, not promised calendar delivery.
+Status: 1.94.0 deployed to local MicroK8s; adaptive discovery verified. Live self-hosted inference timed out; commercial live inference remains unverified. Estimates are engineering effort, not promised calendar delivery.
 No hosted GitHub publication is part of this work.
 
 ## Product scope and timeline
 
 | Milestone | Effort / target sequence | Tasks | Exit criteria | Status |
 |---|---|---|---|---|
-| AI-01 Control plane | Days 1–2 | Tenant-scoped settings; administrator master and incident-feature switches; encrypted credentials; audit; configuration revision; cancellation | Negative authorization, tenant isolation, disable/re-enable races, CSRF and secret handling pass | In progress |
-| AI-02 Provider connections | Days 3–4; depends on AI-01 | Self-hosted compatible chat endpoint and external OpenAI Responses adapter; destination allowlist; DNS pinning; timeout and output limits; synthetic connection check | Both protocol contracts pass; real provider checks recorded separately | In progress |
-| AI-03 Incident assistant | Days 5–7; depends on AI-01/02 | Durable jobs and dedicated worker; permission-filtered incident/comments, knowledge, similar incidents and related CIs; cited read-only recommendations; cancel/status UI | End-to-end flow, current-access checks, interrupted jobs and duplicate submissions pass | In progress |
-| AI-04 Acceptance | Days 8–10; depends on AI-01–03 | PostgreSQL upgrade/rollback, functional/security/browser/accessibility, provider evaluation, backup restore, immutable image, MicroK8s rollout and runbook | All evidence recorded; AI remains off until administrator configures and enables it | Planned |
+| AI-01 Control plane | Days 1–2 | Tenant-scoped settings; administrator master and incident-feature switches; encrypted credentials; audit; configuration revision; cancellation | Negative authorization, tenant isolation, disable/re-enable races, CSRF and secret handling pass | Complete |
+| AI-02 Provider connections | Days 3–4; depends on AI-01 | Self-hosted compatible chat endpoint and external OpenAI Responses adapter; destination allowlist; DNS pinning; timeout and output limits; synthetic connection check | Both protocol contracts pass; real provider checks recorded separately | Complete |
+| AI-03 Incident assistant | Days 5–7; depends on AI-01/02 | Durable jobs and dedicated worker; permission-filtered incident/comments, knowledge, similar incidents and related CIs; cited read-only recommendations; cancel/status UI | End-to-end flow, current-access checks, interrupted jobs and duplicate submissions pass | Complete |
+| AI-04 Acceptance | Days 8–10; depends on AI-01–03 | PostgreSQL upgrade/rollback, functional/security/browser/accessibility, provider evaluation, backup restore, immutable image, MicroK8s rollout and runbook | Deployment evidence recorded; new configurations default off and existing administrator enablement is preserved | Deployed; provider evaluation gaps below |
 | AI-05 Approved actions | Days 11–15; depends on AI-04 quality review | Exact proposed change; expiring approval bound to record version; reauthorize; existing mutation APIs; audit/idempotency | No approval bypass, stale action rejection, no duplicate mutation | Planned; not part of first read-only release |
 
 The initial implementation may advance faster than these estimates. Actual completion is tracked by evidence, not elapsed days. Dependencies: configured model endpoint/model and credentials; a reachable build engine; a working acceptance cluster. Both self-hosted and external modes are required by the user. Never silently fall back from local to hosted processing.
@@ -64,3 +64,28 @@ Not verified: behaviour under sustained concurrent chat load; quality beyond the
 
 - OpenAI Responses API: https://developers.openai.com/api/reference/cli/resources/responses/methods/create
 - OWASP agent security: https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html
+
+## Adaptive provider discovery (1.94.0)
+
+Requested 2026-09-20. This extends the delivered chat and administrator controls. Estimates are incremental engineering effort; verification determines completion.
+
+| Task | Sequence / estimate | Acceptance | Status |
+|---|---|---|---|
+| AD-01 Discover models and limits | Day 1 | Authenticated bounded listing, same-origin llama.cpp runtime properties, multiple-model choice | Implemented; protocol tests pass |
+| AD-02 Persist trusted discovery | Day 1, after AD-01 | Signed preview bound to administrator, tenant, endpoint and credential | Implemented; negative binding tests pass |
+| AD-03 Adapt requests | Days 1–2, after AD-01 | Preserve rules and question; shorten evidence/history; honor limits; omit unknown thinking parameters | Implemented; budget and privacy tests pass |
+| AD-04 Acceptance | Day 2, after AD-01–03 | Migration, browser/accessibility, full regressions, immutable image, fresh backup restore, MicroK8s checks | Deployed; live inference limitation below |
+| AD-05 Additional protocols | Subsequent increments | Documented adapter and contract/live tests per unsupported API | Backlog |
+
+Verified: 135 focused tests; 10 PostgreSQL-backed browser/accessibility tests; migration 0096 to 0097, downgrade and roll-forward with 20,000 synthetic records preserved. Authenticated live llama.cpp metadata reports Qwen/Qwen3-8B-GGUF:Q4_K_M, runtime context 4096 and training context 40960. Metadata alone does not establish generation quality.
+
+Adaptive acceptance evidence (2026-09-20):
+
+- Full host suite: 857 passed, 112 skipped, one version/PWA mismatch caused by changing VERSION while the suite was in flight. The failed test passed independently after version synchronization; no runtime defect remained. Skipped tests are not passing evidence.
+- Browser/accessibility: 10 passed against isolated PostgreSQL.
+- Candidate: 1.94.0, private registry digest sha256:a67a37e3f1462824164688f3798a9afb72aaeeb04debda7be12c8dfe10bad7a7. Fresh OS package update; Trivy reports zero fixable HIGH/CRITICAL findings. No image signing or GitHub publication was performed.
+- Fresh backup: serviceops-adaptive-20260920T141241Z, SHA-256 a8c98b45502860023818004c2b7d7ca40afb6bef2be18f600bce09340ecda589. Restore-tested locally; restored upgrade preserved all 19 tickets and existing AI settings, credentials and enablement.
+- Static checks: ruff, JavaScript syntax, migration expand policy, version consistency, Helm lint and strict manifest validation passed.
+- Live model limitation: authenticated models/props succeeded, but a synthetic READY request with thinking disabled timed out after 90 seconds. No operational records were sent. This does not identify a GPU, memory or model-load cause. Commercial credentials/inference and deployed authenticated browser access remain unverified.
+
+MicroK8s acceptance completed: Helm revision 87, web 2/2, outbox 1/1, AI worker 1/1 on the recorded digest. Health and readiness returned 200 with version 1.94.0 and Alembic head 20260921_0097. Retained Helm health test succeeded. PostgreSQL and uploads PVC bindings were preserved; recent workload logs contained no detected error/traceback lines. Public HEAD returned Cloudflare 302 to wijesundara.cloudflareaccess.com (an earlier urllib GET returned 403). Deployed authenticated model discovery confirmed runtime /props context 4096, training context 40960 and thinking-template support. Existing AI enablement remained enabled and its key remained configured. The live inference timeout is an unresolved verification gap, not a successful model test.
