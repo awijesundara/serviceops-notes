@@ -2,6 +2,7 @@
 
 Baseline: 2026-09-20. Owner: ServiceOps engineering; provider/data policy owner: tenant administrator.
 Status: read-only release implemented and verified locally; acceptance rollout pending. Estimates are engineering effort, not promised calendar delivery.
+No hosted GitHub publication is part of this work.
 
 ## Product scope and timeline
 
