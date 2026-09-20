@@ -4,6 +4,8 @@ This is the authoritative work register. “Done” requires code, tests,
 documentation, and evidence. Priority: P0 release blocker, P1 required for
 enterprise production, P2 planned enhancement.
 
+**B-362 AI assistance (2026-09-20):** Local 1.92.0 implementation in progress. Tenant administrator master/incident controls, self-hosted and OpenAI adapters, encrypted configuration, durable read-only investigation jobs, source-permission checks, dedicated worker and browser UI. [Plan and evidence](AI_IMPLEMENTATION_PLAN.md); [operator guide](AI_OPERATIONS.md). Approved write actions and real-model quality validation remain pending.
+
 **B-323 verification supplement (2026-08-14):** the final containerized suite
 passed `486 passed, 9 skipped` (the nine skips are the environment-gated
 browser cases plus the sibling-documentation case inside the isolated unit

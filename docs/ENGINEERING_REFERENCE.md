@@ -793,3 +793,8 @@ object storage, search and Kubernetes cannot be certified using mocks alone.
 | Configuration | Git-backed declarative source; database is deployed runtime state |
 | Programme order | Security and platform foundations before visible expansion |
 | Data | Preserve through reversible versioned migrations with upgrade, verification and rollback tests |
+
+
+## AI module boundary
+
+The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](AI_OPERATIONS.md) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](AI_IMPLEMENTATION_PLAN.md) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.
