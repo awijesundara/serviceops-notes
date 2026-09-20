@@ -39,6 +39,25 @@ Migration rollback removes the new tables only when both are empty. If configura
 
 The AI worker purges expired run payloads; UI access also rejects expired runs. Audit events retain request/configuration/completion/cancellation metadata without prompt bodies. If the worker is stopped, database deletion waits until it resumes. Common secret patterns are redacted before inference, but this is not comprehensive PII/secret discovery.
 
+## Live answers, visible reasoning and the chat assistant (1.93.0, migration `20260921_0096`)
+
+**Live answers.** Investigations and chat replies are written progressively. The browser polls `GET /ai/runs/<id>/stream?after=<seq>` about every 600 ms (short polling, chosen over SSE/WebSocket because it passes the Cloudflare tunnel and gunicorn unchanged and never holds a web worker). The worker streams from the model (OpenAI-compatible SSE from llama.cpp, Ollama, vLLM), writes partial text to the run row at most every 0.4 s, and refreshes a heartbeat; a run with no heartbeat for `AI_PROVIDER_TIMEOUT_SECONDS + 60` s is marked interrupted. The hosted OpenAI adapter is not streamed: its answer arrives as one chunk. Investigations still require at least one valid `[S#]` citation; chat citations are optional.
+
+**Thinking display.** The panel shows two things: (1) an activity trace recorded by the pipeline itself ("Verified your access", "Collected evidence", "Checked your access again"), never invented by the model; (2) the model's own reasoning stream when the model is a reasoning model (llama.cpp `reasoning_content`, or inline `<think>` blocks) and **Show model reasoning** is on. Reasoning is model-written and can be wrong; the UI says so. Turn it off in `/admin/ai` to keep only the activity trace. Non-reasoning models (Qwen2.5) show the trace only. Chat users can tick **Think step by step** per message to request reasoning (`chat_template_kwargs.enable_thinking`); it is slower on CPU.
+
+**Chat assistant.** Enable **Enable the chat assistant** in `/admin/ai` (independent of incident investigations; both need the master switch). Every signed-in user whose acting role is requester, agent, manager, admin or superadmin gets a floating **Ask AI** button and a full page at `/ai/chat`. There is no per-user allow list; access is by role, and the assistant states the asker's scope in the panel header.
+
+*Privacy model.* The model has no tools and no database access. For every message the server decides who is asking from the authenticated session only (request data never widens it), then retrieves evidence deterministically through the same visibility rules the rest of ServiceOps uses (`visible_ticket_query`, published knowledge, `ci_class_read_allowed`):
+
+| Role | Sees |
+|---|---|
+| Requester | own tickets, published knowledge |
+| Agent / manager / admin / superadmin | incidents and changes their role and groups already permit, published knowledge, configuration items their role may read |
+
+Never available to the assistant for anyone: the user directory, audit log, client/customer data, attachments, settings and secrets, other tenants. A message asking for those, for other people's tickets by bulk, for credentials, or attempting to override the rules is answered with a fixed refusal **without calling the model** (audited as `ai chat denied`, reason code only). A reference to a ticket the asker cannot read is reported exactly as one that does not exist. Email addresses and phone numbers in ticket, comment and CI text are masked before the model sees them. Earlier answers are replayed to the model only if every source they cited is still readable; otherwise the history shows a withheld notice. Model output is checked: unknown record numbers become "[unverified reference removed]". A conversation is bound to the role it started under; using it as a different role is refused. Audit records carry counts, ids and reason codes, never questions or answers; nothing is logged.
+
+*History.* Conversations are stored until the user deletes them (History, then Delete, confirm). Administrators cannot read another person's conversation. Deleting removes the messages and clears any run text still held. Erasing a user (GDPR) purges their conversations. Deletion is available even when chat is switched off. Limits: 2000 characters per question, 100 messages per conversation, 20 messages per user per minute, one active answer per user, and the tenant daily AI limit.
+
 ## Current boundaries
 
-The first release is a constrained read-only investigation workflow. Free-form conversations, model-directed tool loops, embedding search, autonomous remediation and approved write actions are later work (AI-05 and follow-up scope). Real model evaluation and production provider connectivity remain required before calling the feature production-ready.
+The assistant is read-only. Model-directed tool loops, embedding search, autonomous remediation and approved write actions are later work (AI-05 and follow-up scope). Real model evaluation and production provider connectivity remain required before calling the feature production-ready.
