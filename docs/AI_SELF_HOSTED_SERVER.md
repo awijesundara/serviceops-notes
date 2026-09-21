@@ -9,7 +9,7 @@ ServiceOps talks to any OpenAI-compatible server. This page records the working 
 | CPU only (8 threads) | about 5.5 tokens/s, 99 s per streamed investigation | Metal on this GPU was slower than CPU; Ollama also CPU |
 | Vulkan on the Radeon Pro 5500M (`-ngl 99`) | about 21.6 tokens/s generation, 52 s per streamed investigation | Prompt processing is the slow part (first token 4-34 s for chat prompts) |
 
-Qwen3 models are reasoning models: ServiceOps shows their thinking live. Qwen2.5 models answer without a reasoning stream.
+Qwen3 models can use a reasoning pass. ServiceOps shows a small temporary **Thinking** status but never displays or stores the model's private reasoning text. Qwen2.5 models generally answer without a reasoning stream.
 
 ## Build and run
 

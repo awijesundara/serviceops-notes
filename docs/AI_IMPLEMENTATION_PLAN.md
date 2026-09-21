@@ -1,7 +1,7 @@
 # ServiceOps AI implementation plan
 
 Baseline: 2026-09-20. Owner: ServiceOps engineering; provider/data policy owner: tenant administrator.
-Status: 1.94.0 deployed to local MicroK8s; adaptive discovery verified. Live self-hosted inference timed out; commercial live inference remains unverified. Estimates are engineering effort, not promised calendar delivery.
+Status: current deployment 1.96.0; transient activity UI, readiness, and live self-hosted streaming verified on 2026-09-21. Commercial live inference remains unverified. Estimates are engineering effort, not promised calendar delivery.
 No hosted GitHub publication is part of this work.
 
 ## Product scope and timeline
@@ -89,3 +89,22 @@ Adaptive acceptance evidence (2026-09-20):
 - Live model limitation: authenticated models/props succeeded, but a synthetic READY request with thinking disabled timed out after 90 seconds. No operational records were sent. This does not identify a GPU, memory or model-load cause. Commercial credentials/inference and deployed authenticated browser access remain unverified.
 
 MicroK8s acceptance completed: Helm revision 87, web 2/2, outbox 1/1, AI worker 1/1 on the recorded digest. Health and readiness returned 200 with version 1.94.0 and Alembic head 20260921_0097. Retained Helm health test succeeded. PostgreSQL and uploads PVC bindings were preserved; recent workload logs contained no detected error/traceback lines. Public HEAD returned Cloudflare 302 to wijesundara.cloudflareaccess.com (an earlier urllib GET returned 403). Deployed authenticated model discovery confirmed runtime /props context 4096, training context 40960 and thinking-template support. Existing AI enablement remained enabled and its key remained configured. The live inference timeout is an unresolved verification gap, not a successful model test.
+
+## Live verification continuation (2026-09-21)
+
+The workspace and deployment had independently advanced to 1.95.0. This continuation made no application, model-server, credential or deployment configuration changes. Current readiness returned 200 for 1.95.0 with migration 20260921_0097.
+
+Two synthetic checks, with no operational records, succeeded against the configured self-hosted server:
+
+- Direct authenticated streaming: HTTP 200, READY received, stream completed; first content at 33.85 seconds, total 33.94 seconds.
+- Deployed ServiceOps provider adapter: READY received, one content delta, no reasoning delta; first content at 7.668 seconds, total 7.72 seconds. The in-memory discovered profile used runtime context 4096, conservative byte budgeting and a 32-token output cap. No saved configuration was changed.
+
+These results establish live protocol/adapter compatibility for this model and resolve the previously unverified streaming path. They do not explain the earlier 90-second timeout or establish reliable latency under load, operational answer quality, or commercial-provider behavior. The same fallback policy remains in 1.96.0: context 4096 for unknown self-hosted limits and 32768 for unknown hosted limits; fallback values are assumptions, not provider-reported capabilities.
+
+## Transient activity interface acceptance (1.96.0)
+
+The AI interface now presents one small changing activity label and removes it at completion. Model reasoning text is discarded rather than persisted or returned. The chat surface no longer draws an empty answer container or a Working/Complete badge. Progressive answer text, citations, Stop, Copy, deeper-reasoning requests, and administrator controls remain.
+
+Validation on 2026-09-21: 61 focused tests; 10 PostgreSQL-backed Chromium/axe tests; 859 full-suite passes with 112 environment-dependent skips; streaming and completed desktop captures inspected; static/version/Helm/strict-manifest gates passed. The rebuilt image had zero fixable HIGH/CRITICAL scan findings. Backup `serviceops-ai-ui-20260921T010417Z` (SHA-256 `ccaba71a00ebfdc72b04d06778ee0f9afa36bf1d05d2d05873f123284d215c1d`, 1,565,964 bytes) restored successfully with migration `20260921_0097`, 19 tickets, 121 tables, and the existing enabled AI configuration preserved.
+
+MicroK8s Helm revision 91 runs `localhost:32000/serviceops@sha256:b0f635418426acaf866a19bf34dd4cb4353654bed40810ac9192e141e96015dd`: web 2/2, outbox 1/1, AI worker 1/1. `/health` and `/ready` returned 200 for 1.96.0; the retained Helm test passed; PostgreSQL/uploads PVCs remained bound; recent web/outbox/AI-worker logs showed clean startup and probes; public access returned the expected Cloudflare Access 302. The deployed JavaScript contains the transient labels and no reasoning-text renderer. Existing AI/chat switches and the encrypted credential remained configured.
