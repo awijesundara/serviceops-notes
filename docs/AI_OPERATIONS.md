@@ -51,6 +51,22 @@ An organization can connect any number of AI services (on its own network or hos
 
 **Transparency.** Every answer shows "Private AI" or "External AI" and, when sensitivity decided the route, why. Audit rows record service name, location and whether the request was sensitive, never the content.
 
+## A more capable assistant: organization facts, authority, ticket drafts, follow-ups, memory (1.98.0, migration `20260924_0100`)
+
+**What it can answer.** Beyond the person's own tickets and published knowledge, the assistant now receives server-calculated facts chosen by what the question is about: ticket counts for the asker (open by kind; staff also see assigned-to-me and open-by-priority), change freeze windows (active and upcoming), the service catalog, business service status, service-level targets, IT support team names, and a short "about ServiceOps" note. These are public or aggregate within the asker's own visibility; nothing about other people is included. A profile fact (own name, job title, department, teams, line manager) is added only when the question asks about the person's team, manager or department, and marks the question as personal so it stays on the organization's own AI.
+
+**Adapting to authority.** Every turn the system prompt states what this person may and may not do, derived from the same role policy the application enforces (raise incidents; raise changes only as an administrator or a member of an IT fulfillment team; internal comments; assign and progress; approve; reports; administer). The assistant is told to explain who could help instead of promising something outside that authority, and to use plain language for non-technical people. The current date is included so change dates can be checked against freezes.
+
+**Raising tickets.** The assistant asks up to two short questions when details are missing, checks freezes for change dates, mentions existing articles and tickets, then may append a machine-readable draft. The server validates and length-limits it (kind incident or change, only if the person may raise changes; impact, urgency and category from fixed lists; secrets redacted) and shows it as a card with **Review and create**, which opens the normal ticket form pre-filled (`/tickets/new/<kind>?ai=1&...`). Only the person can submit it, through the unchanged, fully validated form, and a banner says so. The assistant creates nothing.
+
+**Follow-up chips.** Each answer can offer up to three short next questions; clicking one sends it like typed text.
+
+**Memory (`ai_memory`).** People can say "remember that ..." or "from now on ...", or click **Remember** on a suggestion; "forget everything" clears it. Notes are at most 240 characters, up to 30 per person, private to that person and tenant, listed under the **Memory** button with a Remove button per note, purged on user erasure, and switched by the administrator ("Let the assistant remember what people ask it to", on by default). Passwords, keys and payment or bank numbers are refused. Relevant notes (standing preferences plus notes sharing words with the question) are given to the model; a note containing personal details keeps that conversation on the organization's own AI. Saving and forgetting need no model call. Audit rows record counts only.
+
+**Deliberately not done (design review of the "per-user memory with pgvector and MCP" proposal).** Adopted: server-owned memory, strict per-user scoping, provenance, categories, validation before storage. Not adopted now: automatic extraction of memories by the model (privacy risk; only explicit saves or user-confirmed suggestions), embeddings and pgvector (unneeded at this size; keyword relevance is explainable and adds no service), team and organization memory (organizational knowledge already lives in knowledge articles with authorship and review), MCP (the assistant is intentionally tool-less; an MCP server for ServiceOps can be added later, with the same per-request authorization, if external agents need it).
+
+**Reliability.** A busy provider (HTTP 429/5xx) is retried once before failing over; when an answer cannot be produced the person is told why (busy, key rejected, model unavailable) instead of a generic message. Token budgeting counts about three bytes per token (previously one), which stopped evidence being trimmed away on small-context servers.
+
 ## Any provider, connected from an address and a key (1.94.0)
 
 ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Quick setup** preset):
