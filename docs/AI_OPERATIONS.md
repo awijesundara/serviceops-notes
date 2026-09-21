@@ -75,7 +75,7 @@ An organization can connect any number of AI services (on its own network or hos
 
 **Pages to open.** Answers can carry up to two "Open <page> →" links, chosen from the same catalogue and only for pages the person may open.
 
-**Chat interface.** The header is one row: title, a short access badge ("Admin access", full description on hover) and four icon buttons (new chat, history, memory, full page and close). History and memory open over the conversation area, not over the header. The welcome text is two lines, the character counter appears only near the limit, the composer sits on one row and grows with the text, sources are folded under "Sources (n)", and panels and messages fade in (disabled for reduced-motion). On the admin AI page the save bar appears only after something is changed, and the "Use this service" switch is aligned.
+**Chat interface.** The header is one row: title, a short access badge ("Admin access", full description on hover) and icon buttons for new chat, history, memory, full page and close. History and memory open over the conversation area, not over the header. The empty state is simply “How can I help you today?”; the former explanatory paragraph and four canned prompts were removed in 1.99.1. The character counter appears only near the limit, the composer sits on one row and grows with the text, sources are folded under "Sources (n)", and panels and messages fade in (disabled for reduced-motion). On the admin AI page the save bar appears only after something is changed, and the "Use this service" switch is aligned.
 
 ## Using provider allowances well: free tiers and per-model limits (1.98.0, migration `20260925_0101`)
 
