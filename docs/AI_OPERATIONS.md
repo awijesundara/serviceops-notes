@@ -39,6 +39,18 @@ Migration rollback removes the new tables only when both are empty. If configura
 
 The AI worker purges expired run payloads; UI access also rejects expired runs. Audit events retain request/configuration/completion/cancellation metadata without prompt bodies. If the worker is stopped, database deletion waits until it resumes. Common secret patterns are redacted before inference, but this is not comprehensive PII/secret discovery.
 
+## Several AI services, smart routing and sensitive-data protection (1.97.0, migration `20260922_0098`)
+
+An organization can connect any number of AI services (on its own network or hosted) in `/admin/ai`. Each service has a name, provider, model, optional key, an **order**, a **weight** and how many requests it can take **at once**. An older single-provider setup is migrated to one service called "Primary".
+
+**Sensitive requests never leave.** Before a request is sent, the question, the earlier chat turns and the *original* text of every record (before personal details are masked) are scanned for: personal details (email, phone, ID numbers; not the contact numbers in published knowledge), passwords and keys (assignments, private keys, cloud and API key shapes, JWTs), payment and bank numbers (card numbers that pass the checksum, IBANs), and the administrator's own words. If anything is found, only services on the organization's network are eligible. This is absolute: a busy, failing or missing private service is never replaced by a hosted one; the person is told the request needs the organization's own AI and none is available. Each detector can be switched off. The **Try it** box in the settings runs the real rules on a sample sentence and shows where it would go; nothing is sent to any AI.
+
+**What may go outside** (only if the organization has authorized outside AI): nothing; only published knowledge; or anything not sensitive (default).
+
+**Sharing methods.** Smart (default): own AI first, an outside service only as overflow when own services are at capacity or down; Private first; Spread the load (weighted random among allowed services, busy ones last); In order (by the order number, next only on failure). Load is the number of runs currently being answered by each service; a service with three consecutive failures is skipped for 60 seconds (still tried if everything is failing). If a service fails before it has started answering, the next allowed service is tried (up to three); once an answer has started there is no failover.
+
+**Transparency.** Every answer shows "Private AI" or "External AI" and, when sensitivity decided the route, why. Audit rows record service name, location and whether the request was sensitive, never the content.
+
 ## Any provider, connected from an address and a key (1.94.0)
 
 ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Quick setup** preset):
@@ -54,11 +66,11 @@ ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Qu
 
 **Operator allowlist.** `AI_SELF_HOSTED_ENDPOINTS` / Helm `ai.selfHostedEndpoints` accepts, comma-separated: a server (`http://192.168.68.68:8080`, covers every path on it), every port of a host (`http://192.168.68.68:*`), or one exact URL (the pre-1.94 form, still valid). Hostnames are matched case-insensitively and the scheme must match. If an address is not listed, the error names the exact entry to add. Also open the network path: add the host to `ai.extraEgress` (omit `ports` to allow every port on that host).
 
-## Live answers, visible reasoning and the chat assistant (1.93.1, migration `20260921_0096`)
+## Live answers, private reasoning and the chat assistant (1.93.1, UI revised in 1.96.0)
 
 **Live answers.** Investigations and chat replies are written progressively. The browser polls `GET /ai/runs/<id>/stream?after=<seq>` about every 600 ms (short polling, chosen over SSE/WebSocket because it passes the Cloudflare tunnel and gunicorn unchanged and never holds a web worker). The worker streams from the model (OpenAI-compatible SSE from llama.cpp, Ollama, vLLM), writes partial text to the run row at most every 0.4 s, and refreshes a heartbeat; a run with no heartbeat for `AI_PROVIDER_TIMEOUT_SECONDS + 60` s is marked interrupted. The hosted OpenAI adapter is not streamed: its answer arrives as one chunk. Investigations still require at least one valid `[S#]` citation; chat citations are optional.
 
-**Thinking display.** The panel shows two things: (1) an activity trace recorded by the pipeline itself ("Verified your access", "Collected evidence", "Checked your access again"), never invented by the model; (2) the model's own reasoning stream when the model is a reasoning model (llama.cpp `reasoning_content`, or inline `<think>` blocks) and **Show model reasoning** is on. Reasoning is model-written and can be wrong; the UI says so. Turn it off in `/admin/ai` to keep only the activity trace. Non-reasoning models (Qwen2.5) show the trace only. Chat users can tick **Think step by step** per message to request reasoning (`chat_template_kwargs.enable_thinking`); it is slower on CPU.
+**Thinking display.** While a request runs, one small status line changes in place: for example, **Checking access**, **Reviewing evidence**, **Thinking**, then **Writing answer**. It disappears when the answer is complete. There is no expandable card, activity-step list, or model chain-of-thought in the interface. Reasoning deltas (`reasoning_content` or inline `<think>` blocks) are used only to select the transient **Thinking** label; their text is not persisted or returned by the run and conversation APIs. Administrators can enable **Allow deeper reasoning**, after which chat users may request **Think step by step** for a message. That changes model behavior and may be slower; it does not expose private reasoning text.
 
 **Chat assistant.** Enable **Enable the chat assistant** in `/admin/ai` (independent of incident investigations; both need the master switch). Every signed-in user whose acting role is requester, agent, manager, admin or superadmin gets a floating **Ask AI** button and a full page at `/ai/chat`. There is no per-user allow list; access is by role, and the assistant states the asker's scope in the panel header.
 
