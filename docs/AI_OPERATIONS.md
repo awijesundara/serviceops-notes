@@ -67,6 +67,16 @@ An organization can connect any number of AI services (on its own network or hos
 
 **Reliability.** A busy provider (HTTP 429/5xx) is retried once before failing over; when an answer cannot be produced the person is told why (busy, key rejected, model unavailable) instead of a generic message. Token budgeting counts about three bytes per token (previously one), which stopped evidence being trimmed away on small-context servers.
 
+## Whole-product reach, honest access map, and a calmer chat (1.99.0)
+
+**Modules the assistant can now speak about, always under the asker's own visibility** (`serviceops_core/ai/modules.py`, aggregate counts and a few recent records, chosen by what the question asks about): service requests and requested items (own for requesters, wider for staff via the same visibility helper as the Requests page); problems, events, risks and other operational records (through the same helper as the records pages); approvals waiting for the asker; tasks assigned to the asker; service-level breaches and near-breaches across visible tickets; the knowledge base by category; configuration items and assets, only for roles and CI classes the role may read; head-counts of accounts by role for administrators (numbers only, never names or contact details); customer-management ticket counts for people who may open that module (numbers only). **What is never given:** the audit log, people's details, customer names and messages, settings, secrets, attachments.
+
+**"What can't I access?"** The assistant answers from the same page catalogue as the search bar and menu, filtered by the person's role, listing what they can open and what their access level does not include.
+
+**Pages to open.** Answers can carry up to two "Open <page> →" links, chosen from the same catalogue and only for pages the person may open.
+
+**Chat interface.** The header is one row: title, a short access badge ("Admin access", full description on hover) and four icon buttons (new chat, history, memory, full page and close). History and memory open over the conversation area, not over the header. The welcome text is two lines, the character counter appears only near the limit, the composer sits on one row and grows with the text, sources are folded under "Sources (n)", and panels and messages fade in (disabled for reduced-motion). On the admin AI page the save bar appears only after something is changed, and the "Use this service" switch is aligned.
+
 ## Using provider allowances well: free tiers and per-model limits (1.98.0, migration `20260925_0101`)
 
 Each AI service can carry the allowance of its plan: requests per minute, tokens per minute, requests per day, and the time zone in which the day resets (Google resets at midnight Pacific). Every attempt is logged briefly (`ai_call`, kept three days), so ServiceOps knows what each service has used. Google does not expose remaining quota through its API, so ServiceOps counts what it sent itself; usage from other tools on the same key is not seen, and an unexpected refusal (HTTP 429) pauses that service for about a minute without counting as a fault.
