@@ -1,7 +1,7 @@
 # ServiceOps AI implementation plan
 
 Baseline: 2026-09-20. Owner: ServiceOps engineering; provider/data policy owner: tenant administrator.
-Status: ServiceOps 1.97.6 is deployed at Helm revision 98. Transient activity UI, multiple-service privacy routing, latest-incident retrieval, secure context retrieval, readiness, live self-hosted streaming, and the first approved-action slice are verified. Commercial live inference remains unverified. Estimates are engineering effort, not promised calendar delivery.
+Status: ServiceOps 1.99.1 is deployed at Helm revision 102. Transient activity UI, multiple-service privacy and quota routing, whole-product permission-scoped context, ticket drafts, explicit per-user memory, secure context retrieval, live self-hosted streaming, and the first approved-action slice are verified. Commercial live inference remains unverified. Estimates are engineering effort, not promised calendar delivery.
 No hosted GitHub publication is part of this work.
 
 ## Product scope and timeline
