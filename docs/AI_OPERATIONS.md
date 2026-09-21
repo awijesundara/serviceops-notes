@@ -67,6 +67,20 @@ An organization can connect any number of AI services (on its own network or hos
 
 **Reliability.** A busy provider (HTTP 429/5xx) is retried once before failing over; when an answer cannot be produced the person is told why (busy, key rejected, model unavailable) instead of a generic message. Token budgeting counts about three bytes per token (previously one), which stopped evidence being trimmed away on small-context servers.
 
+## Using provider allowances well: free tiers and per-model limits (1.98.0, migration `20260925_0101`)
+
+Each AI service can carry the allowance of its plan: requests per minute, tokens per minute, requests per day, and the time zone in which the day resets (Google resets at midnight Pacific). Every attempt is logged briefly (`ai_call`, kept three days), so ServiceOps knows what each service has used. Google does not expose remaining quota through its API, so ServiceOps counts what it sent itself; usage from other tools on the same key is not seen, and an unexpected refusal (HTTP 429) pauses that service for about a minute without counting as a fault.
+
+**What ServiceOps does with it, automatically.**
+- A service that has used its allowance is not called; when every allowed service is spent the person is told the allowance is used up and roughly when it returns, and nothing is sent.
+- Work is spread across services in proportion to the share of allowance each has left, so all of them are used and none is drained first.
+- Chat goes to lighter, plentiful models first; investigations go to more capable ones first. A model with under 10% of its allowance left steps aside so the scarce ones last the day. Tiers come from the model name (lite, standard, pro).
+- Privacy rules are unchanged and come first: a sensitive request only ever considers services on your own network.
+
+**Free tier starting points.** For Google models the settings page offers the free-tier limits shown in the AI Studio rate-limit dashboard on 2026-09-21 (for example the Flash-Lite models 15 requests a minute and 500 a day, the Flash models 5 a minute and 20 a day, Gemma 4 30 a minute, 16,000 tokens a minute and 14,400 a day, Pro models no free allowance). They are only defaults: check your dashboard and edit them, because Google changes them. A new Google service starts with them automatically.
+
+**Adding many models at once.** After connecting a Google key the dialog offers the other chat models on the account (up to 12); each becomes its own service with its own allowance, sharing the key. Because every model has a separate daily allowance, several Lite models plus Gemma multiply the requests available per day. The key is stored encrypted once per service, so rotate it by editing each service.
+
 ## Any provider, connected from an address and a key (1.94.0)
 
 ServiceOps speaks four provider types; choose one in `/admin/ai` (or pick a **Quick setup** preset):
