@@ -174,7 +174,9 @@ unverified capabilities are listed under “Explicit boundaries.”
 ## 5. Incident management
 
 - Incident creation/editing with caller, contact type, impact, urgency,
-  calculated priority, category, service/CI context, team, assignee, state,
+  calculated priority, admin-configurable category/subcategory (ITIL v4/
+  ServiceNow-style, each subcategory optionally suggesting a service offering),
+  service/CI context, team, assignee, state,
   description, notes, and resolution information.
 - Incident queues, assigned views, dashboard counts, analytics, and export.
 - Central transition enforcement; resolved records lock protected edits while
@@ -338,6 +340,8 @@ global-search results, analytics, and overdue reporting where applicable.
 ## 12. Services, schedules, SLAs, and outages
 
 - Service offerings with description, owner, and active state.
+- Ticket category/subcategory taxonomy administration (rename, add, deactivate),
+  with each subcategory optionally suggesting a service offering.
 - Service-to-CI mappings and impact context.
 - SLA definitions by record type and priority with target minutes, schedule,
   and active state.
