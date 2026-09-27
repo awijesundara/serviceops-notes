@@ -39,6 +39,36 @@ Migration rollback removes the new tables only when both are empty. If configura
 
 The AI worker purges expired run payloads; UI access also rejects expired runs. Audit events retain request/configuration/completion/cancellation metadata without prompt bodies. If the worker is stopped, database deletion waits until it resumes. Common secret patterns are redacted before inference, but this is not comprehensive PII/secret discovery.
 
+## Privacy: what an external service receives, and how long chats are kept (1.107.0, migration `20260928_0107`)
+
+Whoever's API key a hosted service uses, it only ever receives what the person
+asking may already read: the server retrieves evidence under that person's
+identity, and conversations and memory notes are private to them.
+
+- **The asker's identity stays inside the organization.** Before a request goes
+  to an external service, the asker's name, first name, username (when it has a
+  distinctive shape such as `anna.lee`) and email are replaced with "the person
+  asking". Their role is still stated so the answer fits their access. The
+  organization's own AI still sees the name.
+- **Contact details are masked in all evidence.** Email addresses and phone
+  numbers in tickets and comments are removed before any model sees them, for
+  incident investigations as well as chat, even when "Personal details"
+  detection is off. Published knowledge keeps its public contact numbers.
+- **Chats expire.** Administration > AI > "Delete chats after (days without a
+  message)", default 30, range 1-365. The AI worker deletes idle conversations
+  and their messages; a conversation with an answer in progress is kept. "Keep
+  results for" still governs run records (1-30 days). People are told in the
+  chat panel.
+- **Choose a provider plan whose terms fit.** The consent switch now says so:
+  free tiers (Google AI Studio's, for example) may use what they receive to
+  improve the provider's products. Use a paid or organization-owned key for
+  anything beyond a trial, and keep "What counts as sensitive" switched on.
+
+Not covered: names of other people written in free text (descriptions,
+comments) cannot be detected reliably. A request that contains them but nothing
+else sensitive can still go to an external service; use "Only published
+knowledge" or "Nothing" as the outside-services scope if that matters.
+
 ## Several AI services, smart routing and sensitive-data protection (1.97.0, migration `20260922_0098`)
 
 An organization can connect any number of AI services (on its own network or hosted) in `/admin/ai`. Each service has a name, provider, model, optional key, an **order**, a **weight** and how many requests it can take **at once**. An older single-provider setup is migrated to one service called "Primary".

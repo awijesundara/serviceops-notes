@@ -798,3 +798,37 @@ object storage, search and Kubernetes cannot be certified using mocks alone.
 ## AI module boundary
 
 The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](AI_OPERATIONS.md) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](AI_IMPLEMENTATION_PLAN.md) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.
+
+## Web route modules (B-401)
+
+`app.create_app()` configures the application, registers request hooks,
+error handlers and template filters, and then calls `register(app)` on each
+route module in `serviceops_core/web/`. It defines no routes itself, and
+`tests/test_web_modules.py` fails if one is added back to `app.py`.
+
+| Module | Routes |
+| --- | --- |
+| `platform.py` | Health, readiness, metrics, status page, PWA manifest and service worker, help |
+| `auth.py` | Sign-in, sign-out, password reset, OIDC/LDAP/Cloudflare Access login, sessions |
+| `api.py` | `/api/v1` REST and mobile API, SCIM, the embedded MCP endpoint |
+| `workspace.py` | Home, profile, preferences, notifications, manager portal, analytics, lookups, UI state |
+| `tickets.py` | Incidents, changes, problems, known errors, improvements, enterprise records, attachments |
+| `service_requests.py` | Catalog, requests, RITMs, catalog tasks, approvals |
+| `cmdb.py` | CMDB, assets, racks, topology, import and discovery |
+| `knowledge.py` | Knowledge base |
+| `client_management.py` | External customer support (client tickets, organisations, views) |
+| `administration.py` | Administration, settings, ITIL administration |
+| `common.py` | Helpers and constants shared by several route modules |
+
+Endpoint names are unchanged from when the routes lived in `create_app()`
+(each module registers directly on the app, not through a Flask blueprint),
+so every `url_for()` call, template and API client keeps working. Route
+modules import shared services from `app`; names that tests monkeypatch on
+the `app` module (outbound delivery, scanning, LDAP, `setting_value`,
+`tenant_context_id` and a few others) are read as `core.<name>` through
+`import app as core`, so a patch on `app.<name>` reaches the routes too.
+
+New routes go in the module for their area. Business rules still belong in
+`serviceops_core/` service and policy modules, not in route handlers.
+Moving module-level services out of `app.py` (about 7,300 lines of
+services and helpers above `create_app()`) is the next decomposition step.
