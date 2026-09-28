@@ -313,6 +313,21 @@ global-search results, analytics, and overdue reporting where applicable.
   neutral `Device` class instead of creating arbitrary CMDB classes.
 - NetBox URL, encrypted token, CA certificate, and explicitly marked
   last-resort TLS-verification bypass.
+- Guided NetBox import (CMDB → Import, and a shortcut on the NetBox
+  connection settings page): **Test connection** checks reachability, TLS,
+  token and NetBox version, then reports what the token can read per data
+  type (sites, racks, devices, VMs, IPs, interfaces, inventory), device
+  role → CI class mapping, a device sample rendered as CMDB rows, whether the
+  `environment` custom field exists, and the current CMDB size; nothing is
+  written. **Preview** runs the full reconciliation and discards it.
+  **Import** is only offered after a completed preview from the last 24 hours
+  that found records and hit no record errors, requires an explicit review
+  confirmation, and consumes that preview. A NetBox request that fails
+  outright (refused token, unreachable host, non-API response, untrusted
+  certificate) fails the job with a plain-language reason and writes nothing;
+  every finished job's counts, errors and warnings are shown on the page.
+  The base URL may be given with or without `/api`; component endpoints a
+  NetBox version does not have are skipped without warnings.
 - Self-registering CMDB agent and Puppet deployment example.
 
 ### Agentless discovery and review
