@@ -410,6 +410,12 @@ global-search results, analytics, and overdue reporting where applicable.
   tenant-scoped `users:provision` scope.
 - SCIM external ID/email mapping, audited lifecycle, and immediate session
   invalidation on deactivation.
+- SCIM PATCH accepts explicit paths or pathless attribute objects for
+  `active`, `displayName`, and `emails`. `active` requires a JSON boolean;
+  unsupported operations/paths and malformed payloads return SCIM 400 errors
+  before any account changes. Email conflicts return SCIM 409 `uniqueness`
+  errors, including database-enforced concurrent conflicts. See
+  [SCIM correction evidence](SCIM_FIX_VERIFICATION_2026-10-02.md).
 
 ### Durable integrations and external adapters
 
