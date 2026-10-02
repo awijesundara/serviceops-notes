@@ -131,3 +131,14 @@ the retained Helm health test remain. The full-suite skips and unavailable
 Dockerfile/Compose rebuild described above remain validation boundaries. No
 external IdP interoperability, real Kubo, or broad unselected browser journeys
 are claimed by this correction.
+
+## Follow-up — published as 1.108.5 (2026-10-03)
+
+The interim local image was superseded by the governed release. The fix was
+committed to ServiceOps main as `f8840fb` (rebased onto 1.108.4; full suite
+1243 passed / 118 skipped) and released as v1.108.5 (`94327ba`, image
+`ghcr.io/awijesundara/serviceops-server@sha256:c9772cf3a8d5ffd1d6ed91acf97099fba87f0b834fd08f1991fcf913e4976ccf`).
+Pre-upgrade backup `serviceops-20261002T231916Z.dump` was restore-verified
+(`20260928_0107`, 20 tickets). Helm revision 141 applied migration
+`20261002_0108`; web 2/2 and both workers ready, helm test passed, 20 tickets
+and 8 users preserved, Cloudflare Access 302 and public status page 200.
