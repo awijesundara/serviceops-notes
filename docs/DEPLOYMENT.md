@@ -1,52 +1,72 @@
-# ServiceOps deployment guide
+# ServiceOps deployment and recovery
+
+Use the [documentation index](../README.md) to navigate the six maintained documents. Update this document directly; there is no generated master copy.
+
+## Contents
+
+- [ServiceOps deployment guide](#section-deployment)
+- [Full IPFS storage mode](#section-ipfs_storage_mode)
+- [Running a model server for ServiceOps (llama.cpp, Apple/AMD GPU example)](#section-ai_self_hosted_server)
+- [ServiceOps release and version-control plan](#section-release_governance)
+- [ServiceOps production-readiness release gates](#section-production_readiness_plan)
+
+---
+
+<a id="section-deployment"></a>
+
+## ServiceOps deployment guide
+
+<a id="section-deployment--serviceops-deployment-guide"></a>
 
 > For the complete zero-PostgreSQL profile, including upgrade, recovery and
-> limitations, see [IPFS_STORAGE_MODE.md](IPFS_STORAGE_MODE.md).
+> limitations, see [IPFS_STORAGE_MODE.md](#section-ipfs_storage_mode).
 >
 > For the full user, administrator, identity, Kubernetes, security,
 > monitoring, backup, recovery, upgrade, rollback, and incident-response
 > runbook with diagrams and screenshots, see the
-> [complete platform manual](OPERATIONS_MANUAL.md).
+> [complete platform manual](OPERATIONS_MANUAL.md#section-operations_manual).
 
-## Contents
+<a id="section-deployment--contents"></a>
+### Contents
 
 **Choose and install**
-[Deployment topologies](#deployment-topologies) ·
-[Fast installation](#fast-installation) ·
-[Architecture A: bundled PostgreSQL](#architecture-a-bundled-postgresql) ·
-[Architecture B: external PostgreSQL](#architecture-b-external-postgresql) ·
-[RPM packaging](#rpm-packaging-linux-distribution) ·
-[Kubernetes production deployment](#kubernetes-production-deployment) ·
-[Private registry mirrors (Nexus and similar proxies)](#private-registry-mirrors-nexus-and-similar-proxies) ·
-[Web Installation Center](#web-installation-center) ·
-[Air-gapped deployment boundary](#air-gapped-deployment-boundary)
+[Deployment topologies](#section-deployment--deployment-topologies) ·
+[Fast installation](#section-deployment--fast-installation) ·
+[Architecture A: bundled PostgreSQL](#section-deployment--architecture-a-bundled-postgresql) ·
+[Architecture B: external PostgreSQL](#section-deployment--architecture-b-external-postgresql) ·
+[RPM packaging](#section-deployment--rpm-packaging-linux-distribution) ·
+[Kubernetes production deployment](#section-deployment--kubernetes-production-deployment) ·
+[Private registry mirrors (Nexus and similar proxies)](#section-deployment--private-registry-mirrors-nexus-and-similar-proxies) ·
+[Web Installation Center](#section-deployment--web-installation-center) ·
+[Air-gapped deployment boundary](#section-deployment--air-gapped-deployment-boundary)
 
 **Configure identity and access**
-[AD and LDAP](#ad-and-ldap) ·
-[Keycloak](#keycloak) ·
-[Passkeys and Apple Associated Domains](#passkeys-and-apple-associated-domains) ·
-[Apple push notification configuration](#apple-push-notification-configuration)
+[AD and LDAP](#section-deployment--ad-and-ldap) ·
+[Keycloak](#section-deployment--keycloak) ·
+[Passkeys and Apple Associated Domains](#section-deployment--passkeys-and-apple-associated-domains) ·
+[Apple push notification configuration](#section-deployment--apple-push-notification-configuration)
 
 **Expose and monitor**
-[HTTPS and network exposure](#https-and-network-exposure) ·
-[Service health and monitoring](#service-health-and-monitoring) ·
-[Immutable recovery and object storage](#immutable-recovery-and-object-storage)
+[HTTPS and network exposure](#section-deployment--https-and-network-exposure) ·
+[Service health and monitoring](#section-deployment--service-health-and-monitoring) ·
+[Immutable recovery and object storage](#section-deployment--immutable-recovery-and-object-storage)
 
 **Operate**
-[Operations](#operations) ·
-[Recovery objectives](#recovery-objectives) ·
-[Upgrades](#upgrades) ·
-[Account and emergency recovery](#account-and-emergency-recovery)
+[Operations](#section-deployment--operations) ·
+[Recovery objectives](#section-deployment--recovery-objectives) ·
+[Upgrades](#section-deployment--upgrades) ·
+[Account and emergency recovery](#section-deployment--account-and-emergency-recovery)
 
 **Secure and scale**
-[Security checklist](#security-checklist) ·
-[Scaling](#scaling)
+[Security checklist](#section-deployment--security-checklist) ·
+[Scaling](#section-deployment--scaling)
 
 **Maintainer and CI notes**
-[Mandatory browser quality gate](#mandatory-browser-quality-gate) ·
-[Local development deployment convention](#local-development-deployment-convention)
+[Mandatory browser quality gate](#section-deployment--mandatory-browser-quality-gate) ·
+[Local development deployment convention](#section-deployment--local-development-deployment-convention)
 
-## Deployment topologies
+<a id="section-deployment--deployment-topologies"></a>
+### Deployment topologies
 
 | Environment | Application | Database | Upload storage | Use when |
 |---|---|---|---|---|
@@ -70,7 +90,8 @@ flowchart LR
 Production Kubernetes must use an externally operated, highly available
 PostgreSQL service — the chart rejects a configuration that omits it.
 
-## Passkeys and Apple Associated Domains
+<a id="section-deployment--passkeys-and-apple-associated-domains"></a>
+### Passkeys and Apple Associated Domains
 
 Passkeys require a stable public HTTPS origin. Configure
 `WEBAUTHN_RP_ID=serviceops.example.com`,
@@ -85,9 +106,10 @@ but not a real Apple passkey ceremony.
 
 For the full user, administrator, identity, Kubernetes, security, monitoring,
 backup, recovery, upgrade, rollback, and incident-response runbook, use the
-[complete platform manual](OPERATIONS_MANUAL.md).
+[complete platform manual](OPERATIONS_MANUAL.md#section-operations_manual).
 
-## Mandatory browser quality gate
+<a id="section-deployment--mandatory-browser-quality-gate"></a>
+### Mandatory browser quality gate
 
 Every pull request, push to `main`, and governed release runs a separate
 `browser-quality-gate` job. It creates an isolated `serviceops-e2e` Docker
@@ -108,7 +130,8 @@ failed gates and fork-originated runs, serializes releases, and excludes its own
 version commits to prevent recursive releases. Use the manual release dispatch
 only when selecting a minor or major version increment.
 
-## Air-gapped deployment boundary
+<a id="section-deployment--air-gapped-deployment-boundary"></a>
+### Air-gapped deployment boundary
 
 Air-gapped production deployments use the released RPM plus a transfer bundle
 prepared on an internet-connected Linux host. The bundle must contain the
@@ -126,7 +149,8 @@ apply approved removable-media scanning and chain-of-custody controls, then use
 the normal packaged setup, systemd, health, readiness, backup, and restore
 procedures inside the restricted network.
 
-### Outbound proxy for notifications, email, and update checks
+<a id="section-deployment--outbound-proxy-for-notifications-email-and-update-checks"></a>
+#### Outbound proxy for notifications, email, and update checks
 
 The application itself still makes a handful of outbound HTTPS/SMTP calls at
 runtime -- Google Chat, Telegram, Slack, Teams, and Discord notification
@@ -168,7 +192,8 @@ whatever firewall/egress policy controls what it's allowed to reach) is the
 trust boundary in that configuration, the same way this chart's Kubernetes
 NetworkPolicy egress rules already are.
 
-### Interactive Google Chat bot (/ack, /escalate)
+<a id="section-deployment--interactive-google-chat-bot-ack-escalate"></a>
+#### Interactive Google Chat bot (/ack, /escalate)
 
 Beyond the one-way notification channel above (an incoming webhook, alert
 out only), ServiceOps can run an **interactive** Google Chat app that reads
@@ -237,7 +262,8 @@ see step 2 above), so `@ServiceOps /ack` never reaches the other app and
 message without a bot-mention annotation) rather than relying solely on
 Google's delivery-side filtering.
 
-## Local development deployment convention
+<a id="section-deployment--local-development-deployment-convention"></a>
+### Local development deployment convention
 
 During the active development period on Anushka's local machine, the Docker
 Compose deployment must always publish ServiceOps at `http://localhost:80`
@@ -260,7 +286,8 @@ secrets and retained audit-signing keys would become undecryptable. Store that
 key separately with the local recovery material. Port changes require only
 `APP_PORT`; they must not rotate encryption keys.
 
-## Service health and monitoring
+<a id="section-deployment--service-health-and-monitoring"></a>
+### Service health and monitoring
 
 Use `/live` only for process liveness. `/ready` is the traffic-admission gate:
 it checks PostgreSQL, the exact migration head, active-tenant audit-key
@@ -275,7 +302,8 @@ critical alerts to a staffed destination. Run `tools/synthetic_login.py` from
 outside the cluster with a dedicated unprivileged requester to prove the full
 CSRF, password, session, and authenticated-page journey.
 
-## Account and emergency recovery
+<a id="section-deployment--account-and-emergency-recovery"></a>
+### Account and emergency recovery
 
 Local users can request a non-enumerating, single-use 30-minute password-reset
 link. Completion resets lockout state and revokes every existing browser
@@ -292,7 +320,8 @@ Mutation commands take a checksummed recovery set first. Audit-key recovery is
 an explicit integrity boundary; it never pretends that signatures made with a
 lost key remain verifiable.
 
-## Immutable recovery and object storage
+<a id="section-deployment--immutable-recovery-and-object-storage"></a>
+### Immutable recovery and object storage
 
 Each recovery manifest records a non-secret fingerprint of the exact settings
 encryption key. Configure `BACKUP_ARCHIVE_*` to upload database, uploads, and
@@ -305,7 +334,8 @@ S3-compatible attachments. Empty bucket configuration retains the Docker
 volume/PVC backend. Readiness validates the configured bucket before admitting
 traffic.
 
-## Kubernetes production deployment
+<a id="section-deployment--kubernetes-production-deployment"></a>
+### Kubernetes production deployment
 
 The supported enterprise topology is the Helm chart in `charts/serviceops`
 with an immutable application image, two or more replicas, external HA
@@ -334,7 +364,7 @@ NetworkPolicy, probes, topology spreading, and disruption protection.
 By default, tags are descriptive only and every workload runs
 `repository@sha256:digest` (`image.pinning: digest` in `values.yaml`, the
 default). If your registry cannot serve manifests by digest reference, see
-[Private registry mirrors](#private-registry-mirrors-nexus-and-similar-proxies)
+[Private registry mirrors](#section-deployment--private-registry-mirrors-nexus-and-similar-proxies)
 below for the `image.pinning: tag` alternative — the digest requirement and
 its verification are unchanged either way, only the runtime pull reference
 differs.
@@ -395,7 +425,8 @@ migration. A verified pre-migration backup and migration rehearsal remain
 mandatory. The updater fails closed unless the backup reference is supplied;
 the chart records it on the migration Job and application pods.
 
-### Stateless, progressive and GitOps operation
+<a id="section-deployment--stateless-progressive-and-gitops-operation"></a>
+#### Stateless, progressive and GitOps operation
 
 ServiceOps web replicas keep durable state in external PostgreSQL and shared
 RWX or S3-compatible attachment storage. Signed cookie sessions are
@@ -426,7 +457,8 @@ Enable Prometheus Operator discovery with
 available through an existing Operator Instrumentation resource; enable it
 only after the Collector, egress and data-governance policy are verified.
 
-### Protected CI/CD deployment
+<a id="section-deployment--protected-cicd-deployment"></a>
+#### Protected CI/CD deployment
 
 `.github/workflows/deploy-kubernetes.yml` can deploy automatically after the
 governed release reaches terminal success, or by explicit manual dispatch. It
@@ -446,7 +478,8 @@ and performs an atomic install/upgrade followed by both rollout checks and
 `helm test --logs`. Keep required reviewers and deployment-branch protection
 enabled on the GitHub `production` environment.
 
-## Private registry mirrors (Nexus and similar proxies)
+<a id="section-deployment--private-registry-mirrors-nexus-and-similar-proxies"></a>
+### Private registry mirrors (Nexus and similar proxies)
 
 Some organizations don't let the cluster pull directly from GHCR and instead
 mirror images through an internal proxy such as Sonatype Nexus Repository.
@@ -516,7 +549,8 @@ The `KUBERNETES_IMAGE_REPOSITORY` variable used by the CI/CD path
 `image.repository` value; set it to your Nexus path there too if the
 automated deploy workflow also needs to go through the mirror.
 
-## Web Installation Center
+<a id="section-deployment--web-installation-center"></a>
+### Web Installation Center
 
 Run `./serviceops install web` and visit `http://127.0.0.1:8090`. The temporary
 installer does not receive the Docker socket. It writes a request into a
@@ -529,7 +563,8 @@ bind and base search, Keycloak discovery metadata, and Production security
 policy. Generated environment files are mode `0600`, and validation results
 never echo passwords.
 
-### Production-only initialization
+<a id="section-deployment--production-only-initialization"></a>
+#### Production-only initialization
 
 ServiceOps creates only the local bootstrap administrator and structural ITIL
 groups/SLA definitions. It never creates demonstration personas, manager
@@ -538,7 +573,8 @@ Assign real managers and CCB members before governed changes can be submitted.
 Use `tools/production_cleanup.py` after backing up an older database that
 contains legacy bootstrap demonstration data.
 
-### AD and LDAP
+<a id="section-deployment--ad-and-ldap"></a>
+#### AD and LDAP
 
 ServiceOps uses a service bind to locate exactly one directory user, then binds
 as that user's DN to verify the password. Production requires LDAPS or StartTLS
@@ -557,7 +593,8 @@ as `gg_unix` or the complete DN. Membership reconciles at each AD login.
 Directory synchronization removes only directory-managed memberships and does
 not overwrite manual manager appointments or CCB authority.
 
-### Keycloak
+<a id="section-deployment--keycloak"></a>
+#### Keycloak
 
 Create a confidential OpenID Connect client with standard authorization-code
 flow and this redirect URI:
@@ -571,7 +608,8 @@ role mapping is needed. `KEYCLOAK_ROLE_MAPPINGS` maps realm role names to
 ServiceOps roles. Keep the local administrator credential in an organizational
 secrets vault for identity-provider outages.
 
-## Fast installation
+<a id="section-deployment--fast-installation"></a>
+### Fast installation
 
 Supported host: a current 64-bit Linux server with at least 2 CPU cores, 4 GB RAM, 10 GB free disk, Docker Engine 24+, Docker Compose v2, and outbound access to container registries.
 
@@ -590,7 +628,8 @@ For unattended automation:
 ./serviceops install server --mode bundled --port 8080 --bind 127.0.0.1 --yes
 ```
 
-## RPM packaging (Linux distribution)
+<a id="section-deployment--rpm-packaging-linux-distribution"></a>
+### RPM packaging (Linux distribution)
 
 For hosts that manage software as packages rather than a `git clone`, an RPM
 is available. It installs the same control plane the git checkout gives
@@ -618,7 +657,8 @@ Layout after installation:
 | `serviceops-backup.timer` | Daily verified database/upload recovery set |
 | `/etc/logrotate.d/serviceops` | Rotation for host-side operational logs |
 
-### Supported RPM platforms
+<a id="section-deployment--supported-rpm-platforms"></a>
+#### Supported RPM platforms
 
 The release pipeline builds and clean-install tests separate packages for the
 currently supported Enterprise Linux major families (EL8, EL9, and EL10) and
@@ -682,7 +722,8 @@ itself change the running application version. Run `serviceops update`
 `serviceops restart`) to move to a new pinned image, exactly as in a git
 checkout.
 
-## Architecture A: bundled PostgreSQL
+<a id="section-deployment--architecture-a-bundled-postgresql"></a>
+### Architecture A: bundled PostgreSQL
 
 Choose this for one-server installations and straightforward backups.
 
@@ -704,7 +745,8 @@ cp .env.example .env
 docker compose --env-file .env -f compose.yaml up --build -d
 ```
 
-## Architecture B: external PostgreSQL
+<a id="section-deployment--architecture-b-external-postgresql"></a>
+### Architecture B: external PostgreSQL
 
 Choose this for managed databases, high-availability database clusters, separate backup ownership, or multiple application servers.
 
@@ -745,11 +787,13 @@ Non-interactive example:
 
 The external deployment uses `compose.external-db.yaml`; it creates no local database container or database volume. Schema initialization and baseline records are applied through the authenticated database connection.
 
-## HTTPS and network exposure
+<a id="section-deployment--https-and-network-exposure"></a>
+### HTTPS and network exposure
 
 Keep `BIND_ADDRESS=127.0.0.1` and place ServiceOps behind an HTTPS reverse proxy. Expose only TCP 80/443 publicly. Do not expose PostgreSQL or port 8080 to the internet.
 
-### Caddy
+<a id="section-deployment--caddy"></a>
+#### Caddy
 
 ```caddyfile
 serviceops.example.com {
@@ -763,7 +807,8 @@ serviceops.example.com {
 }
 ```
 
-### Nginx
+<a id="section-deployment--nginx"></a>
+#### Nginx
 
 ```nginx
 server {
@@ -783,7 +828,8 @@ server {
 
 Use your organization’s certificate automation and security standards.
 
-## Operations
+<a id="section-deployment--operations"></a>
+### Operations
 
 ```bash
 ./serviceops status
@@ -824,7 +870,8 @@ provider evidence.
 
 External database backups are intentionally delegated to the database provider. Use provider snapshots, point-in-time recovery, and cross-region copies where appropriate. `./serviceops backup` explains this rather than creating an incomplete application-only database backup.
 
-## Recovery objectives
+<a id="section-deployment--recovery-objectives"></a>
+### Recovery objectives
 
 Define and test:
 
@@ -838,7 +885,8 @@ Define and test:
 
 The database and uploads must be recovered from the same logical backup window.
 
-## Upgrades
+<a id="section-deployment--upgrades"></a>
+### Upgrades
 
 ```mermaid
 flowchart LR
@@ -873,7 +921,8 @@ continued source health. The command never migrates the production database.
 6. Upgrade production with `./serviceops update`.
 7. Verify health, login, ticket creation, approval routing, attachment access, and database backups.
 
-## Apple push notification configuration
+<a id="section-deployment--apple-push-notification-configuration"></a>
+### Apple push notification configuration
 
 Configure these encrypted Platform settings before enabling push:
 `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_BUNDLE_ID`, and the complete `.p8` value
@@ -888,7 +937,8 @@ environment/xcconfig files. Validate on a signed physical iPhone: sign in,
 allow notifications, create a notification for that user, confirm delivery and
 inbox state, then sign out and confirm the installation is unregistered.
 
-## Security checklist
+<a id="section-deployment--security-checklist"></a>
+### Security checklist
 
 - Replace all bootstrap credentials immediately.
 - Keep `.env` owner-readable only and out of version control.
@@ -901,7 +951,8 @@ inbox state, then sign out and confirm the installation is unregistered.
 - Integrate organizational SSO before wide deployment.
 - Review users, managers, CCB membership, and audit events regularly.
 
-## Scaling
+<a id="section-deployment--scaling"></a>
+### Scaling
 
 For a first high-availability architecture:
 
@@ -914,6 +965,343 @@ For a first high-availability architecture:
 The current Docker Compose deployment is designed for a highly reliable single application host. It is not presented as a multi-region control plane.
 
 
-## Optional AI worker
+<a id="section-deployment--optional-ai-worker"></a>
+### Optional AI worker
 
-The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](AI_OPERATIONS.md) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](AI_IMPLEMENTATION_PLAN.md) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.
+The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](OPERATIONS_MANUAL.md#section-ai_operations) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](ENGINEERING_REFERENCE.md#section-ai_implementation_plan) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.
+
+---
+
+<a id="section-ipfs_storage_mode"></a>
+
+## Full IPFS storage mode
+
+<a id="section-ipfs_storage_mode--full-ipfs-storage-mode"></a>
+
+<a id="section-ipfs_storage_mode--status"></a>
+### Status
+
+ServiceOps supports a complete, opt-in `STORAGE_MODE=ipfs` deployment. IPFS is
+the sole durable application and attachment store; no PostgreSQL service or
+persistent embedded database is used. The former B-335 login-only checkpoint
+is migrated automatically at first boot.
+
+Feature parity includes the dashboard, internal ticketing, client management,
+catalog, knowledge, CMDB, discovery, workflows, administration, users and
+roles, settings, notifications, audit history, server-side session inventory
+and revocation, rate limiting, APIs, mobile authentication, attachments,
+analytics, scheduled work, and health monitoring.
+
+<a id="section-ipfs_storage_mode--architecture"></a>
+### Architecture
+
+The existing ServiceOps domain layer contains 109 related SQLAlchemy tables
+and hundreds of mature relational queries. IPFS cannot execute joins,
+constraints, transactions, filters, or ordered queries. In IPFS mode:
+
+1. `IPFSStorageBackend` resolves one instance-owned IPNS name.
+2. It fetches and Fernet-decrypts the referenced checkpoint using
+   `SETTINGS_ENCRYPTION_KEY` (or the documented `SECRET_KEY` derivation).
+3. `IPFSRelationalProjection` restores every table into a uniquely named,
+   process-local, shared-memory SQLite projection. This is an execution/query
+   engine only: it has no disk file and is never authoritative.
+4. The normal ServiceOps models, constraints, tenant filters, workflows, and
+   forms run unchanged against that volatile projection.
+5. Successful commits mark the projection dirty. A two-second checkpointer
+   coalesces bursts, serializes every table with lossless tagged values for
+   timestamps, dates, times, binary values, decimals, and UUIDs, encrypts the
+   complete snapshot, adds and pins it to IPFS, and schedules the newest CID
+   for IPNS publication.
+6. One retrying publisher performs the potentially slow IPNS operation off the
+   request path. `/ready` exposes `checkpoint_publish_pending`.
+7. Attachment bytes are separately Fernet-encrypted before IPFS `add`; the
+   table checkpoint stores their authorization metadata and CID.
+
+The application runs one Gunicorn process in this mode. Threads share the same
+projection. Scheduled processing (SLA, workflow, outbox, discovery, RT import,
+client escalation/email, retention, performance and KPI work) runs inside that
+process so there is one authoritative checkpoint writer.
+
+<a id="section-ipfs_storage_mode--upgrade-from-b-335"></a>
+### Upgrade from B-335
+
+When no `relational_state` exists but the old checkpoint contains `tenant` and
+`user` entity maps, startup imports those records, preserves password hashes
+and IDs, runs the standard idempotent seed for all platform defaults, and
+publishes a full checkpoint. This is automatic and does not require resetting
+the Kubo volume or administrator account.
+
+Do not rotate or discard `SETTINGS_ENCRYPTION_KEY`, `SECRET_KEY`, or the Kubo
+key repository during the upgrade. Losing the encryption key makes checkpoint
+and attachment content unrecoverable.
+
+<a id="section-ipfs_storage_mode--deployment"></a>
+### Deployment
+
+The reference side-by-side stack is `compose.ipfs-demo.yaml` in the ServiceOps
+repository. It contains only `app` and `ipfs`; it deliberately contains no
+PostgreSQL or separate worker service.
+
+Required configuration:
+
+- `STORAGE_MODE=ipfs`
+- `IPFS_API_URL=http://ipfs:5001` for the bundled node
+- stable, secret `SECRET_KEY` and `SETTINGS_ENCRYPTION_KEY`
+- `ADMIN_PASSWORD` for first boot only
+- `GUNICORN_WORKERS=1` (the entrypoint enforces this)
+
+Use `/health` for liveness dependencies and `/ready` for IPFS reachability,
+volatile-projection availability, checkpoint table/file counts, publication
+state, and upload-path availability.
+
+<a id="section-ipfs_storage_mode--recovery-and-backup"></a>
+### Recovery and backup
+
+Back up the complete Kubo data volume plus the separately protected encryption
+keys. Recovery is:
+
+1. Restore the Kubo volume and the same keys.
+2. Start the IPFS node and wait for its health check.
+3. Start ServiceOps with `STORAGE_MODE=ipfs`.
+4. Confirm the startup log reports the expected table count.
+5. Confirm `/ready` is 200 and `checkpoint_publish_pending` eventually becomes
+   false.
+6. Verify login, one ticket, one attachment, audit history, and session
+   revocation.
+
+<a id="section-ipfs_storage_mode--deliberate-operating-boundary"></a>
+### Deliberate operating boundary
+
+This mode now has application feature parity, but it is not equivalent to the
+PostgreSQL profile for scale or availability. The complete snapshot model has
+O(total records) checkpoint cost, allows only one application process, and can
+lose the most recent coalescing window if the process is killed before a dirty
+projection is added and published. IPNS publication can be slow; requests do
+not wait for it, and readiness reports pending durability explicitly.
+
+Use PostgreSQL for horizontal scaling, high write volume, strict synchronous
+durability, multi-node HA, or compliance regimes that require independently
+validated database controls. Production promotion of IPFS mode still requires
+load/soak limits, kill-during-checkpoint recovery evidence, independent tenant
+isolation/security review, and a documented Kubo backup/restore rehearsal.
+
+---
+
+<a id="section-ai_self_hosted_server"></a>
+
+## Running a model server for ServiceOps (llama.cpp, Apple/AMD GPU example)
+
+<a id="section-ai_self_hosted_server--running-a-model-server-for-serviceops-llamacpp-appleamd-gpu-example"></a>
+
+ServiceOps talks to any OpenAI-compatible server. This page records the working reference setup used for testing: a 2019 MacBook Pro (Intel Core i9, AMD Radeon Pro 5500M with 8 GB VRAM) running llama.cpp's `llama-server` through Vulkan (MoltenVK). Any other server (Ollama, vLLM, LM Studio) works the same way from ServiceOps' side; see [AI_OPERATIONS.md](OPERATIONS_MANUAL.md#section-ai_operations).
+
+<a id="section-ai_self_hosted_server--what-was-measured"></a>
+### What was measured
+
+| Setup | Qwen3-8B Q4_K_M | Notes |
+|---|---|---|
+| CPU only (8 threads) | about 5.5 tokens/s, 99 s per streamed investigation | Metal on this GPU was slower than CPU; Ollama also CPU |
+| Vulkan on the Radeon Pro 5500M (`-ngl 99`) | about 21.6 tokens/s generation, 52 s per streamed investigation | Prompt processing is the slow part (first token 4-34 s for chat prompts) |
+
+Qwen3 models can use a reasoning pass. ServiceOps shows a small temporary **Thinking** status but never displays or stores the model's private reasoning text. Qwen2.5 models generally answer without a reasoning stream.
+
+<a id="section-ai_self_hosted_server--build-and-run"></a>
+### Build and run
+
+```
+# Build once (Vulkan, not Metal)
+cd ~/llama.cpp
+cmake -B build-vk -DGGML_VULKAN=ON -DGGML_METAL=OFF && cmake --build build-vk --config Release -j8
+
+# Environment the GPU path needs (put in ~/.zprofile for SSH sessions)
+export DYLD_LIBRARY_PATH=/opt/local/lib
+export VK_DRIVER_FILES=/opt/local/share/vulkan/icd.d/MoltenVK_icd.json
+export MVK_CONFIG_LOG_LEVEL=0
+export GGML_VK_VISIBLE_DEVICES=0        # 0 = Radeon, 1 = Intel UHD
+
+./build-vk/bin/llama-cli --list-devices   # must list Vulkan0: AMD Radeon Pro 5500M
+
+# Serve (keep the key in a file, not on the command line where `ps` shows it)
+./build-vk/bin/llama-server -hf Qwen/Qwen3-8B-GGUF:Q4_K_M -dev Vulkan0 -ngl 99 -fa off \
+  -c 8192 --jinja --host 0.0.0.0 --port 8080 --api-key-file ~/ai/api-key
+```
+
+`-c 8192` matters: ServiceOps investigations send up to about 10,000 characters of evidence, so a 4096-token context can be too small. 8 GB of VRAM holds the 8B Q4 model (about 5 GB) plus an 8192-token cache.
+
+<a id="section-ai_self_hosted_server--connect-serviceops"></a>
+### Connect ServiceOps
+
+1. Operator: allow the server. Kubernetes: `ai.selfHostedEndpoints: "http://192.168.68.68:*"` and an `ai.extraEgress` rule for `192.168.68.68/32` (no `ports` = every port), then Helm upgrade. Compose: `AI_SELF_HOSTED_ENDPOINTS=http://192.168.68.68:*`.
+2. Administrator: Administration, Platform and security, AI assistance. Choose **Server on your network**, address `http://192.168.68.68:8080`, paste the key. The model (for example `Qwen/Qwen3-8B-GGUF:Q4_K_M`) and its context window are detected automatically. Tick the master switch, incident investigations and the chat assistant; save; **Test saved connection**.
+3. Try it: open an incident and choose **Investigate with AI**, or use **Ask AI** at the bottom right. Tick **Think step by step** in the chat to watch the reasoning.
+
+<a id="section-ai_self_hosted_server--keep-it-running-macos"></a>
+### Keep it running (macOS)
+
+A launchd agent restarts the server and survives logout. Template (`~/Library/LaunchAgents/com.serviceops.llama-gpu.plist`), then `launchctl load` it while logged in to the desktop session:
+
+```
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.serviceops.llama-gpu</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>DYLD_LIBRARY_PATH</key><string>/opt/local/lib</string>
+    <key>VK_DRIVER_FILES</key><string>/opt/local/share/vulkan/icd.d/MoltenVK_icd.json</string>
+    <key>GGML_VK_VISIBLE_DEVICES</key><string>0</string>
+  </dict>
+  <key>ProgramArguments</key><array>
+    <string>/Users/USER/llama.cpp/build-vk/bin/llama-server</string>
+    <string>-m</string><string>/Users/USER/ai/models/Qwen3-8B-Q4_K_M.gguf</string>
+    <string>-dev</string><string>Vulkan0</string><string>-ngl</string><string>99</string>
+    <string>-fa</string><string>off</string><string>-c</string><string>8192</string><string>--jinja</string>
+    <string>--host</string><string>0.0.0.0</string><string>--port</string><string>8080</string>
+    <string>--api-key-file</string><string>/Users/USER/ai/api-key</string>
+  </array>
+  <key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+</dict></plist>
+```
+
+A closed lid sleeps the Mac unless `sudo pmset -a disablesleep 1` is set (or the lid stays open on power).
+
+<a id="section-ai_self_hosted_server--troubleshooting"></a>
+### Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| "This endpoint has not been allowlisted..." | The operator has not listed that server; the message names the entry to add |
+| "Provider rejected the request" | Wrong or empty API key, or wrong model identifier |
+| "The server rejected the API key" during detection | Key mismatch with `--api-key-file` |
+| Answer never starts / times out | Server unreachable from the pod (`ai.extraEgress`), model still loading, or `AI_PROVIDER_TIMEOUT_SECONDS` too low for CPU inference |
+| Very slow first word | Long prompt on a small GPU; use a smaller model or raise nothing else; prompt processing dominates |
+| Context window warning | Restart the server with `-c 8192` or larger |
+
+---
+
+<a id="section-release_governance"></a>
+
+## ServiceOps release and version-control plan
+
+<a id="section-release_governance--serviceops-release-and-version-control-plan"></a>
+
+<a id="section-release_governance--policy"></a>
+### Policy
+
+ServiceOps uses Semantic Versioning (`MAJOR.MINOR.PATCH`) and a single source
+of truth: `ServiceOps/VERSION`. A release is immutable. A published tag is
+never moved or rebuilt; a correction receives a new patch version.
+
+- **Patch**: compatible fixes, security patches, and documentation/runtime corrections.
+- **Minor**: backward-compatible capabilities or schema additions.
+- **Major**: intentional breaking API, configuration, deployment, or schema contracts.
+
+<a id="section-release_governance--automated-release-path"></a>
+### Automated release path
+
+1. Push signed changes to `main`; every push runs the supply-chain gate.
+2. When the gate succeeds, **Governed release** runs automatically as a patch
+   release. For a minor or major release, run it by manual dispatch with
+   `increment: minor` or `major`. Never edit the version files by hand.
+3. The workflow reads `VERSION`, calculates the next version, and synchronizes the runtime version, Helm chart and default image tag, README badge, service-worker cache identifiers, example environment, graphical installer, and CLI server installer.
+4. It commits `chore(release): X.Y.Z`, creates the immutable annotated `vX.Y.Z` tag, and invokes the reusable supply-chain workflow against that exact tag.
+5. The supply-chain gate runs release-consistency, Ruff correctness, bytecode, migration-head, complete-test-suite, shell/JavaScript syntax, both Compose-mode, and dependency-audit checks; it then builds and scans the image, generates an SBOM, pushes by source SHA, signs it, and publishes provenance/SBOM attestations.
+6. Only after all gates pass does automation publish the GitHub release and generated release notes.
+
+If a post-tag gate fails, there is no published GitHub release. Fix forward and
+issue a new patch release; do not replace the failed tag. The release commit is
+created through the GitHub API (`tools/release_commit.py`), so GitHub signs it,
+and the tag is created only after that commit lands on `main`. If a version's
+tag already exists from an earlier run, the workflow skips to the next version
+of the same increment.
+
+After the new release is deployed to MicroK8s and verified, delete every older
+git tag and GitHub release so only the newest remains (GHCR image versions are
+kept).
+
+<a id="section-release_governance--branch-and-change-controls"></a>
+### Branch and change controls
+
+- Current state (2026-10-03): the active `security` ruleset on `main` requires
+  verified signatures, blocks force pushes and branch deletion, and requests
+  Copilot code review on push. The sole maintainer pushes directly, and the
+  supply-chain gate runs on every push. Pull requests, approvals and tag
+  restrictions are the target once more than one person contributes.
+- Every commit is authored and committed as Anushka Wijesundara and SSH-signed
+  (GitHub "Verified"); no AI or bot attribution except the release workflow's
+  `chore(release)` commit.
+- `v*` tags are created only by the release automation.
+- Use short-lived branches and descriptive commit subjects.
+- Pair application changes with `serviceops-notes` changes whenever backlog, architecture, operational risk, or release evidence changes.
+- Keep database migrations additive during a minor release line. Breaking migrations require a major release and a tested rollback/restore path.
+
+<a id="section-release_governance--required-evidence"></a>
+### Required evidence
+
+Each release retains the test run, dependency audit, container scan, CycloneDX
+SBOM, image digest, Cosign signature, GitHub provenance attestation, migration
+head, and generated release notes. Production promotion records the digest,
+environment, approver, backup/recovery-set identifier, and rollback outcome.
+
+---
+
+<a id="section-production_readiness_plan"></a>
+
+## ServiceOps production-readiness release gates
+
+<a id="section-production_readiness_plan--serviceops-production-readiness-release-gates"></a>
+
+No item below is complete merely because scaffolding exists. Each gate requires
+dated evidence, an owner, a reviewed result, and remediation of release-blocking
+findings in the governed backlog.
+
+| Gate | Required outcome | Evidence needed |
+|---|---|---|
+| External security | Independent penetration test; all critical/high findings remediated or formally risk-accepted | Signed report, remediation PRs, retest letter |
+| Tenant isolation | Independent review of every tenant-owned model, query, API, attachment, job, export, and migration | Review matrix plus adversarial cross-tenant test results |
+| Supply chain | Real tagged GHCR build; signature/provenance verification; unsigned and untrusted images rejected by a representative cluster | Workflow URL, digest, attestations, admission logs |
+| Recovery | Encrypted off-site immutable backup plus successful database/uploads restore within approved RPO/RTO | Recovery manifest, timings, integrity checks, approval |
+| Upgrade and rollback | Two-version production-like rollout and forced migration/application failure with successful rollback | Runbook transcript, health evidence, restored fingerprints |
+| Observability | Structured logs, metrics, traces, alert rules, SLO dashboards, and incident runbooks | Dashboard export, alert tests, SLO ownership |
+| Performance | Load, soak, worker backlog, failover, and capacity tests against published targets | Workload model, results, bottlenecks, capacity envelope |
+| Object storage | Supported encrypted object storage, malware scanning, retention/legal hold, and failure handling | Adapter tests, scan evidence, lifecycle policy |
+| Identity | Enforced MFA through supported IdP, SCIM lifecycle, session inventory/revocation, and tested emergency access | IdP test record, joiner/mover/leaver evidence |
+| Accessibility | Independent WCAG 2.2 AA audit with keyboard, screen-reader, zoom, contrast, and reduced-motion coverage | Audit and remediation verification |
+| Privacy | Approved classification, retention, legal hold, access/export/deletion, regional controls, and DPA/DPIA operationalization | Control mapping and exercised data-subject workflows |
+
+<a id="section-production_readiness_plan--delivery-order"></a>
+### Delivery order
+
+1. Tenant isolation and external security review.
+2. Supply-chain cluster proof, recovery, and rollback rehearsals.
+3. Observability and performance baselines.
+4. Object storage and identity lifecycle controls.
+5. Accessibility and privacy validation.
+
+Production promotion remains blocked until gates 1–3 have no unresolved
+critical/high issue and the accountable owner explicitly accepts residual risk.
+
+<a id="section-production_readiness_plan--current-implementation-checkpoint--2026-08-13"></a>
+### Current implementation checkpoint — 2026-08-13
+
+ServiceOps 1.67.0 has substantially deepened the internal scaffolding behind
+several gates since the 2026-08-05 checkpoint below — most notably Privacy
+(classification/retention/legal-hold/GDPR export-deletion, tracked as
+B-090, code-complete and internally verified), Object storage (S3-compatible
+storage with a supported migration tool and outage-degradation evidence,
+B-052), Observability (Prometheus/Alertmanager rules with real rehearsal
+evidence, B-070/B-071), and Accessibility (a mandatory desktop/mobile
+Playwright plus axe-core CI gate over four critical workflows, B-323). Global
+search also has PostgreSQL trigram indexes and avoids request-time full-object
+ID materialization. **None of this closes any gate in the table above**:
+per this document's own standard, a gate requires independent or
+organization-executed evidence (an external penetration test, an
+organization's own approved DPA/DPIA sign-off, a real production-scale load
+test), not internal code-level verification alone, however thorough. See
+`BACKLOG.md` for current, item-by-item status; the historical 1.38.2
+checkpoint and its remediation plan are below for record only.
+
+<a id="section-production_readiness_plan--prior-checkpoint--2026-08-05-historical"></a>
+#### Prior checkpoint — 2026-08-05 (historical)
+
+ServiceOps 1.38.2 improved release consistency, CI quality checks, one
+redirect boundary, and shared accessibility semantics. It did not close any
+gate in the table above. Scope and evidence are in
+[REMEDIATION_PLAN_1.38.2.md](BACKLOG.md#section-remediation_plan_1.38.2) (now superseded; see that file).

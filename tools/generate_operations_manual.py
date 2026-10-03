@@ -189,6 +189,10 @@ def build():
 
     for raw in SOURCE.read_text().splitlines():
         line = raw.rstrip()
+        if not in_code and re.fullmatch(r'<a id="[\w-]+"></a>', line):
+            flush_paragraph()
+            flush_table()
+            continue
         if line.startswith("```"):
             flush_paragraph()
             flush_table()
@@ -221,10 +225,10 @@ def build():
             flush_paragraph()
             flush_table()
             story.append(Paragraph(escape(line[3:]), styles["h2"]))
-        elif line.startswith("### "):
+        elif re.match(r"^#{3,6} ", line):
             flush_paragraph()
             flush_table()
-            story.append(Paragraph(escape(line[4:]), styles["h3"]))
+            story.append(Paragraph(escape(line.lstrip("# ")), styles["h3"]))
         elif line.startswith("- ["):
             flush_paragraph()
             flush_table()

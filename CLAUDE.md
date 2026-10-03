@@ -423,7 +423,15 @@ When implementing:
 Internal engineering documentation (governance, backlog, traceability, engineering
 reference, deployment guide, API reference, this file) lives in the sibling
 `serviceops-notes` repo, not in this repo's GitHub history. Controlled documentation
-begins at `serviceops-notes/docs/DOCUMENTATION_INDEX.md`.
+begins at `serviceops-notes/README.md`. The six maintained documents are
+`docs/OPERATIONS_MANUAL.md` (usage and capabilities),
+`docs/ENGINEERING_REFERENCE.md` (architecture and governance),
+`docs/DEPLOYMENT.md` (deployment and recovery), `docs/API_REFERENCE.md`
+(public API contract), `docs/COMPLIANCE.md` (privacy and security controls),
+and `docs/BACKLOG.md` (work register, traceability and dated evidence).
+Update their sections directly. Do not recreate separate indexes, master
+copies, per-feature documents or archive duplicates. Historical evidence
+must remain dated and distinguished from current operating instructions.
 
 This `ServiceOps` repo's GitHub-visible docs are limited to `README.md`,
 `docs/ServiceOps_Complete_Platform_Manual.pdf` (the public user manual),

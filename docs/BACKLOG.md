@@ -1,10 +1,43 @@
-# ServiceOps governed backlog
+# ServiceOps work register and verification history
+
+Use the [documentation index](../README.md) to navigate the six maintained documents. Update this document directly; there is no generated master copy.
+
+The work register is authoritative. Dated verification reports and legacy excerpts below are historical evidence, not a fresh certification of the running deployment. The fresh-review acceptance report records Helm revision 148; earlier revisions remain historical.
+
+## Contents
+
+- [ServiceOps governed backlog](#section-backlog)
+- [Requirements traceability matrix](#section-traceability_matrix)
+- [ServiceOps fresh review and corrections — 2026-10-03](#section-app_fresh_fixes_2026-10-03)
+- [ServiceOps strict-review corrections — 2026-10-03](#section-app_strict_fixes_2026-10-03)
+- [ServiceOps renewed strict-quality review — 2026-10-03](#section-app_strict_review_2026-10-03)
+- [ServiceOps application review — 2026-10-03](#section-app_review_2026-10-03)
+- [Rack equipment image verification — 2026-10-03](#section-rack_image_verification_2026-10-03)
+- [SCIM provisioning corrections — 2026-10-02 (verified 2026-10-03)](#section-scim_fix_verification_2026-10-02)
+- [ServiceOps 1.39.0 operational-resilience release](#section-remediation_plan_1.39.0)
+- [ServiceOps 1.38.2 remediation and release plan](#section-remediation_plan_1.38.2)
+- [ServiceOps master reference (for any AI or engineer touching this codebase)](#section-master_reference)
+- [ServiceOps master reference (for any AI or engineer touching this codebase)](#section-archive-master_reference)
+- [Requirements traceability matrix](#section-archive-traceability_matrix)
+- [Australia UI guide capability mapping](#section-archive-ui_capability_mapping)
+
+---
+
+<a id="section-backlog"></a>
+
+## ServiceOps governed backlog
+
+<a id="section-backlog--serviceops-governed-backlog"></a>
 
 This is the authoritative work register. “Done” requires code, tests,
 documentation, and evidence. Priority: P0 release blocker, P1 required for
 enterprise production, P2 planned enhancement.
 
-**B-362 AI assistance (updated 2026-09-22):** ServiceOps 1.99.1 is deployed at Helm revision 102 with tenant administrator controls, self-hosted and commercial connections, encrypted credentials, adaptive model discovery, privacy- and allowance-aware routing, whole-product permission-scoped context, ticket drafts, explicit per-user memory, role-scoped chat, transient ChatGPT-style activity, secure retrieval, and the first separately controlled approved action. [Plan and evidence](AI_IMPLEMENTATION_PLAN.md); [operator guide](AI_OPERATIONS.md). Commercial live inference and broader model-quality/load validation remain pending.
+**B-412 fresh review (2026-10-03):** Six reproduced transaction, diagnostic persistence, tenant-manager, CMDB matching-key, API-input and CTASK authorization defects corrected with 23 new regressions. Real PostgreSQL combined regressions, real IPFS application restart and 106 browser/accessibility cases pass. Final full suite: 1,382 passed / 125 skipped; PostgreSQL: 66 passed; final focused regression/documentation/version gate: 37 passed. Final MicroK8s acceptance completed at Helm 148 with healthy web/outbox/AI workers, unchanged 20261003_0110 migration and retained records/PVCs. [Evidence and limits](#section-app_fresh_fixes_2026-10-03).
+
+**B-411 strict-review completion (2026-10-03):** Additional bounded-input, installer-state, interrupted-sync and encrypted-checkpoint corrections, plus atomic CI rejection, MFA expiry and email retry hardening, are implemented on v1.110.1. Focused regressions, real PostgreSQL/Kubo and 106 browser/accessibility cases pass. Full suite: 1,358 passed / 126 skipped; explicit documentation/version gate: 14 passed. MicroK8s acceptance completed at Helm 146 with the temporary immutable local candidate, unchanged migration 20261003_0110, ready web/outbox/AI workers and preserved records/PVCs. [Correction and acceptance evidence](#section-app_strict_fixes_2026-10-03).
+
+**B-362 AI assistance (updated 2026-09-22):** ServiceOps 1.99.1 is deployed at Helm revision 102 with tenant administrator controls, self-hosted and commercial connections, encrypted credentials, adaptive model discovery, privacy- and allowance-aware routing, whole-product permission-scoped context, ticket drafts, explicit per-user memory, role-scoped chat, transient ChatGPT-style activity, secure retrieval, and the first separately controlled approved action. [Plan and evidence](ENGINEERING_REFERENCE.md#section-ai_implementation_plan); [operator guide](OPERATIONS_MANUAL.md#section-ai_operations). Commercial live inference and broader model-quality/load validation remain pending.
 
 **B-323 verification supplement (2026-08-14):** the final containerized suite
 passed `486 passed, 9 skipped` (the nine skips are the environment-gated
@@ -65,7 +98,8 @@ mutated for disposable testing.
 
 | ID | Priority | State | Work and acceptance criteria |
 |---|---|---|---|
-## ServiceOps Assist roadmap (2026-09-22)
+<a id="section-backlog--serviceops-assist-roadmap-2026-09-22"></a>
+### ServiceOps Assist roadmap (2026-09-22)
 
 Source: a ServiceNow "Now Assist / AI Agents" feature survey the user provided, with the direction "I need all of these features implemented in ServiceOps... prepare a proper backlog for all these features... carefully manage it." Four scope decisions were confirmed with the user before this list was written and govern every row below:
 
@@ -186,7 +220,7 @@ Status legend: **Verified** already shipped and tested · **Planned** scoped, no
 | B-331 | P3 | Implemented (experimental) | User requested an optional, install-time-selectable database-less deployment mode using IPFS instead of PostgreSQL, with "better user authentication and recovery" and the explicit constraint that it ship in the same codebase, not a fork, splitting apart only at install time. Given the scope (~110 relational models, 571 direct `db.session`/`Model.query` call sites in `app.py`, zero existing storage abstraction), this was planned first (`EnterPlanMode`) rather than implemented blind. Plan highlights, per the user's own explicit choices when asked to resolve the three biggest open design questions: no local index/cache database of any kind (pure in-memory state, checkpointed to IPFS -- not even embedded SQLite); the `StorageBackend` interface designed for eventual full parity across every entity, even though the ~571-call-site migration itself has to happen in waves; and a self-sovereign BIP39 mnemonic recovery phrase as the default authentication root (like a crypto wallet), with admin-assisted recovery reserved as an optional, off-by-default extension rather than the primary path. **Real governance conflict flagged and resolved**: `CLAUDE.md` rule 3 said "PostgreSQL is the only supported standard production database" -- amended (both here and in `ServiceOps/CLAUDE.md`, gitignored there but the source of truth is this repo's copy) to "PostgreSQL is the default, standard production database. An optional, install-time IPFS-backed storage mode exists for self-hosted, database-less deployments... It ships as an optional adapter behind the same interface, not a fork, per rule 10" -- codifying that IPFS mode needs its own documented production-readiness evidence before ever being treated as equivalent to PostgreSQL mode. **Implementation (first slice only, per the plan's own scoping)**: new `serviceops_core/storage/` package -- `interface.py` (full `StorageBackend` contract: generic CRUD, tenant-scoped `query()`, `relate()`, `unit_of_work()`, `enforce_unique()`, plus `attach_file`/`read_file`/`delete_file`, all declared now so no future wave needs a breaking interface change), `postgres_backend.py` (thin wrapper reusing today's local-disk/S3 attachment behavior byte-for-byte -- zero regression risk, the non-attachment CRUD methods intentionally raise `NotImplementedError` since app.py's 571 call sites aren't migrated in this pass), and `ipfs_backend.py` (new: file attachments end-to-end plus the checkpoint boot/save mechanism every future wave reuses -- one IPNS pointer per instance resolved at boot to the latest encrypted-with-`SETTINGS_ENCRYPTION_KEY` checkpoint object; every write updates the in-memory `_file_index` immediately and republishes a fresh checkpoint, so a restart only ever needs the single latest snapshot, not a full history replay). `FileAttachment.ipfs_cid` (new nullable column, migration `20260814_0083`) records the CID under IPFS mode; null and unused under the default. **Two real bugs found via live testing against an actual Kubo container (not mocks)**, exactly the kind of finding a live-infra check catches that a mocked unit test cannot: (1) Kubo's `name/resolve` caches results by default -- a resolve immediately after this same process's own `name/publish` returned a stale CID even 30+ seconds later, confirmed independently via the raw `ipfs` CLI's own `--nocache` flag before touching code; fixed by always passing `nocache=true`. (2) Kubo's `name/publish` tries to provide the record to the public DHT by default and hung for the full 30s request timeout on a node with no swarm peers -- which every bundled/single-node deployment has by design, since a self-hosted instance's checkpoint pointer only ever needs to be resolved by that same instance, not discovered by the wider public network; fixed by passing `allow-offline=true`, the *correct* choice here, not merely a workaround. New `tests/test_ipfs_backend_live.py` (skipped unless `IPFS_LIVE_TEST_API_URL` points at a real node) guards against either regressing, and both were re-verified passing against a fresh disposable Kubo `v0.33.0` container end-to-end after the fix (fresh-node empty checkpoint, attach+read round trip, checkpoint survival across a simulated process restart, delete+republish) in ~12 seconds total. **Known, documented first-slice limitation, not silently glossed over**: the separate `worker` process (`tools/outbox_worker.py`, which also calls `create_app()` and can create attachments via inbound email ingestion) is deliberately *not* wired to `STORAGE_MODE`/`IPFS_API_URL` in `compose.yaml` -- two independent processes each keeping their own in-memory checkpoint index would race publishing the same IPNS pointer and could clobber each other's file index; consolidating IPFS mode onto a single process is explicitly a later wave (see the plan's "Deployment/process shape" section), so worker-created attachments always use `PostgresStorageBackend` even when the main app runs in IPFS mode, until that's addressed. Installer (`installer/app.py`, `templates/index.html`): new "Storage backend" selector (PostgreSQL default vs IPFS experimental) mirroring the existing `db_mode` bundled/external pattern exactly, plus a new `test_ipfs()` readiness check (skips the live check for bundled mode, requires+verifies an API URL for external mode). `compose.yaml` gains a `profiles: ["ipfs"]`-gated bundled Kubo `v0.33.0` service (real digest pinned via a live `docker pull`, not guessed) -- a default deployment never starts it; `app`'s environment gains `STORAGE_MODE`/`IPFS_API_URL` (both default to the inert PostgreSQL-mode values). New tests: `tests/test_storage_backend.py` (20 tests: interface-contract enforcement, checkpoint encrypt/decrypt round-trip including a wrong-key failure case, `PostgresStorageBackend`'s local-disk and S3 attachment paths against a fake S3 client, `IPFSStorageBackend`'s attach/read/delete/checkpoint-reload behavior against a fake in-memory Kubo double), plus 5 new `test_installer.py` cases for the new selector and `write_environment()` defaults. Full suite `509 passed, 11 skipped` (9 pre-existing conditional skips -- e2e browser + docs-sync -- plus 2 new, live-Kubo-only). **A real branch-tracking issue was caught and fixed during shipping, not silently worked around**: local `main` was discovered to be stale relative to `origin/main` (which already had an unrelated mobile-auth branch merged via PR #2 with its own 1.67.0-1.70.3 release history) after this work was accidentally committed on top of that stale local branch instead of current `main` -- resolved by fast-forwarding local `main` to `origin/main` and merging (not force-pushing or rewriting) the IPFS commit in, preserving both histories intact; re-verified the full suite passed again post-merge before pushing. Deployed live: rebuilt `serviceops-app:1.71.0`, redeployed app+worker, `/health` and deep `/ready` both green (migration head `20260814_0083`), confirmed a real authenticated ticket-list fetch still works identically under the unaffected default `STORAGE_MODE=postgres`. Version bumped to `1.71.0` (minor: new opt-in capability) via `tools/release_version.py`. **Explicitly not done, and not claimed**: this is a first slice only -- record CRUD for every other entity (tickets, changes, CIs, users, ...) still requires PostgreSQL regardless of `STORAGE_MODE`; IPFS mode is experimental and unverified at any production scale; horizontal scaling, live migration between modes, and Shamir's-Secret-Sharing layered recovery are explicit non-goals for this pass per the plan. |
 | B-330 | P2 | Verified | Canonical three-asset ServiceOps identity release for ServiceOps 1.70.3 and iOS 1.3.2 (build 8). Replaced the interim dark-background treatment with the user-supplied production variants, each retained for its intended context: the opaque white rounded-square network icon is the iOS launcher, Apple touch icon, and 192/512 PWA icon; the transparent horizontal ServiceOps wordmark is the default web sidebar and authentication/recovery identity; and the transparent standalone network mark is the compact/favicon asset. Tenant-uploaded company logos remain independent and continue to take precedence in the sidebar. All iOS appearance slots use the opaque canonical launcher artwork so no alpha reaches the asset catalogue. No schema, authentication, authorization, or tenant-boundary change. Evidence: every delivered raster was visually inspected and its dimensions/alpha contract checked; the iOS Release clean build and asset-catalog compilation passed, and the installed iPhone 17 Pro simulator home screen rendered the supplied geometry correctly under Apple's active tinted-icon appearance; ServiceOps Ruff and canonical-version gates passed; the complete isolated suite passed (`491 passed, 9 skipped`); the rebuilt `serviceops-app:1.70.3` app and worker are deployed on all interfaces at `http://192.168.68.65:80`; external `/health` and deep `/ready` pass at migration `20260814_0082`; the live manifest declares the new 192/512 maskable artwork; and the new wordmark endpoint plus login reference return successfully. |
 | B-329 | P2 | Verified | Shared application-icon release: the user-approved blue/cyan network-cube artwork is prepared as an opaque, padded 1024 px master on deep navy and applied consistently to ServiceOps 1.70.2 and iOS 1.3.1 (build 7). Web delivery includes a 32 px favicon, 180 px Apple touch icon, 192/512 PWA maskable icons, offline shell caching, and the default sidebar/login/recovery mark; tenant-uploaded company logos remain an independent configurable identity. The iOS asset catalogue declares the same 1024 px artwork for standard, dark, and tinted appearances. No schema or authorization change. Evidence: master and all derived images were dimension/alpha checked; the iOS Release simulator build and asset-catalog compilation passed; the installed iPhone 17 Pro simulator launcher was visually inspected and confirmed centered, legible, and unclipped; ServiceOps canonical-version and Ruff gates passed; the complete containerized suite passed (`491 passed, 9 skipped`); rebuilt `serviceops-app:1.70.2` is deployed at `http://192.168.68.65:80`, both PWA icon endpoints return PNG/200, the live manifest declares 192/512 maskable icons, and `/health` plus deep `/ready` pass at migration `20260814_0082`. |
-| B-328 | P1 | Verified | ServiceOps 1.70.1 mobile discoverability, documentation, and release-evidence update. Added a dedicated authenticated `/mobile-app` page, a persistent Self-service navigation entry, Help Center guidance, and a global-search catalogue entry linking users to the maintained `ServiceOps_iOS` repository. Corrected the backend/configuration default APNs bundle identifier to the iOS target's actual `wijesundara.com.ServiceOps`. The iOS repository now contains a full setup/security/capability README plus genuine iPhone 17 Pro simulator screenshots for Home, My Work, Notifications, and More; the screenshot capture fixture was removed before the shipping build, so no demo records or authentication bypass remain. Added `docs/MOBILE_APP.md`, updated the documentation index, feature/capability references, deployment guidance, and stale native-mobile limitation statements. Evidence: ServiceOps canonical-version, Ruff, bytecode, and full containerized suite passed (`490 passed, 9 skipped`); unsigned iOS Debug capture build and final fixture-free Release simulator build passed; rebuilt `serviceops-app:1.70.1` is deployed at `http://192.168.68.65:80`, app/database are healthy, worker is running, `/health` and deep `/ready` pass at migration `20260814_0082`. No schema change. Real remote APNs delivery remains an external gate requiring the user's Apple credentials, signed physical-device build, and matching sandbox/production configuration. |
+| B-328 | P1 | Verified | ServiceOps 1.70.1 mobile discoverability, documentation, and release-evidence update. Added a dedicated authenticated `/mobile-app` page, a persistent Self-service navigation entry, Help Center guidance, and a global-search catalogue entry linking users to the maintained `ServiceOps_iOS` repository. Corrected the backend/configuration default APNs bundle identifier to the iOS target's actual `wijesundara.com.ServiceOps`. The iOS repository now contains a full setup/security/capability README plus genuine iPhone 17 Pro simulator screenshots for Home, My Work, Notifications, and More; the screenshot capture fixture was removed before the shipping build, so no demo records or authentication bypass remain. Added [docs/MOBILE_APP.md](OPERATIONS_MANUAL.md#section-mobile_app), updated the documentation index, feature/capability references, deployment guidance, and stale native-mobile limitation statements. Evidence: ServiceOps canonical-version, Ruff, bytecode, and full containerized suite passed (`490 passed, 9 skipped`); unsigned iOS Debug capture build and final fixture-free Release simulator build passed; rebuilt `serviceops-app:1.70.1` is deployed at `http://192.168.68.65:80`, app/database are healthy, worker is running, `/health` and deep `/ready` pass at migration `20260814_0082`. No schema change. Real remote APNs delivery remains an external gate requiring the user's Apple credentials, signed physical-device build, and matching sandbox/production configuration. |
 | B-327 | P0 | Implemented | ServiceOps 1.70.0 / iOS 1.3.0 mobile workspace expansion. Added encrypted authenticated APNs device registration, durable outbox delivery with retry evidence and stale-token deactivation, foreground presentation, notification inbox/read state, role-aware mobile bootstrap and assignment teams, approval decisions, ticket comments, knowledge search, and read-only CMDB search. Added native five-area navigation and APNs entitlement/app delegate. Installed version/build metadata is visibly available in both More and Settings and is sourced directly from the app bundle; the follow-up build is 1.3.0 (6). Backend coverage validates ownership and encrypted token storage; unsigned simulator compilation validates the native source. Real APNs delivery remains an external acceptance gate requiring the user's Apple push key, matching signed profile and physical device. |
 | B-326 | P0 | Implemented | ServiceOps 1.69.0 and iOS 1.2.0 biometric and passkey authentication. The iOS client can require Face ID, Touch ID, Optic ID, or device-passcode recovery whenever the app returns from the background; saved access and refresh tokens use `WhenUnlockedThisDeviceOnly` Keychain accessibility and are never copied into preferences. Signed-in users can create an Apple platform passkey from Settings, inventory and revoke their credentials there, and subsequently use the login screen's real passkey action. The backend issues tenant/user-bound, five-minute, single-use WebAuthn registration and authentication challenges; rate-limits unauthenticated attempts and prunes expired challenges; requires resident credentials and user verification; stores credential IDs, COSE public keys and signature counters; rejects inactive or cross-tenant identities; and issues the same short-lived, rotating, revocable mobile session used by password login. Passkey logins and revocations retain authoritative user, app version/build, platform and device attribution. Data-preserving migration `20260814_0081` adds `passkey_credential` and `passkey_challenge`; rollback intentionally retains those additive tables so registered public keys are not destroyed, and the prior application safely ignores them. Deployment configuration adds `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, HTTPS-only `WEBAUTHN_ORIGIN`, `APPLE_PASSKEY_APP_ID`, an Apple AASA response, Compose passthrough, and Helm values. Evidence: complete containerized suite `489 passed, 9 skipped`; focused passkey/configuration/replay/lifecycle and audit-coverage tests passed; Ruff, canonical-version, Compose rendering, API-reference synchronization and whitespace checks passed; Debug and Release unsigned simulator builds succeeded for arm64 and x86_64. An isolated PostgreSQL clone successfully downgraded `20260814_0081` to `20260814_0080` and rolled forward to head with 100 synthetic rows and all data fingerprints unchanged. Helm rendering was not rerun locally because the Helm CLI is unavailable. A real HTTPS domain, matching Apple Associated Domains entitlement/AASA file, signed physical device, and iCloud Keychain ceremony are mandatory external acceptance evidence and cannot be exercised on the plain-HTTP LAN development deployment. |
 | B-325 | P0 | Verified | ServiceOps 1.68.1 and iOS 1.1.1 sensitive-file hygiene review. Audited the tracked and working trees of `ServiceOps`, `serviceops-notes`, and `ServiceOps_iOS` for environment files, credentials, embedded API tokens, private keys, certificates, Apple provisioning/signing material, Xcode user state, database/recovery archives, and common provider-token signatures. No live password, API token, private key, GitHub token, or Apple signing identity was present in the tracked trees; targeted history searches found neither the local administrator password nor the previously removed mobile API token. Expanded the backend ignore policy for local environment variants, Compose/Helm secret overrides, credentials, Terraform variable files, certificates and keys while explicitly retaining `.env.example`; added a controlled ignore policy to `serviceops-notes`; added iOS rules for Xcode user state, DerivedData/build/archive output, local xcconfig/secret files, signing identities and provisioning profiles. Removed the already-tracked `xcuserdata` scheme-management file from the iOS index without deleting the developer's local copy. The chart's tracked `templates/secret.yaml` was reviewed and retained because it contains required parameter references only, not secret values. Debug ATS clear-text LAN permission and Release ATS policy remain separated in source-controlled Info.plists. Validation: `git diff --check`, ignore-rule assertions, tracked-name scans, tracked-content secret-pattern scans, and Debug/Release unsigned simulator builds passed. |
@@ -196,14 +230,14 @@ Status legend: **Verified** already shipped and tested · **Planned** scoped, no
 | B-321 | P2 | Verified | Direct follow-up to [[B-320]]: user reported live, after actually using the newly-split settings pages, that "some are not visible with the whole screen, it just compacts ugly," and asked for every page to be re-visited and confirmed across resolutions, not just spot-checked. Root cause confirmed via real Playwright screenshots, not guesswork: `system_settings_category.html` still wrapped its form in `.settings-workspace`, a CSS grid (`grid-template-columns:210px minmax(0,1fr)`) built for the old sidebar+content mega-page. Once B-320 removed the `.settings-nav` sidebar from this template, the grid still reserved its 210px first track, and CSS grid auto-placement dropped the lone remaining `.settings-content` child into that narrow first column instead of spanning both tracks -- every category's fields rendered squeezed into ~210-330px with a large empty gap to the right, on every settings category page (Security, Organization, Appearance, Sign-in and directory, branding, etc.). `itil_admin_section.html` never used this wrapper (its sections were written as plain `.panel` blocks from the start), so Service delivery & governance's isolated pages were already correct at every resolution. Fixed by removing the `.settings-workspace` wrapper from `system_settings_category.html`, keeping `.settings-content` alone for vertical spacing. Verified for real, per the user's explicit "virtually confirms everything" instruction: installed Playwright + Chromium in a throwaway venv, logged into the live deployment, and screenshotted all 26 isolated pages (12 Platform settings categories + 14 governance sections, full page, not just above-the-fold) plus both index pages at four resolutions -- 1280x800, 1366x768, 1440x900, 1920x1080 -- both before and after the fix. Before: every settings-category page showed the narrow-column bug; governance pages were already correct. After: zero `document.documentElement.scrollWidth > clientWidth` horizontal-overflow cases across all 104 screenshots, and full-width layout confirmed by direct visual inspection on a representative sample (Security, Sign-in and directory, Appearance, Company logo, Ticket defaults, SLA, the two index card-grid pages) at every resolution. Separately investigated and ruled out a second apparent issue found in the first screenshot pass: the sticky "Validate and save" bar appeared to overlap two mid-page fields in a full-page screenshot -- confirmed via a real-scroll (not full-page-stitched) screenshot that this was purely a `position:sticky` full-page-screenshot rendering artifact (sticky elements freeze at their last real scroll offset when a page is captured in one tall stitched image), not a real bug; during actual viewport scrolling the bar correctly stays pinned to the visible bottom edge with no field overlap. Full suite `480 passed, 2 skipped` (unchanged from [[B-320]] -- this was a pure CSS/template fix, no logic change). Deployed live: rebuilt `serviceops-app:1.65.1`, redeployed app+worker, `/health` confirmed version `1.65.1`, no migration needed. Version bumped to `1.65.1` (patch: layout fix) via `tools/release_version.py --bump patch --write`. |
 | B-320 | P2 | Verified | Direct follow-up to [[B-319]]: user rejected the real, correctly-working tab-switching from B-319 outright -- "still not good... i don't need this. this is duplicated or when i click on the icon on multiple things, comes to this same place. we need to decentralized each section into isolated settings pages." Even though B-319's tabs genuinely showed/hid one category at a time, every category still lived on the same one URL/page and the same icon destination -- not the real separation the user wanted. Rebuilt both `system_settings()` and `itil_admin()` as lightweight index/card-grid pages (GET only), and added two new isolated-page routes: `/admin/settings/<category>` (GET/POST, one of the 9 real `SETTING_DEFINITIONS` groups plus `branding`/`infrastructure` pseudo-categories) and `/service-operations/settings/<section>` (GET only, one of 13 sections). Business logic was deliberately left untouched to avoid re-risking the ~20-branch `itil_admin` action dispatch and the settings validation/save loop: every isolated section page's forms post to the same original `itil_admin`/`system_settings_category` handlers they always did (`action="{{ url_for('itil_admin') }}"` on each form), and a new `_admin_referrer_redirect()` helper (reusing this codebase's existing `request.referrer` + `request.host_url` same-origin-prefix pattern, already used at two other call sites) sends the user back to the specific isolated page they came from instead of always landing on one shared index. Fixed a real bug the split would otherwise introduce: the "at least one authentication method must remain enabled" check previously ran unconditionally on every settings save because all fields lived on one shared form; it now only runs when `category == "sign_in_and_directory"`, since that's the only isolated page that ever submits those three fields -- gated directly on the URL's own category parameter, no hidden form field needed. Updated every stale in-app link to the old `#anchor` scheme: `admin_home.html`'s Quick Find cards (39 cards), `admin_access.html`, `rt_import.html`, `cmdb_import.html`, `ci_form.html`, and the global omnisearch navigation table (`app.py`'s `/ui/search` handler) all now link to the real isolated URLs. The `[data-tab-nav]` attribute added in [[B-319]] is no longer referenced by either template (both pages are now real separate URLs, not client-side panels) -- the underlying `.record-section-tabs`/`.tab-panel-hidden` JS/CSS in `platform.js` was left in place since ticket detail pages still use it for a genuinely different, non-settings use case. Rewrote/replaced the tests these two pages' prior behavior depended on: `test_settings_pages_show_one_category_at_a_time_not_everything_at_once` (asserted `data-tab-nav` presence) replaced with `test_settings_pages_are_decentralized_into_isolated_pages` (asserts each isolated page 200s, contains only its own category's fields, and a non-existent category/section 404s); `test_admin_can_update_live_platform_branding` restructured from one giant multi-category POST into one POST per category against its own isolated URL, plus a new `test_settings_category_page_does_not_trigger_auth_method_check_for_other_categories` regression test for the fix above; `test_administration_is_one_hub_with_clear_child_areas` and `test_unified_search_favorites_and_preferences` updated to check the new real URLs instead of `#anchor` fragments. Full suite `480 passed, 2 skipped` (up from 479). Deployed live: rebuilt `serviceops-app:1.65.0`, redeployed app+worker, `/health`/`/ready` both green with no migration needed (no schema change this pass). Verified for real against the running deployment, not just the test suite: authenticated curl session confirmed every new URL returns 200; confirmed the Security page does not leak `COMPANY_NAME` and the Organization page does not leak `PASSWORD_MIN_LENGTH`/`CLAMAV` fields; confirmed the SLA page does not contain the freeze-window form and vice versa; confirmed both index pages link out to the real isolated URLs. Version bumped to `1.65.0` (minor: new navigation capability) via `tools/release_version.py --set 1.65.0 --write`, which also caught and fixed drift in `README.md`/`static/service-worker.js`/`.env.example`/`tools/install/server.sh`/`charts/serviceops/values.yaml` that a manual version bump had missed -- use that tool for version bumps going forward instead of hand-editing each file. |
 | B-319 | P2 | Verified | Direct follow-up to [[B-318]]: user said Platform settings and Service delivery & governance still felt like "all of them are together and unable to track different categories," and pointed out duplicate links "here and there." Root cause of the first complaint: both mega-pages already had a category sidebar (`.settings-nav`) with anchor links, but it only scrolled to a position -- every category's fields stayed rendered and visible simultaneously on one long page, so there was no real separation while looking at any single category. Generalized the existing real tab-switching behavior ticket detail pages already use (`.record-section-tabs` + `.tab-panel-hidden` in `platform.js`) behind a new `[data-tab-nav]` attribute (kept separate from the `.record-section-tabs` class so its horizontal-top-bar CSS doesn't fight `.settings-nav`'s vertical-sidebar styling), and wired both pages to it -- clicking a category now shows only that category and hides the rest, using anchors that already existed (nothing new to add). The same JS already intercepts external `#anchor` links, so [[B-318]]'s Quick Find deep links now land on an actually-isolated section instead of just a scroll position. Removed `itil_admin.html`'s 4 numbered category-divider headings ("01 Service delivery"...), which would otherwise sit outside the tab panels as permanently-visible, near-empty, orphaned headers once only one category shows at a time -- they duplicated what the sidebar's own group labels already said anyway. Second complaint confirmed as two real, distinct duplicate-link bugs, not a vague feeling: `admin_access.html` had two separate cards ("Groups & teams," "Client management access") pointing at the exact same `itil_admin#team-managers` destination, merged into one; `admin_home.html` separately had a "Groups & teams" card routed through the `admin_access` hub as an unnecessary extra hop *and* a "Team ownership" card pointing directly at the same underlying page -- removed the redundant hop-through card, keeping Quick Find's own one-click-to-anywhere design intact. New tests `test_admin_home_has_no_duplicate_card_destinations` (every card href on both `/admin` and `/admin/access` must be unique) and `test_settings_pages_show_one_category_at_a_time_not_everything_at_once`. Full suite `479 passed, 2 skipped` (up from 477). Deployed live and verified with a real Playwright-driven browser session, not just curl/server-rendered HTML: confirmed Quick Find's "LDAP" search shows exactly 2 matching cards with the other 36 genuinely hidden via the `hidden` attribute (a first pass using `:visible` pseudo-selector counting falsely showed 20 -- a Playwright script measurement bug, confirmed and corrected before trusting the result, not a product bug); confirmed real tab isolation on both mega-pages by inspecting the `tab-panel-hidden` class directly; confirmed zero orphaned section dividers remain. Version bumped to `1.64.1` (patch). |
-| B-318 | P2 | Verified | User asked for small, deeply-nested admin components to be searchable (their own example: "LDAP directory sync," a sub-section 200+ lines into the Service delivery & governance mega-page with no menu entry anywhere), and for the whole Administration section's menu/components to be restructured -- explicitly asking for research into how other tools solve this before building. Researched Salesforce Setup's Quick Find, Zendesk Admin Center, Freshservice/Freshdesk, Jira/Atlassian admin, and ServiceNow's Filter Navigator (see the session's research summary for citations). Conclusion: the pattern that actually solves "a leaf item three levels deep isn't findable" is Salesforce/ServiceNow's -- a flat, always-visible search box indexing every admin component label, live-filtering as typed, not just a categorized tree. Zendesk's "who/what is configured" category taxonomy was the reference for regrouping sections; Freshservice and Jira were useful negative examples (menu-only or generic-record-search-only leaves exactly this gap). Rebuilt `admin_home.html` as a genuine Quick Find hub: a live-filtering search box over 39 capability cards (up from ~11 top-level-only cards previously), each deep-linked to its real in-page anchor -- reusing the already-correct existing anchor scheme in `itil_admin.html`/`system_settings.html` rather than duplicating it (two anchors were only newly added, to `integrations.html`/`workflows.html`, which had none), each carrying a `data-keywords` attribute so a synonym like "active directory" or "sso" also surfaces the LDAP card. Restructured the sidebar's flat 15-item Administration list into four labeled subgroups (User management, Service delivery & governance, Connections & automation, Platform & security) matching the same taxonomy. Notable finding during the build: a substantial, fully-styled `.admin-navigator`/`.platform-drawer`/`.all-menu-*` search/drawer system already existed in `admin-workspace.css`/`admin-nav.js` but was rendered by zero templates -- confirmed as dead code from an earlier experimental tab-strip/drawer this repo's own `ADMINISTRATION_INFORMATION_ARCHITECTURE.md` records as deliberately removed ("obscured content and reduced navigation scanability"); reviving it would have contradicted that prior product decision, so a new, lighter implementation was built on the current card-grid pattern instead, leaving the dead CSS/JS untouched (a separate cleanup, out of scope here). Two pre-existing tests asserted specific old card titles this redesign intentionally renamed/regrouped ("Access control," "Service delivery and governance"); updated both to check the new equivalent markers. New test `test_admin_home_is_a_searchable_index_that_surfaces_deeply_nested_components` checks the exact reported LDAP example deep-links correctly, plus a sample of other previously-buried components. Full suite `477 passed, 2 skipped` (up from 476). Deployed live and verified for real, not just via the test suite: confirmed the LDAP card renders with the correct href/keywords, confirmed the `#ldap-sync` anchor target actually contains the LDAP sync section's real content (not just the top of a long page), confirmed all three new sidebar subgroups render. Version bumped to `1.64.0` (minor: new capability). |
+| B-318 | P2 | Verified | User asked for small, deeply-nested admin components to be searchable (their own example: "LDAP directory sync," a sub-section 200+ lines into the Service delivery & governance mega-page with no menu entry anywhere), and for the whole Administration section's menu/components to be restructured -- explicitly asking for research into how other tools solve this before building. Researched Salesforce Setup's Quick Find, Zendesk Admin Center, Freshservice/Freshdesk, Jira/Atlassian admin, and ServiceNow's Filter Navigator (see the session's research summary for citations). Conclusion: the pattern that actually solves "a leaf item three levels deep isn't findable" is Salesforce/ServiceNow's -- a flat, always-visible search box indexing every admin component label, live-filtering as typed, not just a categorized tree. Zendesk's "who/what is configured" category taxonomy was the reference for regrouping sections; Freshservice and Jira were useful negative examples (menu-only or generic-record-search-only leaves exactly this gap). Rebuilt `admin_home.html` as a genuine Quick Find hub: a live-filtering search box over 39 capability cards (up from ~11 top-level-only cards previously), each deep-linked to its real in-page anchor -- reusing the already-correct existing anchor scheme in `itil_admin.html`/`system_settings.html` rather than duplicating it (two anchors were only newly added, to `integrations.html`/`workflows.html`, which had none), each carrying a `data-keywords` attribute so a synonym like "active directory" or "sso" also surfaces the LDAP card. Restructured the sidebar's flat 15-item Administration list into four labeled subgroups (User management, Service delivery & governance, Connections & automation, Platform & security) matching the same taxonomy. Notable finding during the build: a substantial, fully-styled `.admin-navigator`/`.platform-drawer`/`.all-menu-*` search/drawer system already existed in `admin-workspace.css`/`admin-nav.js` but was rendered by zero templates -- confirmed as dead code from an earlier experimental tab-strip/drawer this repo's own [ADMINISTRATION_INFORMATION_ARCHITECTURE.md](OPERATIONS_MANUAL.md#section-administration_information_architecture) records as deliberately removed ("obscured content and reduced navigation scanability"); reviving it would have contradicted that prior product decision, so a new, lighter implementation was built on the current card-grid pattern instead, leaving the dead CSS/JS untouched (a separate cleanup, out of scope here). Two pre-existing tests asserted specific old card titles this redesign intentionally renamed/regrouped ("Access control," "Service delivery and governance"); updated both to check the new equivalent markers. New test `test_admin_home_is_a_searchable_index_that_surfaces_deeply_nested_components` checks the exact reported LDAP example deep-links correctly, plus a sample of other previously-buried components. Full suite `477 passed, 2 skipped` (up from 476). Deployed live and verified for real, not just via the test suite: confirmed the LDAP card renders with the correct href/keywords, confirmed the `#ldap-sync` anchor target actually contains the LDAP sync section's real content (not just the top of a long page), confirmed all three new sidebar subgroups render. Version bumped to `1.64.0` (minor: new capability). |
 | B-317 | P1 | Verified | User asked to review the whole app for the same class of bug found in [[B-316]] (a control that appears to do something but has zero real effect, with no warning) -- said plainly they'd "started losing trust" after catching bugs in claimed-done work, so this was done as a systematic sweep, not spot-checking. **Finding 1, the big one**: audited every `effective_role_has_action()`/`@require_action` call site (decorator and inline, browser and REST API) against the full `config/authorization.json` action catalog. 10 of 17 actions -- `delete`, `purge`, `approve`, `accept`, `close`, `reopen`, `delegate`, `relate`, `discover`, `read` -- are never checked anywhere in the app, for any role. Confirmed concretely against `change_delete()`: it has its own independent `@roles(...)` gate and never calls `effective_role_has_action("delete", ...)` at all. Real authorization for these operations is sound -- it happens through separate, hardcoded role/team-membership rules -- only [[B-316]]'s roles-and-permissions page's promise that toggling these checkboxes does something was false, for every role, not just non-admin ones. `create` is a partial case (REST API v1 only, not the browser UI). Fixed by marking these rows "not yet enforced" (informational, not editable) and making the save handler skip them entirely, so a save can never misinterpret an unavoidably-absent checkbox as "revoke this role's baseline grant" (a real risk for e.g. manager's baseline "approve" grant). **Finding 2**: audited all 68 defined settings for whether they're actually read anywhere (most of an initial 20 "dead" hits were false positives from dynamic/f-string key construction, e.g. the `WORKSPACE_WIDGET_*_ENABLED` family). Found 2 genuinely dead: `DEFAULT_DENSITY` (new users always got "comfortable" from the model column's hardcoded default, regardless of what an admin set) and `SESSION_HOURS` (actual session lifetime was purely env-var-driven, resolved before the database was even connected -- the admin-facing setting had literally never been read). Both wired up for real rather than just hidden: `DEFAULT_DENSITY` now seeds new `UserPreference` rows at both creation call sites; `SESSION_HOURS` is re-read into `PERMANENT_SESSION_LIFETIME` in the same already-established post-migration settings-reread block `MAX_UPLOAD_MB`/`LDAP_ENABLED`/etc. already use, with the env var's resolved value passed as the fallback default so existing env-var-only deployments are unaffected until an admin actually touches the UI. New tests: `test_admin_roles_page_marks_unenforced_actions_and_never_saves_overrides_for_them`, `test_session_hours_setting_actually_controls_session_lifetime` (a real two-boot `create_app()` test, not a unit-level mock), `test_default_density_setting_applies_to_new_user_preferences`. Full suite `476 passed, 2 skipped` (up from 473). Version bumped to `1.63.2` (patch). Deployed live and verified for real: confirmed the roles page correctly hides all 10 unenforced-action checkboxes; set `SESSION_HOURS=2` live, restarted the container, confirmed via a real `create_app()` call that `PERMANENT_SESSION_LIFETIME` was genuinely `2:00:00`, then restored the default. `/health`/`/ready` green throughout. |
 | B-316 | P2 | Verified | User reported that granting agent/manager the `administer`, `security_administer`, and `platform_administer` actions on `/admin/roles` had no effect -- they still couldn't see the admin panel, and asked whether this was expected. Confirmed by reading every call site in `app.py`: every admin panel route is gated by `@roles("admin")`/`@roles("superadmin")` -- a hardcoded role-membership check that runs before, and completely independently of, the action-based `RolePolicyOverride` policy this page controls. Since agent/manager always fail that check, granting them these actions was structurally a no-op, but the page gave no warning or explanation -- a real, confirmed UX gap, not user error. One genuine exception found: `security_administer` also independently governs the 7 CMDB Network Discovery routes (`/cmdb/discovery`...), which have no role gate at all, so it does something real for agent/manager and stays editable. Fixed by hiding `administer`/`platform_administer` as togglable checkboxes for non-admin roles (shown as "n/a" with an explanatory tooltip) instead of letting the page configure something inert, plus a clarifying note on the page itself. Cleaned up the two now-inert override rows the user's own testing had created for "manager" directly in the live database, leaving their `security_administer` override alone since that one is meaningful. New regression test `test_admin_roles_page_hides_admin_panel_gated_actions_for_non_admin_roles`. Full suite `473 passed, 2 skipped`. Version bumped to `1.63.1` (patch: UX fix). Deployed live and confirmed via a real authenticated request. This came directly on the heels of the user explicitly saying they'd "started losing trust" after catching bugs in claimed-done work -- the response was a full live re-verification pass of everything from [[B-130]]/[[B-315]] before addressing this new report (real MailHog SMTP send/skip checks, real ticket state transitions through the actual UI, real role revoke/superadmin-protection checks), documented plainly including the two dead-end test mistakes that were Claude's own error, not app bugs, so the user could tell the difference. |
 | B-315 | P0 | Verified | User reported live, mid-session, that a role permission change in `/admin/users` "seems not working." Reproduced against a real fixture account on the live deployment before touching any code: an account holding only `agent` (via the `User.role` column, with no backing `UserRoleGrant` row -- an old fixture/import-style account), granting it `agent` + `manager` together via the edit form resulted in only `manager` persisting; `agent` silently vanished with no error shown. Root cause: `User.granted_roles` defensively merges the `User.role` column into the displayed/current role set even when no real `UserRoleGrant` row backs it, so the edit form correctly showed `agent` as checked -- but the route's sync loop only ever INSERTs a grant row when a role goes from unchecked to checked, and `recompute_base_role()` (called after the loop) only trusts real `UserRoleGrant` rows. A role that stayed checked the whole time, backed only by the column, got silently dropped the moment *any other* role changed on that account. `sync_role_grants()` (the directory/SSO path) was already correctly defensive about this exact gap -- only the direct admin-edit route wasn't. Fixed by backfilling a missing grant row for any role that's held-and-still-requested, self-healing the gap the first time an inconsistent account is touched through the form. Confirmed fixed against the same live fixture account afterward: agent + manager + admin all granted together now persist correctly together. New regression test `test_editing_roles_does_not_silently_drop_a_role_with_no_backing_grant_row`, confirmed to fail against the pre-fix code and pass against the fix. Shipped together with [[B-130]] in `v1.63.0` since both were built in the same pass; full suite `472 passed, 2 skipped`. Deployed live, confirmed via direct authenticated request against the real running instance, not just the automated suite. | User rejected [[B-312]]'s permanently-visible username hint text ("Just your username -- no need for @company.com or DOMAIN\") as bad UI, and asked for placeholder ghost text instead, with the company domain pulled from the LDAP configuration. New `ldap_username_placeholder()` derives a UPN-style domain from `LDAP_BASE_DN`'s `DC=` components (e.g. `DC=corp,DC=example,DC=com` -> `corp.example.com`) and renders it as the username field's placeholder (e.g. `jsmith or jsmith@corp.example.com`) via the existing `ui_context()` template context processor, so it's available on every `login.html` render path without touching each of the 4 call sites individually. When both local and directory sign-in are enabled, the placeholder now swaps live with the provider dropdown instead of a domain hint that doesn't apply to a local account. Removed the old always-visible hint `<small>` element and its CSS/JS entirely, replacing the JS with a much smaller placeholder-swap. New test `test_login_username_placeholder_derives_domain_from_ldap_base_dn` (domain derived correctly; falls back to `jsmith` with LDAP enabled but no base DN yet, and to `Username` with LDAP disabled). Full suite: 450 passed, 2 skipped (up from 449). Version bumped to `1.62.7` (patch: UX correction of a very recent patch, not a new capability). Deployed live -- confirmed via direct HTTP fetch of `/login` that the placeholder renders correctly and the old hint text is gone. `OPERATIONS_MANUAL.md`'s "Sign in" section and the PDF updated to match. |
-| B-313 | P3 | Verified | User asked to update all screenshots and documents, reporting they were "out of sync now" following [[B-312]]'s login fix. Recaptured all 22 existing reference screenshots against the live `v1.62.6` deployment via `tools/capture_screenshots.py`, and found the capture list itself was missing 4 pages entirely -- My Workspace ([[B-121]]), guided tours admin ([[B-120]]), data governance admin ([[B-090]]), and the client support mailbox admin page ([[B-309]]) -- none of which had ever had a screenshot or manual section despite being Verified features. Added all 4 to the capture list and corresponding `OPERATIONS_MANUAL.md` "3A. Visual walkthrough" sections. While in there, found and fixed a pre-existing, unrelated content gap: the manual's "Sign in" section ended mid-sentence with no actual list of identity methods -- filled it in properly, including a mention of the new UPN/down-level login form support and live username hint. Rebuilt `docs/ServiceOps_Complete_Platform_Manual.pdf` and refreshed the 4-image README screenshot subset in `ServiceOps/docs/readme/` (was stale from 2026-08-03). Bumped `FEATURE_CATALOG.md`/`MASTER_REFERENCE.md`'s baseline version references from 1.62.5 to 1.62.6. Confirmed zero broken screenshot references after the change. No code/schema change, so no version bump (matches this repo's existing precedent for docs-only commits, e.g. [[B-310]]). |
+| B-313 | P3 | Verified | User asked to update all screenshots and documents, reporting they were "out of sync now" following [[B-312]]'s login fix. Recaptured all 22 existing reference screenshots against the live `v1.62.6` deployment via `tools/capture_screenshots.py`, and found the capture list itself was missing 4 pages entirely -- My Workspace ([[B-121]]), guided tours admin ([[B-120]]), data governance admin ([[B-090]]), and the client support mailbox admin page ([[B-309]]) -- none of which had ever had a screenshot or manual section despite being Verified features. Added all 4 to the capture list and corresponding `OPERATIONS_MANUAL.md` "3A. Visual walkthrough" sections. While in there, found and fixed a pre-existing, unrelated content gap: the manual's "Sign in" section ended mid-sentence with no actual list of identity methods -- filled it in properly, including a mention of the new UPN/down-level login form support and live username hint. Rebuilt `docs/ServiceOps_Complete_Platform_Manual.pdf` and refreshed the 4-image README screenshot subset in `ServiceOps/docs/readme/` (was stale from 2026-08-03). Bumped [FEATURE_CATALOG.md](OPERATIONS_MANUAL.md#section-feature_catalog)/[MASTER_REFERENCE.md](BACKLOG.md#section-master_reference)'s baseline version references from 1.62.5 to 1.62.6. Confirmed zero broken screenshot references after the change. No code/schema change, so no version bump (matches this repo's existing precedent for docs-only commits, e.g. [[B-310]]). |
 | B-312 | P2 | Verified | User reported (with a screenshot of Google's own account-creation UX as the target model) that AD/LDAP sign-in only accepted a bare username -- typing "username@companyname.com" (UPN) or "CORP\username" (down-level logon name), both standard Windows login forms, failed. Root cause: the default `LDAP_USER_FILTER` matches `sAMAccountName`, which only ever holds the bare form; `ldap_authenticate()` substituted whatever the user typed verbatim. Fixed by stripping a UPN suffix/down-level prefix and retrying the directory search with the bare local part before giving up (falls back to the exact typed string for sites that customized their filter to match `userPrincipalName` instead), and by using that bare local part -- not whichever form was typed -- as the new local account's username on a person's first-ever directory login, so the account name stays clean regardless of which form they happened to type first (returning logins are unaffected either way, matched by the directory entry's DN). UI: added a small, live-updating hint under the username field on `/login`, styled after Google's own sign-in field -- confirms "Signing in as \"jsmith\"" while a domain-qualified form is typed, otherwise reminds the user a bare username is enough; hidden entirely for local-only deployments. New regression test `test_ldap_login_accepts_upn_and_down_level_forms_not_just_bare_username` exercises the fix against a faithful fake AD directory (real filter-matching logic). Full suite: 449 passed, 2 skipped (up from 448). No real external AD/LDAP server is available in this environment for a live end-to-end smoke test -- verified via the automated test's faithful simulation of AD's actual filter-matching behavior, consistent with [[B-061]]'s existing external-validation disclosure. Version bumped to `1.62.6` (patch: bugfix-dominant, UI hint is in service of the fix, not a new capability area). Deployed live, `/health`/`/ready` green. |
-| B-311 | P3 | Verified | User asked to review ServiceOps "every inch" for real bugs, and separately check whether progress reports/docs are up to date. Code review (spawned as a focused sweep of external-dependency-failure paths, tenant isolation, and race conditions -- the dominant bug classes this codebase has previously had) found and fixed three real issues, shipped as `v1.62.5`: (1) `cmdb_import()`'s Google Sheets fetch validated the export URL via `integration_endpoint_valid`/`integration_endpoint_resolves_safely` but then called `requests.get()` directly, letting requests' own DNS lookup re-resolve the hostname independently of that check -- the same DNS-rebinding TOCTOU gap `deliver_webhook()` already closes via `pin_resolved_addresses()`. Now pinned the same way. (2) `change_plan_update()` fetched a CI via unscoped `db.session.get()` and fed it into the risk-score calculation before the tenant-ownership check ran, so a cross-tenant `ci_id`'s attributes could briefly influence `calculated_risk_score` before the request was rejected (no persistence occurred, but a real ordering bug); reordered so the tenant-scoped lookup happens first. The change-creation route's already-correctly-ordered equivalent was tightened to reuse its validated CI object instead of a second unscoped fetch. (3) `ldap_authenticate()` only called `user_conn.unbind()` on the success path -- a failed StartTLS or bind returned without unbinding, leaking one open LDAP socket per failed login attempt; both early returns now unbind first. Full suite: 448 passed, 2 skipped both before and after. Docs audit (separate focused pass) found `MASTER_REFERENCE.md`'s embedded backlog table was out of sync with this file -- [[B-090]], [[B-120]], [[B-121]] still showed "Open" despite being Verified here, and [[B-070]]/[[B-071]]/[[B-052]] statuses didn't reflect real progress; fixed to match. `FEATURE_CATALOG.md` was stale at a "1.46.0" baseline (16 releases behind) with no mention of guided tours, My Workspace, the client email channel, or data governance -- added catalogue entries for all four (sections 23a-23d) and bumped the baseline to 1.62.5. Found and fixed a direct self-contradiction in `FEATURE_CATALOG.md` §24 ("Explicit boundaries"): it claimed no general-purpose workspace designer exists, worded broadly enough to read as contradicting [[B-121]]'s now-shipped closed-catalog workspace -- reworded to specifically scope the boundary to a general-purpose page/metadata-runtime designer, distinct from the closed widget catalog that does exist. `REMEDIATION_PLAN_1.38.2.md`/`REMEDIATION_PLAN_1.39.0.md` were confirmed fully superseded (~23-24 releases behind, every item they list as open has newer status in this file) and marked historical in-place, not deleted. `PRODUCTION_READINESS_PLAN.md`'s 2026-08-05 checkpoint paragraph was stale relative to the internal progress on Privacy/Object storage/Observability gates since then; added a current checkpoint that explicitly does **not** claim any gate closes (per that document's own standard, gates require independent/organization-executed evidence, not internal verification alone), keeping the prior checkpoint as historical record beneath it. `API_REFERENCE.md`'s "ServiceOps 1.19+" framing was checked and found accurate, not stale -- confirmed none of the four newly-catalogued features (guided tours, My Workspace, client email, data governance) expose a versioned `/api/v1` endpoint; they are internal, session-authenticated app routes, so the public REST v1 surface genuinely hasn't changed. `BACKLOG.md` itself and `DOCUMENTATION_INDEX.md`/`RELEASE_GOVERNANCE.md` were confirmed accurate, no changes needed. Also found and committed pre-existing uncommitted doc updates to `ADMINISTRATION_INFORMATION_ARCHITECTURE.md`/`OPERATIONS_MANUAL.md` describing the accordion-style sidebar navigation (Home/My work/Self-service/Management/Operations/Administration) -- confirmed this matches real, already-shipped code in `templates/base.html` (not speculative), just never previously committed to this repo. |
-| B-310 | P3 | Verified | User asked for a review of every backlog item to confirm "Verified"/"Implemented" claims still hold against current source, not just the prose. A targeted audit (grep/read against actual current source, not the backlog text) confirmed essentially everything checked -- 14 P0/P1 "In progress" entries ([[B-004]], [[B-005]], [[B-007]], [[B-009]], [[B-010]], [[B-052]], [[B-062]], [[B-070]], [[B-071]], [[B-130]], [[B-200]], [[B-202]], [[B-203]], [[B-204]], [[B-249]]) plus a spot-check sample of "Verified" entries across early/mid/late ranges -- still matches real, current code. Two apparent misses ([[B-200]]'s ADRs, [[B-260]]'s manual tooling) were false positives from only searching the `ServiceOps` repo and missing that both live in the sibling `serviceops-notes` repo by design (ADR-010 through ADR-019 are a real decisions table in `GOVERNANCE.md`/`MASTER_REFERENCE.md`; the manual generator/screenshot tooling is in `serviceops-notes/tools/`) -- confirmed directly, not re-flagged as gaps. One real (minor) gap surfaced while chasing that false positive, not previously known: `docs/screenshots/` was completely empty while `OPERATIONS_MANUAL.md` referenced 21 screenshot files that were never actually captured/committed after [[B-260]] -- the manual's images were all broken links. Fixed by running `tools/capture_screenshots.py` against the live `serviceops-app:1.60.0` deployment (22 screenshots recaptured, including `dashboard.png`) and `tools/generate_operations_manual.py` to rebuild the PDF; confirmed zero remaining broken references by cross-checking every `screenshots/*.png` reference in `OPERATIONS_MANUAL.md` against the regenerated directory. No code/schema change, so no version bump (matches this repo's existing precedent for docs-only commits, e.g. `d1e839b`). |
+| B-311 | P3 | Verified | User asked to review ServiceOps "every inch" for real bugs, and separately check whether progress reports/docs are up to date. Code review (spawned as a focused sweep of external-dependency-failure paths, tenant isolation, and race conditions -- the dominant bug classes this codebase has previously had) found and fixed three real issues, shipped as `v1.62.5`: (1) `cmdb_import()`'s Google Sheets fetch validated the export URL via `integration_endpoint_valid`/`integration_endpoint_resolves_safely` but then called `requests.get()` directly, letting requests' own DNS lookup re-resolve the hostname independently of that check -- the same DNS-rebinding TOCTOU gap `deliver_webhook()` already closes via `pin_resolved_addresses()`. Now pinned the same way. (2) `change_plan_update()` fetched a CI via unscoped `db.session.get()` and fed it into the risk-score calculation before the tenant-ownership check ran, so a cross-tenant `ci_id`'s attributes could briefly influence `calculated_risk_score` before the request was rejected (no persistence occurred, but a real ordering bug); reordered so the tenant-scoped lookup happens first. The change-creation route's already-correctly-ordered equivalent was tightened to reuse its validated CI object instead of a second unscoped fetch. (3) `ldap_authenticate()` only called `user_conn.unbind()` on the success path -- a failed StartTLS or bind returned without unbinding, leaking one open LDAP socket per failed login attempt; both early returns now unbind first. Full suite: 448 passed, 2 skipped both before and after. Docs audit (separate focused pass) found [MASTER_REFERENCE.md](BACKLOG.md#section-master_reference)'s embedded backlog table was out of sync with this file -- [[B-090]], [[B-120]], [[B-121]] still showed "Open" despite being Verified here, and [[B-070]]/[[B-071]]/[[B-052]] statuses didn't reflect real progress; fixed to match. [FEATURE_CATALOG.md](OPERATIONS_MANUAL.md#section-feature_catalog) was stale at a "1.46.0" baseline (16 releases behind) with no mention of guided tours, My Workspace, the client email channel, or data governance -- added catalogue entries for all four (sections 23a-23d) and bumped the baseline to 1.62.5. Found and fixed a direct self-contradiction in [FEATURE_CATALOG.md](OPERATIONS_MANUAL.md#section-feature_catalog) §24 ("Explicit boundaries"): it claimed no general-purpose workspace designer exists, worded broadly enough to read as contradicting [[B-121]]'s now-shipped closed-catalog workspace -- reworded to specifically scope the boundary to a general-purpose page/metadata-runtime designer, distinct from the closed widget catalog that does exist. [REMEDIATION_PLAN_1.38.2.md](BACKLOG.md#section-remediation_plan_1.38.2)/[REMEDIATION_PLAN_1.39.0.md](BACKLOG.md#section-remediation_plan_1.39.0) were confirmed fully superseded (~23-24 releases behind, every item they list as open has newer status in this file) and marked historical in-place, not deleted. [PRODUCTION_READINESS_PLAN.md](DEPLOYMENT.md#section-production_readiness_plan)'s 2026-08-05 checkpoint paragraph was stale relative to the internal progress on Privacy/Object storage/Observability gates since then; added a current checkpoint that explicitly does **not** claim any gate closes (per that document's own standard, gates require independent/organization-executed evidence, not internal verification alone), keeping the prior checkpoint as historical record beneath it. `API_REFERENCE.md`'s "ServiceOps 1.19+" framing was checked and found accurate, not stale -- confirmed none of the four newly-catalogued features (guided tours, My Workspace, client email, data governance) expose a versioned `/api/v1` endpoint; they are internal, session-authenticated app routes, so the public REST v1 surface genuinely hasn't changed. `BACKLOG.md` itself and [DOCUMENTATION_INDEX.md](../README.md)/[RELEASE_GOVERNANCE.md](DEPLOYMENT.md#section-release_governance) were confirmed accurate, no changes needed. Also found and committed pre-existing uncommitted doc updates to [ADMINISTRATION_INFORMATION_ARCHITECTURE.md](OPERATIONS_MANUAL.md#section-administration_information_architecture)/`OPERATIONS_MANUAL.md` describing the accordion-style sidebar navigation (Home/My work/Self-service/Management/Operations/Administration) -- confirmed this matches real, already-shipped code in `templates/base.html` (not speculative), just never previously committed to this repo. |
+| B-310 | P3 | Verified | User asked for a review of every backlog item to confirm "Verified"/"Implemented" claims still hold against current source, not just the prose. A targeted audit (grep/read against actual current source, not the backlog text) confirmed essentially everything checked -- 14 P0/P1 "In progress" entries ([[B-004]], [[B-005]], [[B-007]], [[B-009]], [[B-010]], [[B-052]], [[B-062]], [[B-070]], [[B-071]], [[B-130]], [[B-200]], [[B-202]], [[B-203]], [[B-204]], [[B-249]]) plus a spot-check sample of "Verified" entries across early/mid/late ranges -- still matches real, current code. Two apparent misses ([[B-200]]'s ADRs, [[B-260]]'s manual tooling) were false positives from only searching the `ServiceOps` repo and missing that both live in the sibling `serviceops-notes` repo by design (ADR-010 through ADR-019 are a real decisions table in [GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance)/[MASTER_REFERENCE.md](BACKLOG.md#section-master_reference); the manual generator/screenshot tooling is in `serviceops-notes/tools/`) -- confirmed directly, not re-flagged as gaps. One real (minor) gap surfaced while chasing that false positive, not previously known: `docs/screenshots/` was completely empty while `OPERATIONS_MANUAL.md` referenced 21 screenshot files that were never actually captured/committed after [[B-260]] -- the manual's images were all broken links. Fixed by running `tools/capture_screenshots.py` against the live `serviceops-app:1.60.0` deployment (22 screenshots recaptured, including `dashboard.png`) and `tools/generate_operations_manual.py` to rebuild the PDF; confirmed zero remaining broken references by cross-checking every `screenshots/*.png` reference in `OPERATIONS_MANUAL.md` against the regenerated directory. No code/schema change, so no version bump (matches this repo's existing precedent for docs-only commits, e.g. `d1e839b`). |
 | B-309 | P2 | Verified | User asked that Client Management get "a dedicated email address that will automatically fetch the email so that we can give a better service," with a dedicated admin configuration page, explicitly requesting research into how leading tools (Zendesk, Freshdesk, Help Scout, Intercom, Zoho Desk) do this before implementing. Chose, via explicit clarifying questions, full two-way email (inbound + outbound, not inbound-only -- confirmed no real vendor ships inbound-only as a supported mode) and real-mailbox verification (a disposable GreenMail Docker IMAP+SMTP server) over mocks. New `ClientMailbox` model (tenant-scoped, admin-managed, modeled as a list mirroring `IntegrationConnection`'s per-row shape rather than the global `PlatformSetting` mechanism, which was confirmed too single-row/global for this) holds IMAP/SMTP connection settings with passwords encrypted via the same `settings_cipher()`-backed property pattern `IntegrationConnection.secret` already uses (migration `20260811_0073`). A new `serviceops_core/email_ingest.py` (pure parsing/threading, zero I/O dependency, mirrors `client_automation.py`'s "engine has no I/O" shape) implements the researched conventions: Message-ID/In-Reply-To/References headers are the primary threading signal, a bracketed `[CXTnnnnnnn]` subject token is the documented fallback (per Zendesk's own docs, since subject tags get stripped/reordered by clients/gateways); a sender's `ClientContact` is always auto-created, `ClientOrganization` auto-linking by sender domain is gated by a hardcoded free-mail denylist (gmail/yahoo/outlook/hotmail/icloud/aol/protonmail/live/msn) matching Freshdesk's documented "blacklist free-mail domains from company auto-linking" convention, falling back to the mailbox's configured default organization; `Auto-Submitted`/`Precedence` headers reject autoresponders/bulk mail before ticket creation, and the app's own outbound replies are stamped `Auto-Submitted: no`; per-sender inbound rate limiting reuses the existing `route_rate_limit()` helper as a last-resort circuit breaker (mirrors Zendesk's documented per-sender hourly ceiling). New `process_client_email_inbox()` (app.py, wired into `tools/outbox_worker.py`'s periodic loop like every other background job) polls each active mailbox via `imaplib`, marks each message `\Seen` immediately after fetch (before processing) so a downstream exception can't cause reprocessing, and funnels ticket creation through the same `attach_slas()`/`evaluate_client_triggers()` calls manual creation already uses. `deliver_client_email_reply()` sends an agent's public reply back out via the mailbox's SMTP config with correct `In-Reply-To`/References threading. `ClientTicketMessage.author_id` was made nullable (an inbound-email message has no internal `User` author -- rendered as "<contact> (via email)"); `ClientTicketMessage` gained `message_id`/`in_reply_to`; `FileAttachment` gained a nullable `client_ticket_id`, and the malware-scan/hash/storage tail of `save_ticket_attachment()` (which had no actual Flask-`FileStorage` dependency) was extracted into a parallel `save_email_attachment()` for raw email-attachment bytes, deliberately not a refactor of the original upload path. New admin page `/client-management/mailboxes` (`templates/client_mailboxes_admin.html`, mirrors `client_macros_admin.html`'s list+toggle+add-form shape) linked from Client Management's admin toolbar. **Real GreenMail (Docker) end-to-end verification** (not mocks) against the live deployed stack, all 4 tests passing: (1) a real inbound email created a ticket with correctly auto-created contact/organization; (2) a real agent reply was delivered via real SMTP with correct `In-Reply-To`/subject-token threading, confirmed by connecting to the customer's own real IMAP inbox; (3) a second reply referencing the agent's own reply's Message-ID threaded into the same ticket, not a duplicate; (4) an `Auto-Submitted: auto-replied` email was correctly rejected, no ticket created. That same verification pass caught a real bug before ship: the reply-send path picked *any* active `ClientMailbox` for the tenant rather than the one the ticket actually came in on, and silently sent nothing (no flash, no log) when no mailbox happened to be active -- fixed by adding `ClientTicket.mailbox_id` (migration `20260811_0074`) to remember the originating mailbox and preferring it, falling back to the tenant's sole active mailbox only for manually-created tickets, with an explicit flashed warning when no active mailbox exists at all. Disclosed scope limitations, not attempted this pass: basic IMAP/SMTP auth only, no OAuth (Gmail/O365 require an app password, not the normal account password, under basic auth); no content-based spam scoring beyond the loop/rate-limit defenses above; the free-mail denylist is hardcoded, not admin-configurable; the reply-mailbox fallback for manually-created tickets assumes a single mailbox per tenant even though the model supports several. Version bumped to `1.59.0` (minor: new user-facing capability). Evidence: full suite `424 passed, 2 skipped` (new coverage: `tests/test_email_ingest.py` -- 9 unit tests for parsing/threading/free-mail/auto-generated detection, no I/O; `tests/test_app.py` -- mailbox admin tenant-isolation/admin-only tests, inbound-ticket-creation-with-auto-org test, threaded-reply-does-not-duplicate test, auto-generated-mail-rejected test, outbound-SMTP-delivery-with-Message-ID-storage test, using a fake IMAP connection test double for the app-level tests). Migrations `20260811_0073`/`20260811_0074` each verified with a full fresh-upgrade/downgrade/re-upgrade cycle against real Postgres 16. Deployed live (`serviceops-app:1.59.0`) -- `/health`/`/ready` green, migration head `20260811_0074` confirmed both via `/ready` JSON and a direct `alembic_version` query. Closing disclosure given to the user: this environment cannot verify against their actual production mailbox -- after deploy, they must configure a real mailbox on `/client-management/mailboxes` and send one real test email themselves to confirm true end-to-end delivery in their own environment. |
 | B-308 | P2 | Verified | Phases 2-7 (the remainder) of the Client Management build-out started in [[B-307]], delivered in one continuous pass per explicit user instruction ("complete phase 2 to 7 continuously"), each phase still independently built/tested/migrated/deployed/live-verified before moving to the next, then shipped together in a single commit/tag/release since intermediate versions were never separately committed to git during the run. **Phase 2, custom fields**: tenant-wide `ClientCustomFieldDefinition` schema (text/number/date/select) for tickets/organizations/contacts -- field *existence* is tenant-wide (matches Zendesk's own model), with per-organization required/visible overrides stored in the org's own `settings` JSON (a new column, also the foundation phase 7 reuses) rather than a second table; values stored in a new `custom_fields` JSON column on each of the three entities (migration `20260810_0068`). **Phase 3, saved Views**: new `ClientView` model (migration `20260811_0069`) sitting on top of the *existing* filter-condition engine (`parse_list_filter_param`/`apply_filter_conditions`, already used by CMDB/ticket lists) rather than inventing bespoke filtering -- the customer ticket list's filter bar now reuses the exact same `.list-filter` JS component the Incidents/Changes lists already use. Views can be private or shared tenant-wide; the six built-in views (mine/unassigned/pending/recent/solved/unsolved) stay hardcoded and unchanged. **Phase 4, Macros**: new `ClientMacro` model (migration `20260811_0070`) -- one-click bulk field changes plus an optional canned reply, applied via a new dropdown on the ticket detail page, only rendered when at least one active macro exists. **Phase 5, per-organization SLA policies**: `SLADefinition` gains a nullable `client_organization_id` (migration `20260811_0071`, same "null = tenant-wide default" convention used everywhere else in this app) -- `attach_slas()` now prefers an org-specific row over the tenant default for the same priority when both exist; `sync_slas()` extended to recognize client tickets' own "Solved" terminal state (ITIL tickets never use it, so this was previously dead for customer tickets -- their SLA clock would never stop on resolution, only on the later "Closed" transition). **Phase 6, Triggers**: new `serviceops_core/client_automation.py` -- a small, closed-vocabulary condition→action engine (deliberately single-condition/single-action, not a multi-row rule builder) scoped to `ClientTicket`'s own fields, since the existing `serviceops_core/workflow.py` engine is ITIL-ticket-specific by design and not a clean fit; new `ClientTrigger` model (migration `20260811_0072`) evaluated on ticket create/update/status-change. **Phase 7, branding + escalation policy**: per-organization display name/accent color (reuses phase 2's `settings` column, no new migration) shown on that organization's own tickets -- a logo-image field was deliberately *not* built despite being in the original plan, since this app's CSP (`img-src 'self' data:`) would silently block any externally-hosted logo and there's no upload/storage path for one; shipping a control that silently doesn't work was rejected in favor of disclosing the gap. A new `escalation_hours`/`escalation_group_id` policy per organization is enforced by a new periodic `process_client_escalation_policies()` job wired into the same background-worker loop as SLA-breach detection -- idempotent via an `auto-escalated` tag (no dedicated boolean column was added for one flag).
 
@@ -247,7 +281,7 @@ Version bumped to `1.51.0` (minor: new `tenant_id` columns + new capability, not
 | B-280 | P0 | Verified | Discovery review UI repair prepared for ServiceOps 1.39.1. Root cause: both discovery pages used inline JavaScript while production CSP permits only same-origin script files, so filter, selection and run-progress behavior was blocked by the browser. Behavior now lives in `static/discovery.js`; filters and bulk selection work under CSP, and inline confirmation handlers were removed. The horizontally clipped target table was replaced with responsive cards; Run now and View results are visible in each card header, with status, schedule and latest-result context beneath. Review controls use clearer filtered/every-device wording, remain sticky on wide screens, and adapt to narrow screens. Evidence: authenticated headless-Chrome checks against `http://localhost:80` confirmed visible Run now and View results actions, zero horizontal page overflow, working search/filter clearing, select/deselect filtered/all state transitions, and zero browser console exceptions. Captured screenshots were inspected at 1440x1000. A clearly marked temporary candidate was inserted solely to exercise the review page and deleted afterward. Focused suite passed `19 passed`; final full suite passed `312 passed, 1 skipped`; Ruff, JavaScript syntax and whitespace checks passed. Local Docker deployment reports healthy version 1.39.0 pending governed patch publication. |
 | B-279 | P0 | Verified | ServiceOps 1.39.0 operational-resilience release. Deep readiness now distinguishes liveness from safe authenticated service and verifies PostgreSQL, exact Alembic head, every active tenant audit key, worker heartbeat, writable uploads, and configured S3 storage. Prometheus metrics, request trace correlation, deployable alerts, a real authenticated synthetic-login probe, backup-age evidence, and the System Health recovery-set indicator were added. Local account recovery uses throttled, non-enumerating, single-use 30-minute tokens and revokes all sessions; users and tenant administrators can inventory/revoke browser sessions. API clients can receive a tenant-scoped `users:provision` scope for SCIM create/update/deactivate, and deprovisioning invalidates sessions. Keycloak can enforce an exact IdP MFA `acr`. Guarded `diagnose-recovery`, `recover-admin`, and `recover-audit-key` commands always take a checksummed pre-mutation recovery set and record audit boundaries. Recovery manifests carry a non-secret encryption-key fingerprint and can be uploaded to encrypted S3-compatible Object Lock storage. Attachments support S3-compatible storage with local-volume fallback. Review discovered devices now provides search, class/vendor/source filters, live visible/selected counts, Select/Deselect visible, and Select/Deselect all. Verification: isolated full suite `310 passed, 1 skipped` (only the sibling-notes check unavailable inside the image), focused final release/cross-repository/resilience suite `10 passed`, focused recovery/device suite `14 passed`, Ruff, supply-chain verification, shell syntax, Python compilation, canonical-version and whitespace checks passed. A first live command-path check found production helper scripts invoked by path rather than module, causing `ModuleNotFoundError`; invocation was corrected, regression tested and redeployed. Live PostgreSQL migrated to `20260805_0058`; app/database/worker are healthy at `http://localhost:80`; deep readiness passes all five configured checks; audit encryption diagnosis passes; Prometheus reports worker up and current backup age; a bounded 1,000-request probe passed with zero errors, 27.66 ms p95 and 1,125.14 requests/s; login page returns 200, unauthenticated protected access redirects, and post-correction recent app/worker logs contain no traceback/critical/key/migration failures. External penetration testing, independent tenant review, representative IdP/SCIM/S3/SMTP integration, external alert delivery, hardware passkeys, approved RPO/RTO, and real cluster failure evidence remain external acceptance boundaries and are not claimed. |
 | B-278 | P0 | Verified | Local login recovery after the port-80 redeployment exposed a pre-existing encryption-key mismatch: the database's three audit-integrity key records (two retired, one active) had been encrypted by a lost prior `SETTINGS_ENCRYPTION_KEY`, so a valid login reached mandatory audit creation and failed with `cryptography.fernet.InvalidToken`, returning HTTP 500. Port 80 was not causal. Before recovery, `./serviceops backup` created `serviceops-20260805T103718Z` database/uploads/manifest artifacts. Authorized break-glass recovery preserved all 32 historical audit rows and all historical key records, retired the unreadable active key, created encrypted key `recovery-20260805T103754Z-c2d83726`, and appended an explicit recovery-boundary audit event. The prior 32 rows remain readable but cannot be cryptographically reverified without the lost key; this integrity limitation is permanent and explicitly recorded rather than concealed. The administrator lockout caused by the failed attempts was cleared without changing its password, and that unlock was also audited. Evidence: replacement active key decrypts successfully, subsequent login/lockout audit events are signed, audit row count advanced to 35, local app remains healthy on `http://localhost:80`, and the administrator is active and unlocked. Prevent recurrence by retaining the exact local `SETTINGS_ENCRYPTION_KEY` with recovery material; never regenerate or replace it while reusing a database. |
-| B-277 | P0 | Verified | ServiceOps 1.38.2 whole-project remediation. The canonical-version tool now governs the CLI server installer and Helm image tag in addition to the existing runtime, chart, README, example environment, installer UI, and service-worker locations; the release workflow stages those files. Confirmed stale `1.26.0`/`1.28.1` deployment defaults are replaced with `1.38.2`. The improvement-creation return path now uses the shared internal-path validator and rejects scheme-relative external URLs. Supply-chain CI now blocks on Ruff correctness checks, bytecode compilation, a single Alembic head, the full test suite, shell syntax, JavaScript syntax, and both bundled/external-PostgreSQL Compose rendering. Shared accessibility semantics add a keyboard skip link, focusable main landmark, truthful navigation expansion state, and a labelled modal configuration-item browser. The deployment review additionally exposed Gunicorn 26 trying to create its optional control socket under the non-login user's `/nonexistent` home in the read-only container; the entrypoint now disables that unused socket and has a regression assertion. No schema change. Evidence: canonical-version check, Ruff, compileall, shell syntax, JavaScript syntax and both Compose-mode checks passed; the full containerized suite passed `304 passed, 1 skipped`; cross-repository documentation/version checks passed `5 passed`; the production image `serviceops-app:1.38.2` was rebuilt and deployed through `tools/deploy-local.sh`; app, worker and PostgreSQL are healthy at `/health`, runtime reports 1.38.2, migration head is `20260805_0056`, and post-fix logs contain no error/traceback/control-socket failure. The immutable tag workflow run `30996357438` passed its dependency audit, high/critical Trivy gate, GHCR push, Cosign signing, CycloneDX SBOM, SLSA/SBOM attestations, and registry/provenance verification for `ghcr.io/awijesundara/serviceops@sha256:c790eec3aaab4145f68fadbbdb540e56584f3cb687904e958c57bbd43a6e8dc7`; GitHub Release `v1.38.2` was published. Representative cluster-admission evidence remains under B-007 and is not claimed here. Detailed scope and external boundaries: `REMEDIATION_PLAN_1.38.2.md`. |
+| B-277 | P0 | Verified | ServiceOps 1.38.2 whole-project remediation. The canonical-version tool now governs the CLI server installer and Helm image tag in addition to the existing runtime, chart, README, example environment, installer UI, and service-worker locations; the release workflow stages those files. Confirmed stale `1.26.0`/`1.28.1` deployment defaults are replaced with `1.38.2`. The improvement-creation return path now uses the shared internal-path validator and rejects scheme-relative external URLs. Supply-chain CI now blocks on Ruff correctness checks, bytecode compilation, a single Alembic head, the full test suite, shell syntax, JavaScript syntax, and both bundled/external-PostgreSQL Compose rendering. Shared accessibility semantics add a keyboard skip link, focusable main landmark, truthful navigation expansion state, and a labelled modal configuration-item browser. The deployment review additionally exposed Gunicorn 26 trying to create its optional control socket under the non-login user's `/nonexistent` home in the read-only container; the entrypoint now disables that unused socket and has a regression assertion. No schema change. Evidence: canonical-version check, Ruff, compileall, shell syntax, JavaScript syntax and both Compose-mode checks passed; the full containerized suite passed `304 passed, 1 skipped`; cross-repository documentation/version checks passed `5 passed`; the production image `serviceops-app:1.38.2` was rebuilt and deployed through `tools/deploy-local.sh`; app, worker and PostgreSQL are healthy at `/health`, runtime reports 1.38.2, migration head is `20260805_0056`, and post-fix logs contain no error/traceback/control-socket failure. The immutable tag workflow run `30996357438` passed its dependency audit, high/critical Trivy gate, GHCR push, Cosign signing, CycloneDX SBOM, SLSA/SBOM attestations, and registry/provenance verification for `ghcr.io/awijesundara/serviceops@sha256:c790eec3aaab4145f68fadbbdb540e56584f3cb687904e958c57bbd43a6e8dc7`; GitHub Release `v1.38.2` was published. Representative cluster-admission evidence remains under B-007 and is not claimed here. Detailed scope and external boundaries: [REMEDIATION_PLAN_1.38.2.md](BACKLOG.md#section-remediation_plan_1.38.2). |
 | B-256 | P1 | Verified | Administration information-architecture and release-governance consolidation prepared for ServiceOps 1.30.0. The duplicate persistent application navigator is replaced by one compact left-side panel switcher for All, Favorites, History, Workspaces, and Admin; destinations are deduplicated and consistently labelled, including uppercase CMDB and RT. Unified search now discovers navigation destinations as well as authorized records. Administration pages use a reusable sticky breadcrumb/context header with a clear route back to Administration home, and the long in-page settings navigation tracks the visible section without reordering while scrolling. Operational configuration was moved to Service delivery and governance, leaving Platform settings limited to genuine platform defaults and connections; Workflow is presented as Workflow and automation with clearer guidance. Documentation sources and tooling now live in serviceops-notes, while ServiceOps retains only the generated platform-manual PDF. Semantic versioning is governed from ServiceOps/VERSION and a manually dispatched release workflow synchronizes artifacts, tests/scans the exact tagged source, signs and attests the GHCR image, then publishes the GitHub release. Evidence: full containerized pytest suite exited 0; version-consistency and whitespace checks passed; focused navigation, global-search, authorization, settings-ownership, documentation-link, and release-version tests are included. External penetration testing, independent tenant-isolation review, real GHCR/cluster admission validation, production backup/rollback rehearsals, observability, load testing, object storage, MFA/SCIM, accessibility, and privacy controls remain explicitly open under B-008, B-231, B-007, B-009/B-010, B-070, B-071, B-052, B-062, B-080, and B-090. |
 | B-001 | P0 | Implemented | Remove demo mode/personas/sample seeding/default passwords; fresh-install and cleanup tests pass. |
 | B-002 | P0 | Verified | Production uses an Alembic migration gate with safe fresh-schema creation, existing-schema adoption, version verification, dedicated Kubernetes migration Job and tenant backfill. The rehearsal script previously hardcoded the expected head/prior revision and went stale at `20260727_0013` (see [[B-230]]); it now derives both dynamically. Re-verified 2026-07-28 at full scale against a disposable clone of the current head: `20260727_0013 → 20260727_0012 → 20260727_0013` downgrade/roll-forward with 100,717 records across 63 tables, fingerprints preserved. Independent tenant-isolation review (separate from migration correctness) remains open under [[B-231]]. |
@@ -322,7 +356,7 @@ Version bumped to `1.51.0` (minor: new `tenant_id` columns + new capability, not
 | B-241 | P1 | Implemented | `tools/load_test_fixture.py` (seeds well-known weak passwords like `admin`/`admin`) was never invoked by application startup, but was still present inside the production image, reachable via `docker exec` against a running production container. The production `Dockerfile` now removes it after `COPY . .`; `Dockerfile.test` is unaffected and still has it available for test use. Verified the file no longer exists at `/app/tools/load_test_fixture.py` in the rebuilt production image. |
 | B-240 | P2 | Implemented | Dead dark-mode CSS (`.theme-dark`, `.theme-system`, `@media(prefers-color-scheme:dark)`) sat in `static/platform.css` even though `UserPreference.theme` is hardcoded to `"light"` everywhere (migration backfill, save handler, and the preferences form's hidden input all force `"light"`) per ADR-012's light-only, dark-mode-is-a-governed-non-requirement decision. Removed the unreachable rules; no behavior change since nothing ever set those classes. |
 | B-242 | P0 | Implemented | CI's Trivy gate caught `Authlib==1.6.4` carrying CVE-2026-27962 (critical, JWK header injection authentication bypass) plus three high/other CVEs, all fixed in 1.6.9. Bumped to `Authlib==1.6.9`. Tests: 71/71 pass. Released as 1.23.2. |
-| B-244 | P0 | Implemented | 1.23.3 security release, prompted by an external dependency audit against the deployed 1.23.2 image finding 9 known vulnerabilities in 4 packages despite the B-242 Authlib fix. Upgraded `Flask` 3.1.1 → 3.1.3, `Authlib` 1.6.9 → 1.6.12, `requests` 2.32.5 → 2.33.0, `Werkzeug` 3.1.3 → 3.1.6 (and dev-only `pytest` 8.4.1 → 9.0.3; `pytest`/`pip` findings only ever affected `Dockerfile.test`, never the production image). Verified with a fresh `pip-audit` inside the rebuilt image: zero known vulnerabilities. Full suite 71/71 pass. Also fixed `compose.external-db.yaml`/`.env.example` defaulting `SESSION_COOKIE_SECURE=false` with no `ALLOW_INSECURE_SESSION_COOKIES` override documented, which per [[B-233]]'s fail-closed startup guard meant a production-profile external-DB deployment following the example would refuse to start; both now default to secure cookies with the escape hatch documented. `packaging/build-dist.sh` now accepts an optional image-digest argument so packaged installs can pin `repository@sha256:...` instead of a mutable tag (previous version claimed digest-pinning in `DEPLOYMENT.md` without the tooling to actually do it); falls back to a tag with a printed warning if no digest is given. Deployed and verified locally: image/worker `serviceops-app:1.23.3`, migration head `20260727_0013`, healthy app/db/worker, CSP header present. Documentation corrected for several items an external review found stale: `OPERATIONS_MANUAL.md` was 3 releases behind (1.22.0) and described cookie/webhook/theme/tour behavior predating [[B-233]]/[[B-236]]/ADR-012; `TRACEABILITY_MATRIX.md` still cited the superseded small-scale rehearsal and called the working guided tour a "Gap"; `UI_CAPABILITY_MAPPING.md` claimed dark/system theme support that was never implemented; added the previously-referenced-but-missing `docs/DOCUMENTATION_INDEX.md`. Remaining, not addressed in this release: the currently-running local QA deployment still has `TEST_FIXTURE_ACTIVE=true` test accounts loaded (deliberately left for the user to decide whether to clear, since it's local test data, not this release's concern); a fresh `release-evidence/serviceops-1.23.3.json` must be regenerated after this backlog entry lands on a clean HEAD. |
+| B-244 | P0 | Implemented | 1.23.3 security release, prompted by an external dependency audit against the deployed 1.23.2 image finding 9 known vulnerabilities in 4 packages despite the B-242 Authlib fix. Upgraded `Flask` 3.1.1 → 3.1.3, `Authlib` 1.6.9 → 1.6.12, `requests` 2.32.5 → 2.33.0, `Werkzeug` 3.1.3 → 3.1.6 (and dev-only `pytest` 8.4.1 → 9.0.3; `pytest`/`pip` findings only ever affected `Dockerfile.test`, never the production image). Verified with a fresh `pip-audit` inside the rebuilt image: zero known vulnerabilities. Full suite 71/71 pass. Also fixed `compose.external-db.yaml`/`.env.example` defaulting `SESSION_COOKIE_SECURE=false` with no `ALLOW_INSECURE_SESSION_COOKIES` override documented, which per [[B-233]]'s fail-closed startup guard meant a production-profile external-DB deployment following the example would refuse to start; both now default to secure cookies with the escape hatch documented. `packaging/build-dist.sh` now accepts an optional image-digest argument so packaged installs can pin `repository@sha256:...` instead of a mutable tag (previous version claimed digest-pinning in `DEPLOYMENT.md` without the tooling to actually do it); falls back to a tag with a printed warning if no digest is given. Deployed and verified locally: image/worker `serviceops-app:1.23.3`, migration head `20260727_0013`, healthy app/db/worker, CSP header present. Documentation corrected for several items an external review found stale: `OPERATIONS_MANUAL.md` was 3 releases behind (1.22.0) and described cookie/webhook/theme/tour behavior predating [[B-233]]/[[B-236]]/ADR-012; [TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix) still cited the superseded small-scale rehearsal and called the working guided tour a "Gap"; [UI_CAPABILITY_MAPPING.md](ENGINEERING_REFERENCE.md#section-ui_capability_mapping) claimed dark/system theme support that was never implemented; added the previously-referenced-but-missing [docs/DOCUMENTATION_INDEX.md](../README.md). Remaining, not addressed in this release: the currently-running local QA deployment still has `TEST_FIXTURE_ACTIVE=true` test accounts loaded (deliberately left for the user to decide whether to clear, since it's local test data, not this release's concern); a fresh `release-evidence/serviceops-1.23.3.json` must be regenerated after this backlog entry lands on a clean HEAD. |
 | B-243 | P2 | Implemented | Added RPM packaging (`packaging/build-dist.sh`, `packaging/rpm/serviceops.spec`, `packaging/systemd/serviceops.service`) so `dnf install` is a supported alternative to `git clone`. It packages the control plane only (CLI, Compose files, Helm chart, operations tooling) -- no application source or Dockerfile ships; every release still runs from the pinned registry image, so package upgrades never trigger a local build. `/etc/serviceops/serviceops.env` and `/var/lib/serviceops/backups` hold real secrets/data outside `/opt/serviceops`, symlinked in so the unmodified CLI scripts work unchanged. Verified end-to-end in a Fedora 40 container: `rpmbuild -ba` succeeds, `rpm -ivh` produces correct ownership/symlinks/systemd unit, `serviceops help` runs, and `rpm -e` removes the package without touching `/var/lib/serviceops/backups`. Not yet verified: an actual `serviceops install server` run against a live Docker daemon from the packaged tree (only the CLI wiring and Compose file validity were exercised), and no `.deb`/Homebrew equivalent exists yet if other distributions are wanted. |
 | B-245 | P1 | Verified | Release 1.24.0 introduces a ServiceNow-inspired but ServiceOps-branded incident record workspace: dense two-column create/detail forms, persistent Update/Resolve actions, caller/contact/category/subcategory/service-offering/CI/assignment/notification fields, calculated priority, and field-level Event history immediately under the operational form. New incident fields use reversible migration `20260728_0015`; tenant-scoped service-offering/CI validation and existing owning-team mutation authorization remain enforced server-side. Evidence: 73/73 automated tests passed; a disposable PostgreSQL `0015 → 0014 → 0015` rehearsal preserved 1,734 records across 63 tables; the local app and worker run image `serviceops-app:1.24.0`, the live database is at `0015`, and the authenticated incident detail route returned HTTP 200. |
 | B-246 | P0 | Verified | Release 1.24.2 corrects the failed visual delivery of B-245. The installed PWA's cache-first `serviceops-shell-v1` continued serving the pre-1.24.0 `itil.css`, leaving the incident form as an unstyled single column despite correct server HTML and HTTP 200 responses. All shell assets now carry a release cache key, the service-worker cache is versioned, old caches are deleted on activation, and static delivery is network-first with cached offline fallback. A follow-up rendered screenshot also caught and removed a sticky-toolbar overlap that obscured Number and Contact type. Playwright viewport QA at 1996×1248 verifies two 717.5 px columns, aligned first-row fields, visible Event history, and a full-page screenshot. HTTP status alone is no longer accepted as visual evidence. |
@@ -350,8 +384,8 @@ Version bumped to `1.51.0` (minor: new `tenant_id` columns + new capability, not
 | B-273 | P2 | Verified | User reported a real subnet discovery "Run now" appeared to hang forever in the browser (screenshot: the `test` target, `192.168.68.0/24`, stuck on "Never" with the button still showing "Run now" and no feedback). Root cause: `discover_subnet` (added in [[B-271]]) probed every host in the CIDR sequentially — a `/24` at even a 1s per-host timeout could take up to several minutes for a sparse subnet (most addresses never respond, so nearly every probe pays the full timeout), which exceeds gunicorn's 60s request timeout (`tools/gunicorn-entrypoint.sh`) and gets the worker killed mid-request with zero feedback to the browser — indistinguishable from an actual hang. Fixed at the root: `discover_subnet` now sweeps with a `ThreadPoolExecutor` (40 workers, SNMP round trips are I/O-bound so this is a genuine wall-clock win, not busywork) and a tightened default per-host timeout (1s → 0.6s); a full `/24` now completes in ~15-20s, verified twice against the same real LAN from [[B-272]] — once via the module directly (17.8s), once through the live `/cmdb/discovery` route end-to-end (18.8s measured with `time curl`). Also added proactive UI feedback per the user's explicit ask ("make this proactively show its progress so user doesn't feel nervous"): clicking "Run now" immediately disables the button, shows a small CSS spinner, and sets an expectation ("usually under a minute" for a subnet) instead of looking frozen during the wait — plain vanilla JS/CSS, no new dependency. Version bumped to `1.36.2` (patch: bug fix); no schema/migration change. Evidence: full suite 291 passed, 1 skipped (unchanged count — this was a performance/UX fix, not new test surface, though the existing schedule/route tests still cover the changed function). Deployed and verified live (`serviceops-app:1.36.2`) against the user's own real `test` target from the screenshot: re-ran it live, completed in 18.8s instead of hanging, confirmed the spinner/disabled-button markup is served. One transparently-reported oddity from that live re-run: it found 0 responsive hosts this time versus 1 (the Brother printer) in the immediately preceding [[B-272]] pass — most likely the printer's SNMP agent idled/slept between runs (consumer print servers commonly do this), not a regression, since the identical code path had just found it minutes earlier. The `test` target and its data were deleted afterward; dummy-data fingerprint confirmed unchanged. |
 | B-272 | P2 | Verified | Closed [[B-271]]'s standing "no live SNMP hardware" risk. First asked whether the app container running under Docker Compose could even reach the user's real LAN (`192.168.68.0/24`) given it sits on Docker's own bridge subnet (`172.18.0.0/16`) — verified empirically before guessing: a raw UDP send and a real TCP handshake from inside `serviceops-local-app-1` to the LAN gateway both succeeded, confirming Docker Desktop's NAT does route out to the host's LAN. Then ran a real parallelized sweep (`ThreadPoolExecutor`, 40 workers, 0.6s timeout) of the full `/24` with community `public`: 254 addresses in 17.6s, one SNMP-responsive device found — a Brother NC-8900w network print server at `.64`. That single real device immediately surfaced two genuine bugs that mocked-facts testing could never have caught: (1) `discover_host` was calling plain `str()` on SNMP's raw binary `OctetString`/`IpAddress` values for interface MACs and ARP-table IPs, producing mangled unreadable characters instead of a MAC or IP address — fixed by reading the true bytes via `value.asOctets()` and formatting explicitly (colon-hex for 6-byte MACs, dotted-decimal for 4-byte IPv4); (2) Brother's `sysObjectID` enterprise prefix (`1.3.6.1.4.1.2435`) wasn't in the vendor-guess table, so vendor came back blank on a real device — added it plus Microsoft/Ubiquiti/Brocade while there. Verified the fix twice against the same live printer: once directly through the module, once end-to-end through the real `/cmdb/discovery` admin route (create target → run → confirm the resulting `ConfigurationItem` in the live database has clean MACs `50:c2:e8:a8:28:60` etc. and `vendor='Brother'`). Version bumped to `1.36.1` (patch: bug fix); no schema/migration change. Evidence: 3 new regression tests in `tests/test_network_discovery.py` (`_format_mac`/`_format_ipv4` against a fake `OctetString`-like object exposing `.asOctets()`, matching pysnmp's real interface, plus a fallback-to-`str()` case for non-octet values) — full suite 291 passed, 1 skipped (up from 288/1). Deployed and verified live (`serviceops-app:1.36.1`); the real discovery target and the CI it created were deleted afterward and the dummy-data fingerprint confirmed unchanged before/after — this device's data was never left sitting in the standing local test stack. Remaining, now-narrower risk: only one real device class (an SNMPv2c-speaking consumer printer) has been validated end-to-end; a real managed switch (the primary intended use case — LLDP neighbor topology, multi-port `ifTable`) and SNMPv3 remain unvalidated against genuine hardware. |
 | B-271 | P2 | Implemented | Agentless CMDB discovery, requested by the user in GLPI/FusionInventory terms ("automatically detect all the connected resources, switches, hardware... from a single content id, and automatically map a graph for each CI"). Scoped up front via explicit user choices: runs on the same L2/L3 segment as targets (no remote-collector architecture), and validated with mocked device responses rather than live hardware (none available in this environment). New `DiscoveryTarget` model + migration `20260805_0055` (administrator-configured host or CIDR-subnet target, its own SNMP version/port/community, `community_encrypted` following the exact `IntegrationConnection` per-row-secret pattern — same `settings_cipher()` Fernet cipher, never a new one) and new admin UI at Admin → CMDB → Discovery (list/add/run-now/delete, `security_administer`-gated). `serviceops_core/network_discovery.py` does the actual SNMP work (new `pysnmp==7.1.28` dependency — confirmed compatible with this image's Python 3.14 base before adding it) — GET/WALK against MIB-II (sysDescr/sysObjectID/sysName), IF-MIB (interfaces + MACs), IP-MIB (ARP table), and LLDP-MIB (neighbor topology) — with a best-effort vendor guess from `sysObjectID`'s enterprise-number prefix (Cisco/Juniper/HP/Dell/Huawei/MikroTik/Netgear) and a CI-class heuristic (Network Switch/Server/Network Appliance/Device). Reconciliation upserts into the *existing* `ConfigurationItem`/`CIRelationship` tables (no new CI-like table) and creates "Connects to" edges for LLDP-mutual neighbor pairs, deduplicated so a mutually-reporting pair produces one edge, not two. Conservative by design, matching the LDAP/Keycloak profile-mapping philosophy from [[B-266]]: a CI already classified manually (`discovery_source == "Manual"`) never has its name/class/vendor silently overwritten by a heuristic guess, only its attributes/last-seen metadata refresh. Explicitly a distinct, complementary path to the pre-existing agent-based `tools/cmdb_sync_agent.sh` (a host self-registering itself), not a replacement — this is for switches/appliances that can't run an agent. Scheduled runs wired into the existing outbox worker loop (new `process_discovery_schedule()`, per-target interval/last-run bookkeeping, one bad target never blocks others — same isolation pattern as `process_ldap_sync_schedule`). New `/cmdb/topology` page renders every visible CI/relationship as an interactive graph via a new ~140-line dependency-free vanilla-JS force-directed layout (`static/cmdb-topology.js`, plain SVG + a small custom physics simulation, draggable nodes) — no charting library added, consistent with this app's no-CDN policy. Security posture: SNMP credentials are only ever used against an administrator-explicit target (single host or CIDR the admin typed in) — discovery never scans an unconfigured range, and the community string is encrypted at rest and never logged. Real, unrelated bug found and fixed while building this: `Mako` 1.4.0 (an `alembic` transitive dependency, pulled in regardless of this feature) accidentally ships its own internal nox test-tooling as a top-level installable `tools` package, which shadowed this repo's own `tools/` package and broke every test importing `tools.*` the moment a fresh (no layer cache) `pip install` picked up that version — inspected the actual shipped files (`tools/toxnox.py`, `tools/warn_tox.py`) and confirmed they're legitimate Mako-repo dev/nox helpers, not a supply-chain compromise, just an upstream packaging mistake; pinned `Mako==1.3.12` (last clean release) directly in `requirements.txt`. Version bumped to `1.36.0` (minor: new user-facing capability). Evidence: full suite 288 passed, 1 skipped (up from 275/1 — 5 new pure-function/reconciliation tests in `tests/test_network_discovery.py` covering vendor/class guessing and reconciliation with mocked facts, including that a manually-classified CI's identity survives a discovery run and that one bad host in a batch never blocks the rest; 9 new route tests in `tests/test_app.py` covering encrypted-at-rest storage, invalid-CIDR rejection, `security_administer` gating, a mocked end-to-end discovery run via `monkeypatch.setattr("serviceops_core.network_discovery.discover_host", ...)`, SNMP-failure handling, cross-tenant 404 isolation, the schedule-skip-if-not-due logic, and the topology page rendering real nodes/edges). Migration verified for real against a throwaway Postgres 16 container (not SQLite): fresh `upgrade head` from empty, `\d discovery_target` confirmed all columns/FKs/indexes, `downgrade` to the prior revision confirmed the table is dropped, re-`upgrade head` confirmed clean redo — full up/down/up cycle, not just a forward-only check. Deployed and verified live against the standing local test stack (`serviceops-app:1.36.0`, `http://localhost`): created a real discovery target via authenticated session, confirmed `community_encrypted` in the live database is Fernet ciphertext (not the plaintext community string), confirmed the topology page renders, deleted the test target afterward, and confirmed the dummy-data fingerprint was unchanged before/after. Not done this pass, per the user's own explicit scoping choice: no live SNMP-speaking hardware was available to validate against, so `discover_host`/`discover_subnet`'s actual wire-level SNMP behavior is only proven correct against pysnmp's own documented API shape and mocked facts, not a real switch — flagged as the standing remaining risk until genuine hardware (even a modest home-lab managed switch) is available for a live pass. Also not done: SNMPv3 auth/priv credential fields exist on the model but the UI form and reconciliation path were only exercised with SNMPv2c in testing; no remote-collector option for networks the app server can't directly reach (out of scope per the user's access-model choice, not forgotten). |
-| B-270 | P2 | Implemented | Per explicit user direction, amended `CLAUDE.md`'s "Documentation control" section (in both this repo and `ServiceOps`, which keep identical copies) to carve out `docs/API_REFERENCE.md` as the one deliberate exception to "this repo stays private, `ServiceOps` only gets README + PDF" — integrators need the REST API contract and it carries no internal governance/backlog/security-posture material, unlike everything else under `docs/`. Published a byte-identical copy to `ServiceOps/docs/API_REFERENCE.md` (new `tools/sync_api_reference.sh` here does the copy; re-run it in the same change as any future `API_REFERENCE.md` edit) and added `ServiceOps/tests/test_docs_sync.py`, which diffs the two files whenever a sibling `serviceops-notes` checkout is present on disk and fails the test if they've drifted — skips harmlessly inside `Dockerfile.test`'s isolated build context, which never has the sibling repo. `docs/DOCUMENTATION_INDEX.md` was not changed since `API_REFERENCE.md` was already listed there; only its distribution changed, not its existence or purpose. Evidence: `ServiceOps` full suite 275 passed, 1 skipped (`test_api_reference_mirror_matches_maintained_original`, skip reason correctly reported as "sibling serviceops-notes checkout not present" inside the container); ran the same test directly on the host afterward where the sibling repo is present — passed, confirming byte-identical content. `ServiceOps` version bumped to `1.35.3` (patch: this is docs/tooling, not a functional change, but the repo's release policy requires a tag on every push landing new changes) and pushed as `v1.35.3`. Not done this pass: no CI/pre-commit hook currently re-runs `sync_api_reference.sh` automatically on every `serviceops-notes` commit — today it's a manual step the test only catches after the fact, not before a push; automating that remains open. |
-| B-269 | P2 | Implemented | Documentation catch-up for [[B-265]]/[[B-266]]/[[B-267]]/[[B-268]], which shipped real features and fixes without their corresponding manual/API-reference updates at the time. Audited `API_REFERENCE.md` against every current `/api/v1/*` route in `app.py`: no undocumented endpoints, no stale documented endpoints, no behavioral drift — the only gap was the scope summary table (§2) omitting `cmdb:write`, which is used in code and described in §9 but was never added to the table; fixed. `OPERATIONS_MANUAL.md` updates: **Navigation** (§3) gained a paragraph on the sidebar profile card's "Acting as {Role}" switcher (multi-role users only) and the labeled full-width "Sign out" button, replacing the old top-nav description that no longer matched the UI. A new **System Health** subsection documents the combinable Splunk-style filters, the four export formats and their two admin-only audited routes, and `docker logs`/`kubectl logs` now mirroring the in-app log detail — none of this existed in the manual before despite being live since B-265. **Changes** (§3) and the **Submit a Normal change through approval** walkthrough (§3B) were updated from "affected CI" (singular) to describe the primary-CI-plus-repeatable-additional-CIs picker from B-266, including that adding one to an approved change is still a material change. **Keycloak** (§9) gained a paragraph on `KEYCLOAK_ATTR_MAP` profile-attribute mapping (mirroring what LDAP sync already did), and **LDAP directory synchronization** (§9)'s field list and settings table were corrected to include `business_phone`/`mobile_phone`/`location`, which the code already synced but the manual didn't mention. `MASTER_REFERENCE.md` (a regenerated merge per `DOCUMENTATION_INDEX.md`'s synchronization rule) had its Keycloak, Changes, and a new sidebar-profile-card/System Health passage updated to match, rather than a full document regeneration. `TRACEABILITY_MATRIX.md` and `GOVERNANCE.md` were checked and intentionally left unchanged — no implementation status or architectural decision changed, only field/UI extensions of already-"Implemented and verified" work. Evidence: markdown-only change, no code/schema/version bump, no redeployment needed or performed. Not done this pass, flagged rather than silently skipped: the compiled `docs/ServiceOps_Complete_Platform_Manual.pdf` (built by `tools/generate_operations_manual.py` from `OPERATIONS_MANUAL.md` plus screenshots captured via `tools/capture_screenshots.py`) was **not** regenerated — `playwright` is not installed in this environment (confirmed via `python3 -c "import playwright"` failing) and `docs/screenshots/` is currently empty locally, so a real regeneration needs both a `pip install -r requirements-docs.txt && playwright install chromium` and a running local dev stack to re-capture screenshots against; attempting a partial run without screenshots would have produced a broken PDF, so none was built. The Markdown source (the actual maintained original per this repo's own documentation-control policy) is fully up to date; only the derived PDF artifact in the ServiceOps repo is now stale relative to it. |
+| B-270 | P2 | Implemented | Per explicit user direction, amended `CLAUDE.md`'s "Documentation control" section (in both this repo and `ServiceOps`, which keep identical copies) to carve out `docs/API_REFERENCE.md` as the one deliberate exception to "this repo stays private, `ServiceOps` only gets README + PDF" — integrators need the REST API contract and it carries no internal governance/backlog/security-posture material, unlike everything else under `docs/`. Published a byte-identical copy to `ServiceOps/docs/API_REFERENCE.md` (new `tools/sync_api_reference.sh` here does the copy; re-run it in the same change as any future `API_REFERENCE.md` edit) and added `ServiceOps/tests/test_docs_sync.py`, which diffs the two files whenever a sibling `serviceops-notes` checkout is present on disk and fails the test if they've drifted — skips harmlessly inside `Dockerfile.test`'s isolated build context, which never has the sibling repo. [docs/DOCUMENTATION_INDEX.md](../README.md) was not changed since `API_REFERENCE.md` was already listed there; only its distribution changed, not its existence or purpose. Evidence: `ServiceOps` full suite 275 passed, 1 skipped (`test_api_reference_mirror_matches_maintained_original`, skip reason correctly reported as "sibling serviceops-notes checkout not present" inside the container); ran the same test directly on the host afterward where the sibling repo is present — passed, confirming byte-identical content. `ServiceOps` version bumped to `1.35.3` (patch: this is docs/tooling, not a functional change, but the repo's release policy requires a tag on every push landing new changes) and pushed as `v1.35.3`. Not done this pass: no CI/pre-commit hook currently re-runs `sync_api_reference.sh` automatically on every `serviceops-notes` commit — today it's a manual step the test only catches after the fact, not before a push; automating that remains open. |
+| B-269 | P2 | Implemented | Documentation catch-up for [[B-265]]/[[B-266]]/[[B-267]]/[[B-268]], which shipped real features and fixes without their corresponding manual/API-reference updates at the time. Audited `API_REFERENCE.md` against every current `/api/v1/*` route in `app.py`: no undocumented endpoints, no stale documented endpoints, no behavioral drift — the only gap was the scope summary table (§2) omitting `cmdb:write`, which is used in code and described in §9 but was never added to the table; fixed. `OPERATIONS_MANUAL.md` updates: **Navigation** (§3) gained a paragraph on the sidebar profile card's "Acting as {Role}" switcher (multi-role users only) and the labeled full-width "Sign out" button, replacing the old top-nav description that no longer matched the UI. A new **System Health** subsection documents the combinable Splunk-style filters, the four export formats and their two admin-only audited routes, and `docker logs`/`kubectl logs` now mirroring the in-app log detail — none of this existed in the manual before despite being live since B-265. **Changes** (§3) and the **Submit a Normal change through approval** walkthrough (§3B) were updated from "affected CI" (singular) to describe the primary-CI-plus-repeatable-additional-CIs picker from B-266, including that adding one to an approved change is still a material change. **Keycloak** (§9) gained a paragraph on `KEYCLOAK_ATTR_MAP` profile-attribute mapping (mirroring what LDAP sync already did), and **LDAP directory synchronization** (§9)'s field list and settings table were corrected to include `business_phone`/`mobile_phone`/`location`, which the code already synced but the manual didn't mention. [MASTER_REFERENCE.md](BACKLOG.md#section-master_reference) (a regenerated merge per [DOCUMENTATION_INDEX.md](../README.md)'s synchronization rule) had its Keycloak, Changes, and a new sidebar-profile-card/System Health passage updated to match, rather than a full document regeneration. [TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix) and [GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance) were checked and intentionally left unchanged — no implementation status or architectural decision changed, only field/UI extensions of already-"Implemented and verified" work. Evidence: markdown-only change, no code/schema/version bump, no redeployment needed or performed. Not done this pass, flagged rather than silently skipped: the compiled `docs/ServiceOps_Complete_Platform_Manual.pdf` (built by `tools/generate_operations_manual.py` from `OPERATIONS_MANUAL.md` plus screenshots captured via `tools/capture_screenshots.py`) was **not** regenerated — `playwright` is not installed in this environment (confirmed via `python3 -c "import playwright"` failing) and `docs/screenshots/` is currently empty locally, so a real regeneration needs both a `pip install -r requirements-docs.txt && playwright install chromium` and a running local dev stack to re-capture screenshots against; attempting a partial run without screenshots would have produced a broken PDF, so none was built. The Markdown source (the actual maintained original per this repo's own documentation-control policy) is fully up to date; only the derived PDF artifact in the ServiceOps repo is now stale relative to it. |
 | B-268 | P1 | Verified | User reported [[B-267]]'s fix hadn't resolved the underlying problem — clicking anywhere in the "Granted roles" field on the user-edit form (its heading, the info-tip, whitespace between checkboxes) always toggled "requester" specifically, and the Active switch still misbehaved nearby. Found the same class of bug as B-267 one field over: every role checkbox was already correctly wrapped in its own `<label class="check">`, but the whole group was ALSO wrapped in one outer `<label class="wide">` in `templates/user_form.html` — an invalid nested label. Per standard browser label-activation behavior, clicking anywhere inside an outer label that isn't itself a more specific interactive descendant activates the *first* labelable descendant in tree order, which is "requester" (the first role rendered) — this also explains why Active seemed to misbehave in the same session: the oversized, invalidly-nested Granted-roles label sat directly above it in the grid. Replaced the outer `<label>` with a plain `<div class="wide field-group">` (new `.record-grid .field-group` CSS rule in `static/admin-workspace.css` reproducing the same 145px/1fr label-style layout) so only a direct click on a specific role's own `<label class="check">` activates that role. Confirmed this was the only remaining instance of a `<label>` wrapping multiple form controls anywhere in the app (grepped for `checkbox-row` inside a `<label>`). Version bumped to `1.35.2` (patch: bug fix); no schema/migration change. Evidence: 275/275 automated tests pass (`Dockerfile.test`, real container build), including a new `test_user_edit_granted_roles_checkboxes_are_not_wrapped_in_one_label` asserting the outer `<label class="wide">` is gone, `<div class="wide field-group">` is present, and label tags remain balanced. Deployed and verified live against the standing local test stack (`serviceops-app:1.35.2`, `http://localhost`): fetched `/admin/users/1` via a real authenticated session and confirmed both the B-267 and B-268 fixed markup are what's actually served; dummy-data fingerprint unchanged before/after. Not done this pass: still no browser/Playwright click-simulation test (not installed in this environment) — verified via markup inspection only, so the user's next real click in a browser is the first genuine end-to-end confirmation. |
 | B-267 | P1 | Verified | User-reported bug in the admin user-edit form: clicking the "Calendar integration" dropdown toggled the unrelated "Active" switch instead. Root cause was two compounding defects in the toggle-switch markup/CSS introduced with the original user-management UI: (1) `templates/user_form.html` wrapped the Active `.switch` in a second, invalid nested `<label>` (a label inside the field's own label) — not itself catastrophic, but a sign the control's DOM was already built on shaky ground; (2) `.switch input{position:absolute;opacity:0}` in `static/admin-workspace.css` had no `position:relative` on `.switch` itself, so that invisible-but-still-clickable checkbox had no containing box to be absolutely positioned within — it escaped to be positioned against the nearest ancestor that actually establishes one, landing visually on top of the neighboring Calendar integration field instead of staying inside its own 46×25px switch. Fixed both: added `position:relative` (plus `inset:0` on the input so it exactly fills its switch, and `cursor:pointer`) to `.switch`, and replaced the nested label with a single `label[for=active-toggle]`/`input#active-toggle` pairing. Confirmed this was the only nested-`<label class="switch">` instance in the app (`preferences.html`'s five toggle switches all use one non-nested label each, so they were never affected, but they benefit from the same `position:relative` containment fix). Version bumped to `1.35.1` (patch: bug fix) across the same synced files as [[B-266]]; no schema/migration change. Evidence: 274/274 automated tests pass (`Dockerfile.test`, real container build), including a new `test_user_edit_active_toggle_and_calendar_integration_are_independent_controls` asserting the rendered edit-user page has no `<label class="switch">`, has the `id`/`for="active-toggle"` pairing, and has balanced label tag counts. Deployed and verified live against the standing local test stack (`serviceops-app:1.35.1`, `http://localhost`): fetched `/admin/users/1` via a real authenticated session and confirmed the fixed markup is what's actually served; dummy-data fingerprint unchanged before/after. Not done this pass: no browser/Playwright click-simulation test (Playwright not installed in this environment) — verified via markup/CSS inspection, not an actual simulated click, so the fix is structurally sound but wasn't clicked through in a real browser by this session. |
 | B-266 | P2 | Implemented | Three requests from live use. (1) The sidebar role-switcher popover (added in [[B-265]]) could render unreadable when it opened over the dark sidebar background — it relied on inherited/implicit colors instead of an explicit background; `.sidebar .role-switcher .role-switcher-popover` now forces `background:#fff;color:var(--ink)` plus a raised `z-index:30` and a stronger shadow so it's always legible regardless of what's behind it, and the redundant "Switching genuinely changes what you can see and do..." explainer line was removed per user request (the role list plus "(active now)" marker is self-explanatory). (2) Change Requests could only carry a single "Configuration item" at creation time — the primary-CI field on `ChangeGovernance.ci_id` — even though the existing generic `TaskCI` many-to-many table (already used for Incident's primary CI and for post-creation "Affected CIs" on the change detail page) fully supports more than one. Added a repeatable "Additional configuration items" picker to the Change creation form (`templates/ticket_form.html`, new `initAdditionalCIPickers()` in `static/lookup.js` cloning the existing CI lookup widget), submitted as `additional_ci_ids[]` and linked as `TaskCI(relationship_role="Affected CI")` rows in the same transaction as ticket creation — no new table, reusing the mechanism the detail-page "Affected CIs" section (added under [[B-032]]) already had. (3) Keycloak/OIDC login only ever mapped name/email/roles onto the user record, unlike LDAP sync which already populates title/department/division/employee_id/employee_type ([[B-262]]). Added a new admin-configurable `KEYCLOAK_ATTR_MAP` setting (mirrors `LDAP_ATTR_MAP`'s shape) and `apply_external_profile_attrs()` helper, applied in `provision_external_user()` on every Keycloak login from OIDC userinfo claims; also extended `LDAP_ATTR_MAP`/`ldap_sync.PROFILE_FIELDS` to cover `business_phone`/`mobile_phone`/`location` (AD `telephoneNumber`/`mobile`/`physicalDeliveryOfficeName`), which were present as `User` columns but never synced from either directory. Both paths preserve existing values when a later login's claim/attribute set is sparser (never null out known profile data). Explicitly descoped this pass, flagged to the user rather than rushed: an admin-manageable "make this user's group membership independently editable, otherwise hide the manual group UI" toggle — `DirectoryManagedMembership` already distinguishes directory- from manually-sourced group rows, but there is currently no admin-facing manual group-membership editor at all to gate with such a toggle, and building one blind risked a disguised rewrite of group-management UI the user didn't ask for yet. Version bumped to `1.35.0` (minor: new user-facing capability) across `VERSION`, `charts/serviceops/Chart.yaml`, `installer/app.py`, `.env.example`, `README.md`, `static/service-worker.js`; no schema/migration change (`TaskCI` already existed). Evidence: 273/273 automated tests pass (`Dockerfile.test`, real container build), including 2 new tests — `test_change_creation_links_multiple_configuration_items` (creates a change with a primary CI plus two additional CIs, asserts `ChangeGovernance.ci_id` is the primary and exactly the two additional CIs land as `TaskCI` "Affected CI" rows) and `test_keycloak_provisioning_applies_mapped_profile_attrs` (asserts mapped claims populate title/department/employee_id/business_phone/mobile_phone/location on first login, and a sparser second login never nulls out previously-set fields). Deployed and verified live against the standing local test stack (`serviceops-app:1.35.0`, `http://localhost`): logged in via a real CSRF round trip, confirmed the Change creation form now renders the "Additional configuration items" picker with a working "Add another configuration item" button, confirmed the fixed popover CSS (`background:#fff`, `z-index:30`) is present in the served `brand.css`, and confirmed the dummy-data fingerprint (5 users incl. 3 `dummy.*`, 7 `DUMMY DATA:` tickets, 0 application errors) was unchanged before/after. Not done this pass: no live Keycloak/OIDC server was available to exercise `KEYCLOAK_ATTR_MAP` end-to-end through a real IdP login (only the unit-level `provision_external_user()` path was verified); no browser/Playwright screenshot of the fixed popover was taken (Playwright not installed in this environment) — verified structurally via curl/grep only; the admin group-management toggle described above remains open, not started. |
@@ -365,14 +399,14 @@ Version bumped to `1.51.0` (minor: new `tenant_id` columns + new capability, not
 | B-256 | P2 | Verified | Four more reported gaps from live use of [[B-255]]. (1) "Print / Save as PDF" did nothing: the buttons used inline `onclick="window.print()"` attributes, which this app's own CSP (`script-src 'self'`, no `'unsafe-inline'`) silently blocks — the exact security control this repo requires was quietly defeating a feature added in the same pass that should have been tested against it. Fixed by replacing every inline handler with a `data-print-page` attribute plus one delegated `addEventListener` in `static/platform.js`, which respects the existing CSP with no policy relaxation. (2) "My approvals" had no way to notice pending approvals without opening the page. Added a `pending_approvals_count` (mirrors `approval_chains()`'s own pending-vote query: `ApprovalVote` in state `Requested` for the current user, tenant-scoped through the chain) to the shared `ui_context()` context processor, rendered as an amber `.nav-badge` pill next to "My approvals" in the sidebar — same visual language as the existing notification bell. (3) Same treatment requested for "My tasks": added `my_open_tasks_count` (open `OperationalTask` + `CatalogTask` rows assigned to the current user, terminal states excluded) to the same context processor and badge. Both counts are computed on every authenticated page load via the existing context-processor pattern (already doing an equivalent `unread_notifications` count the same way), so no new per-page wiring was needed elsewhere. (4) Analytics page was rebuilt: the previous version was three raw count panels with an arbitrary `value*12`-scaled fake bar (not proportional to anything, so a 3-count bar and a 30-count bar could render at nearly the same width) and an "Overdue work" tile that was actually only counting overdue Problem/Event investigations, mislabeled as if it covered everything. Replaced with metrics standard to ITSM reporting (ServiceNow Performance Analytics / ITIL CSI conventions): SLA compliance % over the last 30 days and current SLA breached/at-risk counts (reusing the same `TaskSLA`/`SLA_AT_RISK_HOURS` logic as the dashboard's own widgets, not a new calculation); a 14-day created-vs-resolved volume trend rendered as a dependency-free dual CSS bar chart (no charting library added — the app has none and CSP blocks external script/style sources anyway); open-backlog aging buckets (0-1/1-3/3-7/7+ days); mean time to resolve by priority for incidents closed in the last 30 days (a `created_at`→`updated_at` proxy, since `Ticket` has no dedicated `resolved_at` column — same convention the manager portal already uses for its "resolved in 30 days" metric); change success rate (Closed vs. Cancelled outcomes in the last 30 days); and a "busiest teams" ranking by open incident/change volume. Bar widths throughout are now genuinely proportional (value ÷ the panel's own max or total), not an arbitrary constant. Cache-busting asset version bumped to `1.27.20` (`templates/base.html`, `.env`, `charts/serviceops/Chart.yaml`, `installer/app.py`) — no schema/migration change this pass. Evidence: rebuilt and redeployed `serviceops-app:1.27.20` to the local dev stack; live authenticated checks confirmed the CSP header is unchanged (still no `'unsafe-inline'`) while the print button's markup now carries no inline handler and the delegated listener is present in the served `platform.js`; the "My approvals" badge rendered "1" against a real pending vote for the logged-in admin; `/analytics` returned `200` with all eight new panels populated from real data (busiest-teams table showing actual per-team open counts, MTTR table computing real per-priority averages — `0.0h` for this dataset because the seeded demo tickets were resolved at creation time, not a bug). Not done this pass: no automated test added for the badge counts or the new analytics calculations; production image not rebuilt, only the local dev stack; true chart rendering (SVG/canvas) was deliberately not attempted given the no-external-script CSP constraint — the CSS bar-chart approach is a deliberate trade-off, not a placeholder. |
 | B-255 | P2 | Verified | Org chart visibility fix, manager-portal performance drill-down, and export controls. (1) The org chart's connector-line tree (`ul.org-tree` flex layout with `::before`/`::after` pseudo-element lines) is a well-known fragile CSS pattern once subtrees are asymmetric in width — nodes render off-alignment or get visually lost against their connector lines. Replaced it with a vertical indented tree (`org2-*` classes, `templates/org_chart.html`, `static/itil.css`): each manager's reports nest under a left border rule instead of relying on flexbox centering + absolutely-positioned lines, with a collapse/expand toggle (`static/platform.js`, delegated `.org2-toggle` click handler, pure client-side) for large hierarchies. Every node now also shows a report count and a role badge. Verified live: `/org-chart` renders all 18 seeded users as `.org2-card` nodes with no missing/clipped nodes. (2) Manager portal previously showed only team-level open-change/incident/task counts with no per-person breakdown. `manager_portal_context()` (new shared helper, used by both the HTML view and the CSV export so they can't drift) now computes, per team member, via batched `group_by`/`Counter` aggregation (no N+1 — one query per metric across all visible members, not per member): active/inactive status, open incidents, open changes, open tasks (`OperationalTask` + `CatalogTask` combined), tickets resolved in the last 30 days, and SLA breached/at-risk counts (reusing the dashboard's own `TaskSLA`/`SLA_AT_RISK_HOURS` logic, scoped to each member's own open tickets rather than tenant-wide). `manager_portal.html` now renders one table per team with these columns instead of a single team-level summary row. (3) Added CSV export, requested "throughout the portal for all the possible things": a new `csv_response()` helper (`app.py`) standardizes attachment headers/UTF-8 BOM for Excel across every export; wired into the manager portal (team + per-member performance), `/tickets/<kind>` (respects the current search/state filter), `/work/open` (respects the priority filter), `/cmdb` (respects the status filter), and `/requests`. True PDF generation was deliberately not added as a new capability — the app has no PDF-rendering dependency in its production `requirements.txt` (only `requirements-docs.txt`, used solely by the docs tool, has `reportlab`), and adding one to the running application means a new supply-chain dependency (pinning, scanning, SBOM) that wasn't asked for explicitly; instead every export surface also gets a "Print / Save as PDF" button that calls the browser's native print dialog against a new print stylesheet (`@media print` block in `static/app.css`) that hides navigation/toolbars/pagination and leaves the record/table content on a clean white background — standard practice for produce-a-PDF-from-a-web-app and zero new dependencies. Cache-busting asset version bumped to `1.27.19` in `templates/base.html`; the same version was aligned across `.env`, `charts/serviceops/Chart.yaml`, and `installer/app.py` per this repo's cross-artifact version-agreement rule (no schema/migration change this pass, so no Alembic head move). Evidence: rebuilt and redeployed `serviceops-app:1.27.19` to the local dev stack; live authenticated smoke tests confirmed `/org-chart` (18 nodes, no clipping), `/manager/portal` (6 teams, 12 member rows with populated metric columns), and all five new `*/export.csv` endpoints (manager portal, incident tickets, open work, CMDB, requests) returning `200` with `Content-Disposition: attachment` and real seeded-data rows. Not done this pass: no automated test added for the org chart, manager-portal aggregation, or export endpoints; the production Docker image was not rebuilt, only the local dev stack; true server-rendered PDF export remains a possible future addition if a vetted PDF dependency is explicitly approved for the production image. |
 | B-254 | P1 | Verified | Four reported defects from live use of [[B-253]]'s CMDB/demo-data pass. (1) `CHG0000011 cannot move from Closed to In Progress` was thrown via `abort(409)` in `ticket_detail`'s `action=update` handler with no `try/except`, landing the user on the generic `error.html` page instead of staying on the ticket — `enterprise_detail` already had the correct `try/except HTTPException: flash + redirect` pattern for the equivalent case; applied the identical pattern to `ticket_detail`'s `update` and `quick_resolve` actions (`reopen` was already guarded by an explicit state check). (2) Dashboard "SLA breached"/"SLA at risk" panels always rendered their headers and "No breached SLAs."/"Nothing at risk…" placeholder text even when there was nothing to show, adding two permanently-empty panels to every dashboard view; both sections (and the wrapping `.dashboard-columns` grid) are now only rendered when they have at least one row, matching the same show/hide-when-empty request. (3) The reported 500 on new service request creation: `catalog_order` (`POST /catalog/<id>/order`, the "Request" button on `/catalog`) called `manager.id` and `fulfillment.members` unconditionally when the ordered item is `approval_required`, with no null check — if no active admin user exists or the "Service Desk" support group has no members (true on this instance: `seed_itil()` creates the "Service Desk" group but never populates it with members), this raised `AttributeError`/`ValueError` uncaught, producing a 500. The sibling endpoint `request_item_add` (adding an item to an *existing* REQ) already had this exact guard — `catalog_order` was simply missing it. Fixed by validating both prerequisites before creating any request/RITM rows and flashing a clear, actionable error ("no active administrator or Service Desk team member is configured to approve it") instead of crashing. Root cause is a genuine fresh-install gap (an approval-required catalog item is unusable until an administrator manually adds at least one Service Desk member); deliberately did not auto-seed a member into `seed_itil()`, since implicitly assigning the bootstrap admin to an operational fulfillment team without administrator intent conflicts with this repo's production-only policy against seeded personas/accounts — team membership belongs to explicit admin configuration or AD group mapping, not code. (4) RITM/SCTASK detail pages were requested to visually match ServiceNow's own RITM/SCTASK form layout (horizontal lifecycle stepper; Opened/Opened by fields alongside Number/State) per two reference screenshots. Reused the existing `build_state_track`/`_state_track.html` chevron-stepper component already wired up for Ticket/Incident/Enterprise-record pages (it existed in CSS and one partial but was never included on these two templates) rather than building a new one; added two new `STATE_TRACK_ORDER` entries (`ritm`: Awaiting Approval → Open → Closed Complete; `catalog_task`: Open → Work in Progress → Pending → Closed Complete) reflecting each model's actual stored state values — no new states were invented on either model. Added "Opened"/"Opened by" fields to both templates' record grids, sourced from the owning `CatalogRequest.opened_at`/`requested_by` (`RequestedItem`/`CatalogTask` have no `opened_at`/requester columns of their own; no migration needed). Did not attempt a fuller ServiceNow-parity rebuild (separate Request Details/Notes/Closure Details/Admin tab panels, Level/Effort fields) since neither model carries the underlying data and CLAUDE.md explicitly prohibits claiming false ServiceNow parity — flagged as a possible follow-up if those fields are wanted, which would need new columns and a migration. Evidence: rebuilt `serviceops-app:1.27.18` from current source and redeployed the local dev app+worker containers (db untouched, no migration in this pass); live authenticated smoke tests via real CSRF-token round trips confirmed: `POST /ticket/9` (state `Scheduled`, not in `TICKET_TRANSITIONS`, forcing a 409) redirected 302 back to the ticket with the error inline instead of rendering `error.html`; `POST /catalog/1/order` against the then-empty Service Desk group returned 302 with the new flash message instead of a 500; after adding the admin as a Service Desk member (via direct SQL, dev-database-only — deliberately not done through application code per the reasoning above) the same request succeeded end-to-end into a real RITM/SCTASK pair; `GET /ritm/2` and `GET /catalog-task/2` both confirmed to render the `<nav class="state-track">` stepper with correct done/current/upcoming step classes and the new Opened/Opened by field values. Dashboard SLA-panel change confirmed by absence of the SLA markers in a rendered dashboard fetch. Not done this pass: no automated test added for any of the four fixes; the production Docker image was not rebuilt, only the local dev stack. |
-| B-253 | P1 | Implemented | Whole-app audit plus CMDB depth/hardening pass, driven by a request to make the CMDB "well detailed" and fix cross-cutting code-quality/performance/stability/security issues found along the way. A dedicated read-only audit (see `docs/MASTER_REFERENCE.md` Part 4 for the full report) found: the `app.py`/`serviceops_core` extraction split had stalled (8,015 vs. 395 lines, unchanged this pass — flagged, not fixed); `find_record_by_number()` had zero tenant filtering across all six of its record-type branches, a cross-tenant existence oracle; `/tickets/<kind>` issued up to ~150 extra per-page queries via missing eager-loading and a per-row `ticket_owning_group()` call; `/work/open` had no row cap on either its ticket or request query; `/admin/integrations/process` ran up to 50 outbox events synchronously in the request thread against gunicorn's 60s timeout. All five are fixed: tenant filtering added to every `find_record_by_number` branch (joining through the owning parent for RITM/SCTASK/CTASK/PTASK, which carry no own `tenant_id`); `/tickets/<kind>` now eager-loads requester/assignee and batch-fetches owning groups per page instead of per row; `/work/open` caps each section at 200 rows with a "showing first N" notice; `/admin/integrations/process` caps `process_outbox(limit=5)`. Separately, migration `20260729_0023_cmdb_enrichment.py` extends `ConfigurationItem` with description, lifecycle_state, business_criticality, serial_number, vendor, model, location, cost_center, discovery_source, install_date, warranty_expiry_date, a JSON attributes bag, and an owning support_group — and extends `CIRelationship` with its own `tenant_id` (previously absent entirely, relying on parent-CI tenant scoping by convention rather than its own column) plus a tightened `(parent_id, child_id, relationship_type)` unique constraint (previously `(parent_id, child_id)`, which allowed duplicate relationship types between the same CI pair). `/cmdb`, `/cmdb/new`, `/cmdb/<id>/edit`, and their templates were updated to expose and edit every new field. Separately again, `seed_itil()` now creates the "Laptop Request"/"Software Request" catalog items on first bootstrap if none exist — previously a fresh install had B-038's Windows-routing default wired up but zero catalog items for it to apply to. New non-production tooling: `tools/load_demo_dataset.py` (realistic CMDB/team/ticket dataset, `--confirm-non-production` required, excluded from the production image identically to `tools/load_test_fixture.py` via the same `Dockerfile` line). Evidence: local dev Compose stack fully flushed (`docker compose down -v`) and rebuilt from current source; fresh-install migration head confirmed `20260729_0023`; app/db/worker healthy; `tools/load_demo_dataset.py` run against the fresh database (19 CIs, 32 relationships, 11 tickets, 3 problems, 2 requests, 5 KB articles, 18 users); authenticated smoke test (real CSRF round trip) returned HTTP 200 for `/`, `/cmdb`, `/tickets/incident`, `/tickets/change`, `/work/open`, `/knowledge`, `/cmdb/new`; rendered `/cmdb` HTML confirmed to contain the new Lifecycle/Criticality/Owning-team columns and seeded CI names. Not done this pass, tracked as remaining risk: no automated test added for the new CMDB fields/migration or the `find_record_by_number` fix (violates this repo's own "add negative authorization tests"/"add migration tests" rule — should be closed before this is called Verified); the REST `cmdb:write` endpoint was not extended to accept the new CI fields (web UI only for now); the broader B-231 tenant-id-sprawl follow-up (~20 other child tables with no own `tenant_id`) was not addressed beyond `CIRelationship`; `dashboard()`'s chatty multi-query hot path was not optimized; the production Docker image was not rebuilt/pushed anywhere, only the local dev stack. |
+| B-253 | P1 | Implemented | Whole-app audit plus CMDB depth/hardening pass, driven by a request to make the CMDB "well detailed" and fix cross-cutting code-quality/performance/stability/security issues found along the way. A dedicated read-only audit (see [docs/MASTER_REFERENCE.md](BACKLOG.md#section-master_reference) Part 4 for the full report) found: the `app.py`/`serviceops_core` extraction split had stalled (8,015 vs. 395 lines, unchanged this pass — flagged, not fixed); `find_record_by_number()` had zero tenant filtering across all six of its record-type branches, a cross-tenant existence oracle; `/tickets/<kind>` issued up to ~150 extra per-page queries via missing eager-loading and a per-row `ticket_owning_group()` call; `/work/open` had no row cap on either its ticket or request query; `/admin/integrations/process` ran up to 50 outbox events synchronously in the request thread against gunicorn's 60s timeout. All five are fixed: tenant filtering added to every `find_record_by_number` branch (joining through the owning parent for RITM/SCTASK/CTASK/PTASK, which carry no own `tenant_id`); `/tickets/<kind>` now eager-loads requester/assignee and batch-fetches owning groups per page instead of per row; `/work/open` caps each section at 200 rows with a "showing first N" notice; `/admin/integrations/process` caps `process_outbox(limit=5)`. Separately, migration `20260729_0023_cmdb_enrichment.py` extends `ConfigurationItem` with description, lifecycle_state, business_criticality, serial_number, vendor, model, location, cost_center, discovery_source, install_date, warranty_expiry_date, a JSON attributes bag, and an owning support_group — and extends `CIRelationship` with its own `tenant_id` (previously absent entirely, relying on parent-CI tenant scoping by convention rather than its own column) plus a tightened `(parent_id, child_id, relationship_type)` unique constraint (previously `(parent_id, child_id)`, which allowed duplicate relationship types between the same CI pair). `/cmdb`, `/cmdb/new`, `/cmdb/<id>/edit`, and their templates were updated to expose and edit every new field. Separately again, `seed_itil()` now creates the "Laptop Request"/"Software Request" catalog items on first bootstrap if none exist — previously a fresh install had B-038's Windows-routing default wired up but zero catalog items for it to apply to. New non-production tooling: `tools/load_demo_dataset.py` (realistic CMDB/team/ticket dataset, `--confirm-non-production` required, excluded from the production image identically to `tools/load_test_fixture.py` via the same `Dockerfile` line). Evidence: local dev Compose stack fully flushed (`docker compose down -v`) and rebuilt from current source; fresh-install migration head confirmed `20260729_0023`; app/db/worker healthy; `tools/load_demo_dataset.py` run against the fresh database (19 CIs, 32 relationships, 11 tickets, 3 problems, 2 requests, 5 KB articles, 18 users); authenticated smoke test (real CSRF round trip) returned HTTP 200 for `/`, `/cmdb`, `/tickets/incident`, `/tickets/change`, `/work/open`, `/knowledge`, `/cmdb/new`; rendered `/cmdb` HTML confirmed to contain the new Lifecycle/Criticality/Owning-team columns and seeded CI names. Not done this pass, tracked as remaining risk: no automated test added for the new CMDB fields/migration or the `find_record_by_number` fix (violates this repo's own "add negative authorization tests"/"add migration tests" rule — should be closed before this is called Verified); the REST `cmdb:write` endpoint was not extended to accept the new CI fields (web UI only for now); the broader B-231 tenant-id-sprawl follow-up (~20 other child tables with no own `tenant_id`) was not addressed beyond `CIRelationship`; `dashboard()`'s chatty multi-query hot path was not optimized; the production Docker image was not rebuilt/pushed anywhere, only the local dev stack. |
 | B-342 | P0 | Verified | Catalog approval policy correction prompted by a real report that approval-required requests did not reach the requester's line manager when that manager had only been provisioned from AD/LDAP and had never logged in, with intermittent-looking behavior. Both catalog submission paths selected the first active administrator instead of the requested-for user's `manager_id`; the unordered policy target could vary as administrator data changed. They now resolve and snapshot the requested-for employee's active, same-tenant, non-self line manager at submission, never substitute an administrator, require active same-tenant Service Desk voters for stage two, and validate all prerequisites before creating REQ/RITM/SLA records. LDAP external-identity lookup now compares distinguished names case-insensitively so equivalent casing from login and manager lookups cannot create duplicate placeholder profiles or flap the reporting link. Complete form-flow regressions cover a never-logged-in LDAP manager, exact ApprovalVote and notification ownership, casing variation with no duplicate, immutable in-flight approval after a later org-chart change, and fail-closed zero-record behavior when no manager exists. Evidence: local isolated QA passed `552 passed, 11 skipped, 35 warnings`; six affected workflow tests and eight desktop/mobile WCAG 2.2 AA browser journeys passed; Ruff, compilation, one Alembic head, shell/JavaScript, both Compose profiles, dependency audit, and the production-image high/critical vulnerability scan passed. A real CSRF-protected HTTP submission against disposable PostgreSQL persisted `RITM0000001` with the never-logged-in LDAP manager as the requested first-stage voter and notification owner; the disposable stack was then removed. Push gate [33749369231](https://github.com/awijesundara/ServiceOps/actions/runs/33749369231) passed and automatically triggered governed release [33750143879](https://github.com/awijesundara/ServiceOps/actions/runs/33750143879), which repeated all gates, signed and attested `ghcr.io/awijesundara/serviceops-server@sha256:4813d7e478eaa3e032a4ec9ae3c98898542c42f93e303604896f3e2284d81bb2`, and clean-built/install-tested/attested EL8, EL9, EL10, Fedora 43, and Fedora 44 RPMs. Stable [v1.78.7](https://github.com/awijesundara/ServiceOps/releases/tag/v1.78.7) contains exactly five RPMs and five portable checksums; every downloaded checksum and RPM/image provenance attestation was independently verified. The persistent local app/worker run `serviceops-app:1.78.7`; `/health` and `/ready` pass with PostgreSQL, migration `20260814_0083`, audit encryption, uploads, and worker heartbeat healthy. Superseded v1.78.6 was removed; v1.78.7 is the only release/tag. |
 | B-343 | P1 | Verified | RunOps/FlowOps integration gap: `GET /api/v1/tickets/{number}/ctasks` (added v1.84.0, undocumented here until now) let a companion app read a change's task list but never write it back, so completing a CTASK's underlying work in a companion runbook tool had no way to reflect back into ServiceOps — the change's required-task gate (`transition_ticket`, `{ticket} cannot complete while required task {task} remains {state}`) would then correctly but confusingly block the change from reaching Resolved once the companion tool tried to close it out. Added `PATCH /api/v1/tickets/{number}/ctasks/{ctask_number}` (`tickets:update` scope, same `user_can_manage_ticket` authorization as the existing ticket-update endpoint, idempotency-key required like every other mutating endpoint here), accepting `state`/`work_notes` and reusing `transition_operational_task` so it enforces the exact same change-task lifecycle and gating rules (e.g. Review tasks gated on required Implementation/Testing) as the web UI's own task-update form — no parallel validation path. New tests: scope enforcement (403 without `tickets:update`), successful state+work-notes update, an invalid transition returning 409, and an unknown CTASK number returning 404. Evidence: `3 passed` for the CTASK-specific tests, `616 passed, 48 skipped` for the full suite (Docker, `python:3.14-slim`, matching the production base image). `docs/API_REFERENCE.md` (§5b) updated and synced to the public mirror. |
 | B-410 | P1 | Verified | Security review corrections (2026-10-03, v1.110.1). Ten confirmed findings fixed: CMDB API upsert now enforces per-class create/update permissions for the acting user; CI forms (rack, support group, owner) and the new-ticket owning team resolve ids within the tenant; attach_slas uses only the target tenant's SLA definitions; mobile sessions are bound to User.auth_version (migration 20261003_0110) and end on any credential change; a deactivated tenant loses web sessions, all login paths, API tokens and mobile access; https:// proxies are reached over verified TLS so CONNECT credentials never travel in clear; recovery tokens are redacted from request/access logs and the reset page sends Referrer-Policy: no-referrer; inbound email is fetched with BODY.PEEK[] and marked read only after it is saved; a pending MFA login is voided by a credential change; non-object JSON bodies return 400 instead of 500. Evidence: tests/test_security_review_fixes.py 17 passed (16 fail on the previous code); full suite 1293 passed / 125 skipped. The first gate run (587d521) failed one new test in CI and exposed a real defect: migrations/env.py called logging.config.fileConfig() with its default disable_existing_loggers=True, so every logger that existed before the startup migration (module loggers, the serviceops.request log) was silently disabled for the rest of the process; fixed in ab1fc0b (disable_existing_loggers=False) with regression test test_startup_migrations_do_not_disable_existing_loggers (fails on the previous env.py), full suite 1311 passed / 125 skipped. Gate and Governed release succeeded (release run 37105774264); v1.110.1 published as latest (release commit 979e18c, GitHub-signed), image sha256:b65fcc863b4f4d36f471ddcc9fb8c5917ab39747839cc3a08d31af85902a5bde. Pre-upgrade backup serviceops-backup-manual-20261003073741 (serviceops-20261003T073744Z.dump) restore-tested at 20261003_0109 with 20 tickets. Deployed without --atomic as Helm revision 145; helm test passed; schema at 20261003_0110 with no mobile client left without auth_version; 20 tickets / 8 users retained; /ready and /status 200 in-pod, Cloudflare Access 302 externally; request log lines present and no errors in the post-deploy logs. v1.110.0 release and tag removed per the retention rule. |
 | B-409 | P1 | Verified | Governed release and footprint corrections (v1.110.0, 2026-10-03). `main` requires verified signatures, so the release workflow now creates its `chore(release)` commit through the GitHub API (GitHub-signed) with `tools/release_commit.py`, creates the tag only after that commit lands, and skips versions whose tag already exists instead of failing. Chart option `allowSingleReplica` lets production run one web replica deliberately (default off; web PDB only above one replica). MicroK8s runs one web replica with 50m/256Mi requests and 1 CPU/1Gi limits. Evidence: tests/test_release_version.py and tests/test_kubernetes_delivery.py (28 passed); release run 37099598214 succeeded, including four RPM targets; v1.110.0 published as latest; release commit verified by GitHub; older tags and releases removed per the retention rule. |
 | B-408 | P2 | Verified | AI-drafted ticket notes shown with structure and an "In collaboration with AI" tag (v1.110.0). `comment.ai_assisted` (migration 20261003_0109, backfilled from "ai action execute" audit records) is set when an operator approves an AI-proposed note; such notes render headings, paragraphs, ordered/bulleted lists, `code`, **bold**, [S1] source chips and the quoted draft response from escaped text (`serviceops_core/ai_note.py`), with a tag naming who reviewed and posted it. Other comments keep their line breaks. Evidence: tests/test_ai_collab_notes.py (5 passed), full suite 1290 passed / 124 skipped, headless-browser render of a real note; deployed as Helm revision 144 at head 20261003_0109 with comments 13–15 tagged and 20 tickets / 8 users retained. |
-| B-407 | P2 | Verified | CMDB rack equipment images and conservative identification (v1.110.0): NetBox → exact bundled model → original local front/rear type illustrations for 13 categories plus unknown equipment; role/class/model/name evidence is visible. Inventory and embedded previews include 0U/unpositioned equipment without inventing U1 placement; horizontal PDUs mount in the rack, invalid placement remains visible, and occupied space merges overlapping/fractional intervals. Tenant/class filtering and protected NetBox image proxy remain intact. Focused 48 checks, full suite 1,284 passed / 124 environment-gated skips, 44 final PostgreSQL equipment checks and 106 browser checks passed. Local candidate (Helm revision 143) verified first; released through the governed workflow as v1.110.0 (the v1.109.0 tag was taken by a release run whose commit never reached main) and deployed as Helm revision 144. Detailed evidence recorded in [Rack image verification](RACK_IMAGE_VERIFICATION_2026-10-03.md). |
-| B-406 | P1 | Verified | SCIM project-review corrections (2026-10-02): pathless add/replace deactivation now applies attributes and immediately revokes sessions; duplicate email updates return 409 uniqueness with transactional rollback, including database-enforced conflicts; malformed bodies, attribute types, and operations return SCIM 400 errors before mutation. Existing scope, administrator, and tenant checks are retained. Evidence: 54 new regressions, focused suite 66 passed, clean full suite 1174 passed / 118 environment-gated skips, exact candidate image source verified (539 files), 33 isolated PostgreSQL SCIM checks, 14 browser/accessibility checks, and a real-browser deactivation journey passed. Backup restored at unchanged head 20260928_0107 with 20 tickets. Verified MicroK8s Helm revision 140 runs the final local immutable image (472a394e...), with web 2/2, both workers healthy, health/readiness and retained Helm test passing, Cloudflare Access 302, clean recent logs, original PVCs retained, and 20 tickets / 8 users preserved. An interrupted upgrade was recovered using the verified backup and Alembic; its temporary schema change was reverted. Docker Desktop remained unavailable, so the final artifact used the documented verified-runtime OCI source-layer build with real entrypoint tests. No GitHub publication. [Detailed evidence](SCIM_FIX_VERIFICATION_2026-10-02.md). |
+| B-407 | P2 | Verified | CMDB rack equipment images and conservative identification (v1.110.0): NetBox → exact bundled model → original local front/rear type illustrations for 13 categories plus unknown equipment; role/class/model/name evidence is visible. Inventory and embedded previews include 0U/unpositioned equipment without inventing U1 placement; horizontal PDUs mount in the rack, invalid placement remains visible, and occupied space merges overlapping/fractional intervals. Tenant/class filtering and protected NetBox image proxy remain intact. Focused 48 checks, full suite 1,284 passed / 124 environment-gated skips, 44 final PostgreSQL equipment checks and 106 browser checks passed. Local candidate (Helm revision 143) verified first; released through the governed workflow as v1.110.0 (the v1.109.0 tag was taken by a release run whose commit never reached main) and deployed as Helm revision 144. Detailed evidence recorded in [Rack image verification](#section-rack_image_verification_2026-10-03). |
+| B-406 | P1 | Verified | SCIM project-review corrections (2026-10-02): pathless add/replace deactivation now applies attributes and immediately revokes sessions; duplicate email updates return 409 uniqueness with transactional rollback, including database-enforced conflicts; malformed bodies, attribute types, and operations return SCIM 400 errors before mutation. Existing scope, administrator, and tenant checks are retained. Evidence: 54 new regressions, focused suite 66 passed, clean full suite 1174 passed / 118 environment-gated skips, exact candidate image source verified (539 files), 33 isolated PostgreSQL SCIM checks, 14 browser/accessibility checks, and a real-browser deactivation journey passed. Backup restored at unchanged head 20260928_0107 with 20 tickets. Verified MicroK8s Helm revision 140 runs the final local immutable image (472a394e...), with web 2/2, both workers healthy, health/readiness and retained Helm test passing, Cloudflare Access 302, clean recent logs, original PVCs retained, and 20 tickets / 8 users preserved. An interrupted upgrade was recovered using the verified backup and Alembic; its temporary schema change was reverted. Docker Desktop remained unavailable, so the final artifact used the documented verified-runtime OCI source-layer build with real entrypoint tests. No GitHub publication. [Detailed evidence](#section-scim_fix_verification_2026-10-02). |
 | B-405 | P1 | Implemented | NetBox import reported "Completed" without importing anything (product owner report, 2026-09-28). Root causes: (1) "Preview only (dry run)" was ticked by default, so a default run saved nothing; (2) the import page never showed a background job's result (it read a session key nothing set), so counts, errors and warnings were invisible; (3) a NetBox request that failed outright (refused token, unreachable host, non-API response, TLS) was recorded as a summary error and the job still ended "Completed"; (4) optional component endpoints absent from a NetBox version (cooling intakes/outflows on 4.4) produced a warning on every run. Fix (1.108.0): guided three-step flow on CMDB → Import (and a Test connection shortcut on the NetBox connection settings page). Test connection (`probe_netbox`) reports NetBox version, token type, readable record counts per data type, device role → CI class mapping, a device sample rendered as CMDB rows, missing `environment` custom field, and current CMDB size, writing nothing; distinguishes a bad token from a valid token without view permissions. Preview is an explicit button; Import is offered only after a completed preview from the last 24 hours that found records and hit no record errors, requires a review confirmation, and consumes that preview (server-enforced). Fatal NetBox request failures now fail the job with a plain-language reason and write nothing; empty results carry an explanation; 404 component endpoints are skipped quietly and 403 ones say the token may not read them; base URL accepted with or without `/api`. Evidence: tests/test_netbox_connection.py (17) and tests/test_netbox_sync.py (29) pass; end-to-end against a real NetBox 4.4.10 container with ServiceOps on PostgreSQL 16: test connection, import refused before preview, preview wrote 0 rows, confirmed import created 3 CIs (Switch, Server, Virtual Machine) and 1 rack with serials, models, primary IP, rack position and environment; restricted-permission and wrong tokens explained correctly; wrong-token sync job Failed with the reason. Browser walk-through (Playwright, desktop and 390px) with no console errors. Production cause for the reported run not confirmed first-hand (production database read not permitted in that session). |
 | B-404 | P1 | Implemented | AI privacy hardening after the product owner asked whether other people could read their data through AI chat using the owner's Gemini key (they cannot: evidence is retrieved server-side under the asker's identity, and conversations and memory are per user and tenant). Changes: (1) external AI services no longer receive the asker's name, first name, distinctive username or email (replaced with "the person asking"; whole words, names matched with their capitalization, so "admin"/"Annabel" are untouched), while the role is still stated and the organization's own AI still sees the name; (2) incident-investigation evidence masks email addresses and phone numbers as chat evidence already did, even with personal-detail detection turned off; (3) chat conversations are deleted after a configurable number of days without a message (`ai_configuration.chat_retention_days`, default 30, 1-365, migration `20260928_0107`, expand-only; conversations with a run in progress are kept); previously only run records expired and transcripts stayed until the person deleted them; (4) the chat panel tells people their chats are private and when they are deleted, and the external-service consent explains what leaves the organization and that free tiers (Google AI Studio's, for example) may use it to improve the provider's products. Evidence: tests/test_ai_privacy_hardening.py 10 passed (includes a check that a request retrieving the asker's ticket with contact details is refused rather than sent to an external-only setup); full suite 1089 passed, 118 skipped; migration 0107 upgrade/downgrade/re-upgrade on PostgreSQL 16 with an existing configuration row (gets 30, other retention value unchanged). Release/deploy evidence pending (target v1.107.0). Not addressed: names of other people written in free text (descriptions, comments) cannot be detected reliably and still reach an external service when the request is otherwise not sensitive. |
 | B-403 | P1 | Implemented | Reviewable repair for incident categories reset to "General" by the empty category picker (5f86c1c until 1.104.11, see B-397): `tools/repair_reset_categories.py`, dry run by default, `--apply` to commit. Restores from ticket history only when the reset happened inside the bug window (2026-09-26 09:00 to 2026-09-27 19:00 JST), the incident is still "General" with no later category change, and the original category (after migration 0106's Access/Software relabels) is active in the incident's own tenant; restores the subcategory from the same save when it still matches. Writes ticket history ("Category restored") and an audit entry per incident; idempotent. Evidence: tests/test_repair_reset_categories.py 4 passed (restore with subcategory, relabel mapping, out-of-window/later-change/inactive skips, tenant isolation). Production run pending the v1.107.0 image. |
@@ -383,3 +417,3477 @@ Version bumped to `1.51.0` (minor: new `tenant_id` columns + new capability, not
 | B-399 | P1 | Verified | ITIL categorisation alignment per docs/ITIL_V5_CATEGORISATION.md (product owner's ITIL Version 5 guidance; aligned with, not certified). Nine-category two-level model seeded for new tenants and applied to existing ones by migration 20260927_0106 (relabels Access/Software with their tickets, adds missing entries, retires starter entries without equivalent, never deletes, leaves admin-created entries alone); migration 20260927_0105 adds closure_category/closure_subcategory/resolution_notes/resolved_at with resolved_at backfilled from history. Category required on new incidents; closure categorisation captured at resolution separately from logging; resolution notes required for web resolution (optional in v1 API, documented); resolved_at drives MTTR and 30-day figures; analytics shows incidents by closure category and recategorisation rate; changes no longer take a symptom category; category renames relabel tickets; admin page states the rules and warns past 10 options; startup seeding no longer recreates renamed entries. Also fixed migrations/env.py leaking its session-level advisory lock to the pool. Evidence: full suite 1060 passed; PostgreSQL 16 upgrade/downgrade/re-upgrade rehearsal from production-like 0103 state; browser suite 100 passed with axe-core 4.10.3; 16 targeted browser checks. 1.105.0 was tagged but not published (browser gate failure in two journeys that didn't pick the now-required category; fixed in d0bde26). Released as v1.105.1, deployed to MicroK8s `operations`, Helm revision 128, migrations at 20260927_0106, helm test ready. |
 | B-397 | P1 | Verified | Re-check of CLAUDE.md's "Current review priorities" list against current source, requested as a general "review the project and fix any issues" pass. Four distinct issues found and fixed (most other listed priorities — tenant fail-closed, cookie defaults, CSP, webhook SSRF/DNS-rebinding, version alignment, migration-rehearsal hardcoding — were independently re-verified as already fixed, with file:line evidence, and needed no change this pass). (1) `is_safe_internal_path()` rejected `//host` and absolute-scheme redirects but not a leading-backslash bypass (`/\evil.com`): browsers normalize `\` to `/` when resolving a relative reference for http(s) pages, so this was a live open-redirect bypass on every `start_page`/favorite/history validation call site (the exact control [[B-234]] added). Now parses with `urlparse()` and rejects any backslash outright. (2) `change_plan_update`/`change_task_add` read the ticket unlocked, computed a before/after diff, and called `supersede_change_approval()` (which re-notifies every approver) with no guard against two concurrent requests — e.g. a double-submitted form — both reading the same pre-mutation state and each independently superseding the approval chain, double-notifying approvers (a different mechanism from [[B-232]]'s already-fixed same-request double-send). `tenant_record_or_404()` gained an opt-in `lock=True` (`SELECT ... FOR UPDATE`) used only at these two call sites, so a second request blocks until the first commits and then sees the already-applied state, hitting the existing no-op "no changes" guard instead of re-notifying; SQLite (the test suite's DB) silently ignores `FOR UPDATE`, so this is a real lock only against Postgres. (3) `audit_export()` ran two full sequential table scans of the tenant's audit trail (`verify_audit_chain()`'s integrity walk, then a separate `.all()` for the export body); `verify_audit_chain()` now accepts a pre-fetched `rows` list so the export does one scan, not two. (4) `attachment_file_response()` never checked `FileAttachment.scan_status` — a file whose ClamAV scan genuinely errored (`scan_error`) was served identically to a clean one; now blocks serving with a 503 specifically when scanning is enabled and that file's scan errored, while `not_scanned` stays servable (the honest, expected status when scanning is off, or for files uploaded before it was turned on). Also fixed a local tooling bug found while establishing a test baseline: bare `pytest` (what `make test`/`make check` both run) doesn't add the repo root to `sys.path`, so 53 of 59 test files failed collection silently (1153 tests collected -> 119) — `Dockerfile.test`'s own `PYTHONPATH=/app` meant the Docker/CI path was unaffected, but the documented local workflow was silently running under a tenth of the suite. Added `[tool.pytest.ini_options] pythonpath = ["."]` to `pyproject.toml`. New tests: `test_is_safe_internal_path_rejects_backslash_bypass` and `test_preferences_reject_open_redirect_start_page_backslash_bypass`. Evidence: full local suite `1035 passed, 118 skipped` (all skips gated on live infra absent in this environment — `E2E_BASE_URL`, `AI_BROWSER_DATABASE_URL`, `IPFS_LIVE_TEST_API_URL` — none related to this change); Ruff, compileall, single Alembic head (`20260926_0104`, unaffected — no schema/migration change), and `tools/release_version.py --check` all clean. Commit `28328ed` (no Co-Authored-By trailer); push gate [36288631347](https://github.com/awijesundara/ServiceOps/actions/runs/36288631347) passed and automatically triggered governed release [36289344889](https://github.com/awijesundara/ServiceOps/actions/runs/36289344889), which signed and attested `ghcr.io/awijesundara/serviceops-server@sha256:e139a8cc12b2ddc8c0cc01a523738cf73d67199c93f155d580bdc63172b60efa` and clean-built/install-tested all five RPM targets (EL8, EL9, EL10, Fedora 43, Fedora 44). Stable [v1.104.8](https://github.com/awijesundara/ServiceOps/releases/tag/v1.104.8) published non-draft/non-prerelease. Deployed via `tools/safe_update_k8s.sh` (real pre-upgrade backup `serviceops-backup-manual-20260927120811` taken and referenced first) to the live MicroK8s `operations` namespace, Helm revision 125; `helm test --logs` passed: `{"status":"ready","version":"1.104.8","checks":{"audit_encryption":{"ok":true},"database":{"ok":true},"migrations":{"ok":true,"current":["20260926_0104"],"expected":["20260926_0104"]},"uploads":{"ok":true},"worker":{"ok":true}}}`. `~/Github/k8s/serviceops-values-microk8s.yaml`'s `image.repository` was switched from `localhost:32000/serviceops` (unreachable from the machine this session ran on — MicroK8s's node-local registry addon, not exposed off-node) back to the governed, signed `ghcr.io` image by digest, matching the corrected state from [[B-358]]; flagged for the user to confirm whether `localhost:32000` should be restored as a deliberate fast-path on a session with node access, or `ghcr.io` kept as the standing default. Release retention (delete-superseded-tags-and-releases, per the standing policy below) was attempted but blocked by this session's own auto-mode permission classifier (`gh release delete` flagged "Git Destructive"); left pending for the user or a session with that permission granted — v1.104.4 through v1.104.7 releases/tags still exist as of this entry. Separately noticed, not part of this change: a Dependabot PR bumping 13 Python dependencies (including a **major** `webauthn` 2.7.1→3.0.0, the passkey/WebAuthn auth library) was open at review time — flagged to the user as worth a human look before merging given the security-sensitive package, not merged or evaluated as part of this pass. |
 | B-344 | P2 | Verified | App-wide fade/reveal animation and scroll-affordance fix, backfilled here per this repo's own documentation-control rule after being implemented as an ad-hoc UI request not tied to an existing tracked item. The subtle opacity+translateX page-load animation previously lived only on the three admin/settings templates (`admin_home`, `integrations`, `system_settings_category`) via a `settings-reveal` class on their inner section. Generalized onto `<main>` in `templates/base.html` itself (renamed `page-reveal`) so every page gets the same polish on load; removed the now-redundant per-template class on those three pages to avoid double-firing. Also fixed a real UX gap found via a multi-viewport visual audit (1920 down to 360px, 8 representative pages, Playwright): three horizontally-scrolling regions — the wide ticket/task tables (`.task-list-scroll`, used across dozens of templates), the kanban board (`.task-board`), and the mobile preferences tab strip (`.preferences-nav`) — gave no visual indication that more content existed off-screen, making correctly-contained horizontal scroll look like clipped/broken content at laptop and tablet widths (1024–1440px). Added a CSS-only dual-gradient scroll-shadow (background-attachment local/scroll layering, no JS) color-matched to each component, appearing only where there is more to scroll to. A same-session follow-up commit reverted an added `html{scrollbar-gutter:stable}` (meant to stop the vertical-scrollbar-presence layout shift between pages) because it wastes horizontal space at 2560px and failed `test_e2e_smoke.py`'s wide-desktop assertion that `main` fills the full viewport with no unused horizontal space on 15 of the suite's journeys — that test encodes a deliberate prior design decision (full width utilization over eliminating an occasional scrollbar-width shift), so the gutter reservation was reverted rather than the test weakened. The scroll-shadow additions and reveal animation are unaffected by that revert. Evidence: full local pytest suite `619 passed, 0 failed, 48 pre-existing skips`, Ruff, compileall, single Alembic head (unaffected), shell/JS syntax checks, and a fresh isolated Docker Compose boot (dedicated audit-only Postgres/uploads/logs volumes) confirming `/health` reports 1.87.0 and the animation/scroll-shadow render correctly across all 8 tested viewport widths. Commits `03074af` (animation + scroll-shadow) and `1395945` (gutter revert); auto-released as [v1.87.1](https://github.com/awijesundara/ServiceOps/releases/tag/v1.87.1); deployed to the live MicroK8s `operations` namespace (Helm revision 37, `serviceops-1.87.1`) — confirmed the running image digest is `sha256:6d4f502ab2c315a5b90809822a971098c20a64d90575eca2e544c72501649068` and `helm test` passes (audit encryption, database, migrations, uploads, worker). Known related gap, tracked separately: the wide ticket/task tables (`.task-list`, `min-width:1180px`) still require horizontal scrolling at laptop widths — this entry only made that scrolling discoverable, not eliminated; see the follow-up entry for the actual table redesign. |
+
+---
+
+<a id="section-traceability_matrix"></a>
+
+## Requirements traceability matrix
+
+<a id="section-traceability_matrix--requirements-traceability-matrix"></a>
+
+Status meanings: **Verified** has current automated evidence; **Implemented**
+has code but incomplete external/runtime proof; **Gap** is not production-ready.
+
+| Requirement/source | ServiceOps evidence | Status | Backlog |
+|---|---|---|---|
+| Full application behavior without PostgreSQL in IPFS mode | `serviceops_core/storage/ipfs_projection.py`; encrypted relational checkpoint and attachment objects; 109-table volatile projection; integrated single-process worker; `/health` and `/ready`; full regression suite; live create/publish/restart/recover evidence | Verified for single-node development use; production scale, abrupt-kill and independent security gates remain | B-331, B-335, B-338 |
+| Unified navigation, search, favorites, history, preferences (UI PDF: Next Experience) | `templates/base.html`, `/ui/search`, favorites/recent views, `tests/test_app.py` | Verified | B-021 |
+| Shared keyboard navigation and dialog semantics | base-layout skip link and focusable main landmark; stateful navigation toggle; labelled modal CI browser; blocking Playwright desktop/mobile critical journeys with axe-core WCAG 2.2 AA serious/critical checks and failure artifacts | Internally verified; independent assistive-technology WCAG 2.2 AA audit remains | B-080, B-277, B-323 |
+| Native mobile user identity, biometric lock, passkeys, audit attribution and discoverability | Password/LDAP plus MFA mobile login; short-lived and rotating/revocable tokens; device-only Keychain storage; foreground biometric lock; tenant/user-bound WebAuthn registration/authentication; server-derived user attribution with validated app version/build/platform/device context; searchable web mobile entry and maintained iOS release documentation/screenshots | Automated backend and unsigned iOS Debug/Release build coverage; signed-device, iCloud Keychain, HTTPS relying-party and external IdP testing remain | B-324, B-326, B-328 |
+| Canonical release-version consistency | `VERSION`, `tools/release_version.py`, release workflow and regression tests govern runtime, README, service worker, installers, example environment, and Helm metadata/image tag | Implemented; remote tagged workflow evidence pending | B-007, B-277 |
+| Improvement return-path redirect boundary | `/improvements/new` uses `is_safe_internal_path` and has a negative scheme-relative URL test | Verified in the full 1.38.2 suite | B-277 |
+| User profile, user list and administration home (UI PDF: User Interface/User Administration) | tenant-scoped `/profile`, `/admin/users`, `/admin/users/<id>` and `/admin`; self-service contact fields are separated from admin-only role, active state and department authority; search and persistence/denial tests | Verified | B-248 |
+| Bounded LDAP profile intelligence and smart organization reconciliation | allowlisted `DirectoryProfile` snapshot; rich configurable AD field map; friendly group names; account-state/session revocation; direct-report manager grants; conservative optional team creation and unanimous line-manager inference; certificates/password material/SIDs/security descriptors excluded; representative screenshot-schema regression | Released in v1.78.9; customer LDAP endpoint is not enabled in the local deployment, so corporate-directory bind proof remains environment-dependent | B-344 |
+| Extended LDAP organizational and operational relationships | normalized OU/domain, website, Unix/NIS identity, account-security timestamps, group-purpose summaries and review-only team candidates; self/admin profile views and GDPR export connect the identity to assigned assets and personally owned CIs; no ambiguous group is auto-assigned | Verified locally and in governed v1.79.1 release; live customer-directory bind remains environment-dependent | B-346 |
+| Manager absence approval continuity | time-bounded upward-only delegation to the accountable manager's active manager; no initial backup notification; original and acting approver attribution; tenant/state/change-freeze parity across web and mobile; form-flow regression | Released in v1.78.9; hosted and local verification passed | B-344 |
+| Login and audit security context | server-observed IP, parsed user agent/browser/OS, browser language, optional forward-confirmed reverse DNS, authentication provider, method/path, request/trace correlation, sanitized referrer and one-way session reference; signed into new audit events and displayed/exported; secrets and request bodies excluded | Verified locally and in governed v1.79.0 release | B-344, B-345 |
+| Categorized personal interface settings (UI PDF: System Settings) | `/preferences` categories for accessibility, lists, forms and notification navigation; persistent density, scale, contrast, motion, tooltips, date display and navigation settings; light-only governed by ADR-012 | Verified for implemented settings; vendor theme/developer controls are intentionally not reproduced | B-248, B-240 |
+| Lists, filters, forms, activity, attachments, checklists (UI PDF: Core UI/Workspace) | shared task-derived record shell for INC/CHG/PRB/enterprise records/REQ, common two-column operational fields, action headers, field-level Event history, type-specific related sections and Incident section navigation, shared list toolbar/search/filter/record count/pagination/priority signals and lifecycle plus rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
+| Visual task boards (UI PDF: VTB) | `/task-board`, move endpoint and test | Verified | B-023 |
+| Branding/logo/theme configuration (UI PDF: Theme Builder/configuration) | installer and `/admin/settings`; light-only UI | Implemented | B-024 |
+| Guided help/tours (UI PDF: Adoption services) | `templates/help.html` + `static/platform.js` interactive step-by-step tour with inline focus/advance/skip; static help articles alongside it | Partial; versioned content and role targeting remain open | B-120 |
+| Full configurable workspace/page-builder capability | no page designer or metadata runtime | Gap | B-121 |
+| Production-only initialization | `seed`, installer, Compose, cleanup tool and tests | Implemented | B-001 |
+| Team-manager and CCB approval chain | named manager controls, explicit CCB approver grants, chains/gates/votes; change submission fail-closed | Implemented | B-030 |
+| Approval and lifecycle integrity | centralized transition guards, approval-owned states, exact-voter enforcement, board/form/task bypass tests | Verified | B-034 |
+| Assignment-group operational authorization | shared INC/CHG read visibility for active IT teams, explicit owning-team mutation guard, team-scoped assignees and adversarial cross-team read/write tests | Verified | B-035, B-042 |
+| ITIL related-record network | governed `RecordLink`, `OperationalTask`, `ProblemProfile`, `MajorIncidentProfile`, REQ/RITM/SCTASK hierarchy, reverse related lists and relationship tests | Verified | B-031, B-037 |
+| Ticket history and change reapproval | `TaskHistory`, `ChangeRevision`, material-field comparison, superseded chains, fresh notifications and adversarial approval-reset tests | Verified | B-036 |
+| Task-to-CMDB relationships | primary/affected CIs, impacted services and multi-CI schedule-conflict detection | Implemented | B-032 |
+| CMDB attribute depth (lifecycle, criticality, discovery source, ownership) | `ConfigurationItem` fields added by migration `20260729_0023`: description, lifecycle_state, business_criticality, serial_number, vendor, model, location, cost_center, discovery_source, install/warranty dates, JSON attributes, support_group_id; `CIRelationship` gained its own `tenant_id` and a tightened `(parent, child, type)` unique constraint | Implemented; no automated test added yet, REST `cmdb:write` endpoint not yet extended to the new fields | B-253 |
+| NetBox-to-CMDB semantic reconciliation | `serviceops_core/netbox_sync.py` maps current inventory semantics and `IntegrationSyncJob` runs tenant-scoped worker reconciliation with bounded pages, persisted progress, duplicate exclusion, cancellation, and audit evidence | Verified in governed v1.80.1; customer endpoint validation remains connection-dependent | B-343, B-345, B-349 |
+| Full-resolution responsive application shell | authenticated `main` has no fixed maximum width; Playwright gates mobile, 1440px desktop, and 2560px wide desktop core journeys and asserts the wide shell reaches the viewport edge | Verified | B-343 |
+| Cross-record lookup tenant isolation (`find_record_by_number`) | every branch now filters by the caller's tenant, joining through the owning parent for RITM/SCTASK/CTASK/PTASK | Implemented; no adversarial test added yet | B-253 |
+| Ticket lifecycle-transition errors stay inline (no generic error page) | `ticket_detail`'s `update`/`quick_resolve` actions now wrap `transition_ticket` in `try/except HTTPException`, matching `enterprise_detail`'s existing pattern; verified live against a real invalid-transition ticket | Verified | B-254 |
+| Catalog line-manager approval routing and prerequisite validation | Both catalog creation paths resolve the requested-for user's active, same-tenant, non-self line manager and active Service Desk voters before creating records; LDAP DN lookup is case-insensitive; persisted votes snapshot the submission-time authority; complete form-flow tests cover a never-logged-in LDAP manager, notification delivery, DN casing drift, no administrator substitution, immutable in-flight routing, and fail-closed zero-record behavior | Verified | B-254, B-342 |
+| RITM/SCTASK lifecycle stepper and Opened/Opened by fields | reused existing `build_state_track`/`_state_track.html` component with new `ritm`/`catalog_task` state orders; verified live via rendered HTML on real RITM/SCTASK records | Verified | B-254 |
+| Org chart readability at scale | replaced fragile flex/connector-line tree with an indented vertical tree (`org2-*`); verified live against all 18 seeded users with no clipped/misaligned nodes | Verified | B-255 |
+| Manager visibility into team performance/SLA exposure | `manager_portal_context()` computes per-member open incidents/changes/tasks, 30-day resolutions, and SLA breached/at-risk via batched aggregate queries; verified live across 6 teams / 12 members | Verified | B-255 |
+| CSV/print export coverage | `csv_response()` helper wired into manager portal, tickets, open work, CMDB, and requests list; browser print/PDF via a dedicated print stylesheet | Verified | B-255 |
+| Print/Save-as-PDF works under CSP | replaced inline `onclick` handlers (silently blocked by `script-src 'self'`) with `data-print-page` + a delegated listener in `platform.js`; verified CSP header unchanged and listener present in served JS | Verified | B-256 |
+| Pending-approvals and open-task visibility in navigation | `pending_approvals_count`/`my_open_tasks_count` added to the shared `ui_context()` context processor, rendered as amber nav badges; verified live against a real pending approval | Verified | B-256 |
+| Analytics reflects standard ITSM reporting metrics | SLA compliance, 14-day volume trend, backlog aging, MTTR by priority, change success rate, busiest teams — all computed from real `TaskSLA`/`Ticket` data with proportional (not arbitrary) chart scaling | Verified | B-256 |
+| Sidebar collapse/scroll stability | persisted `nav-collapsed` via `localStorage` and moved scroll/collapse-state restoration into a blocking, CSP-compliant `static/nav-init.js` applied before first paint; verified live with CSP header unchanged and no JS errors | Verified | B-257 |
+| Change approval invalidated on Affected CI/Impacted Service change | `task_ci_add` now calls `supersede_change_approval` for change tickets, matching the other three material-change paths | Verified | B-258 |
+| Emergency change accelerated-but-auditable approval route | `change_approval_stages` gives Emergency changes a single-approver "expedited" CCB stage instead of the full-board majority gate; CCB authorization and audit trail remain mandatory | Verified | B-258 |
+| LDAP bind fails closed on key-rotation/decrypt failure | `ldap_authenticate` resolves the bind password directly and aborts rather than falling back to an anonymous bind if a configured password can't be decrypted | Verified | B-258 |
+| REST API rate limiting | new `api_rate_limit_window` table (migration `20260729_0024`), DB-backed per-client-per-minute counter enforced in `authenticate_api_request()`, configurable via `API_RATE_LIMIT_PER_MINUTE`; verified live returning `429`+`Retry-After` after the configured limit | Verified | B-258 |
+| `ChangeGovernance.ccb_required` wired into CCB gating | previously defined and defaulted but never read; now respected by `change_approval_stages` (no UI to set it False yet — deliberately deferred, security-sensitive) | Implemented | B-258 |
+| Attachment content-type/extension verification | `validate_attachment_upload()` allowlists extensions and cross-checks magic bytes, storing the verified MIME type instead of the client-supplied one; verified live against a rejected `.exe` and an accepted `.pdf` | Verified | B-258 |
+| Attachment malware scanning and cryptographic hashing | optional ClamAV INSTREAM adapter (`scan_attachment()`, no new dependency, configurable host/port/enable), rejects/quarantines a positive scan result before any `file_attachment` row is created, records `sha256`/`scan_status` (migration `20260729_0026`); honestly reports `not_scanned` when unconfigured rather than claiming clean; verified live end-to-end (upload succeeds, `not_scanned` + hash recorded) | Verified | B-260 |
+| `ChangeGovernance`/`ApprovalGate`/`ApprovalVote` own enforced `tenant_id` | previously reachable only by joining back through `approval_chain`/`ticket`; migration `20260729_0025` adds and backfills an own tenant_id column on each, same defense-in-depth precedent as `CIRelationship` (B-253); verified live against the running Postgres database with zero NULL backfills | Verified | B-260 |
+| Catalog hierarchy and task orchestration | multi-RITM REQ, multiple team-owned SCTASKs, sequential/parallel dependency control and terminal-state roll-up | Verified | B-033 |
+| Configurable catalog fulfillment routing | per-item `CatalogItemRouting`, administrator route UI, Windows defaults for Laptop/Software, Service Desk fallback and generated-SCTASK routing tests | Verified | B-038 |
+| Catalog item administration | administrator create/edit controls for item metadata, delivery target, approval, availability and fulfillment route; create/edit/deactivation test | Verified | B-041 |
+| Catalog request visibility boundaries | participant/fulfillment/approver/admin policy applied to REQ list, direct detail, dashboard counts and global search with cross-team denial tests | Verified | B-039 |
+| Cross-module object and field authorization | centralized ticket/request/enterprise policies; direct-ID, list, search, attachment, analytics, approval, relationship and mutation tests; Git-backed action vocabulary plus validated fail-closed field registry for REST tickets, audit exports, JSON search, monitoring/workflow acknowledgements and UI mutation responses | Implemented; independent authorization review pending | B-005, B-040, B-203 |
+| AD/LDAP and Keycloak authentication | authentication code, installer checks, AD group-to-team mapping and login reconciliation | Implemented; external proof absent | B-061 |
+| Safe LDAP reconciliation (profile fields, manager chain, group membership) | `serviceops_core/ldap_sync.py`, `app.process_ldap_sync_schedule`, `tools/outbox_worker.py`, bounded `DirectoryProfile`; no bulk-provision route; just-in-time user creation; scoped RFC 2696 pages, entry ceiling, tenant serialization and failure cooldown | Verified in governed v1.80.1; current customer LDAP endpoint validation remains connection-dependent | B-262, B-344, B-345, B-349 |
+| Docker and external PostgreSQL deployment | Compose definitions, single `./serviceops` lifecycle command, internal installers, health endpoints | Implemented | B-050 |
+| Kubernetes high availability and governed delivery | Helm resources/PDB/network policy; external HA PostgreSQL and shared upload enforcement; database/migration init gates; immutable tag/digest update helper; protected post-release provenance verification and atomic Helm deployment; digest-pinned, egress-isolated retained health-test evidence and explicit ingress namespace trust | Verified in an isolated live Kubernetes install/upgrade/failure-rollback rehearsal; production-cluster credentials remain operator-controlled | B-051, B-347, B-348 |
+| Versioned database migrations and tenant foundation | Alembic baseline plus tenant revision, existing-schema adoption, default-tenant backfill for 15 roots, tenant-aware list/search/direct-ID policies, Kubernetes migration Job, outdated-schema startup refusal, cross-tenant denial tests, and a guarded disposable PostgreSQL `20260727_0013 → 20260727_0012 → 20260727_0013` rehearsal with 100,717 records across 63 tables (dynamically resolved head/prior revision, not hardcoded) | Migration path verified at full scale (2026-07-28); `ApprovalGate`/`ApprovalVote`/`ChangeGovernance` closed by B-260; roughly 21 further dependent child tables and independent tenant-isolation review still pending | B-002, B-005, B-202, B-231, B-260 |
+| CSRF protection and hardened session lifecycle | central unsafe-method guard, injected form tokens, JavaScript token headers, post-login rotation, HttpOnly/SameSite cookies and explicit rejection/acceptance tests | Verified | B-003, B-201 |
+| Tamper-evident audit evidence | tenant-specific hash chains, per-event key IDs, non-destructive encrypted historical-key retention and rotation, file-mounted bootstrap key, request/source correlation, database UPDATE/DELETE denial triggers, minimum seven-year retention/legal hold policy, verification-gated signed export, and SIEM-only signed durable delivery | Implemented; representative external WORM/SIEM validation and independent review pending | B-004 |
+| Versioned REST API foundation | tenant/user-bound hashed clients, scopes, shared policies and projections, cursor pagination, JSON errors/request IDs, OpenAPI, idempotent writes, auditing, one-time token display and revocation | Implemented for initial ticket/incident contract; broader resources, OAuth2, rate limiting and compatibility programme pending | B-204 |
+| Responsive PWA foundation | dynamic manifest, company icon support, secure-context registration and static-shell-only service worker with tests proving no API/ticket caching | Implemented; encrypted governed offline records intentionally deferred | B-205 |
+| Durable integration foundation | transactional outbox, Compose/Kubernetes worker, SKIP LOCKED coordination, bounded retry/dead state, SMTP/STARTTLS, signed webhooks, Teams payloads, encrypted secrets, delivery evidence, authenticated monitoring ingestion, deduplication and team-routed EVT/EVTASK | Implemented with simulated adapters; representative external-system validation and operational SLO evidence pending | B-130 |
+| Priority and SLA governance | Git-backed validated impact/urgency matrix, controlled override evidence, IANA-timezone business schedules, holiday exclusions, immutable SLA lifecycle events, pause/resume accounting and worker-driven breach notifications | Implemented; OLA/contracts, escalation ladders and production-scale calendar/load rehearsal pending | B-206 |
+| Declarative workflow foundation | validated Git package, immutable published versions, restricted expression/actions, state-entry jobs, PostgreSQL worker retries/dead state, correlation and execution evidence, idempotency, safe simulation and administrator deployment view | Implemented for ticket state-entry notification/history actions; broader trigger/action catalogue, waits, compensation, subflows, rate limits and promotion governance pending | B-207 |
+| Durable workflow orchestration | PostgreSQL wait cursor/resume, action-step evidence, manual/API/SLA triggers, API scope/idempotency, per-workflow rate limits, bounded retry, controlled replay and final-attempt safe compensation | Implemented; scheduled recurrence, reusable subflows, broader actions and production failure/load evidence pending | B-208 |
+| Scheduled workflows and subflows | reusable subflow expansion with unknown/cycle rejection, immutable materialized versions, tenant ticket schedules, concurrent scheduler claims, single due-event emission and missed-run coalescing | Implemented; calendar expressions, blackout policy, package dependencies, concurrency quotas and production-scale proof pending | B-209 |
+| Bootstrap credential lifecycle | mounted-file priority, worker exclusion, split Kubernetes runtime/bootstrap Secrets, password rotation, auth-version session invalidation, verified retirement command | Implemented; external vault/provider rotation ceremony pending | B-006, B-210 |
+| Supply-chain evidence | exact dependencies, digest-pinned bases, full-SHA-pinned CI actions, tests, Trivy high/critical gate, CycloneDX image SBOM, digest-only publication/deployment, keyless Cosign signature, GitHub SLSA/SBOM attestations, registry verification and Sigstore namespace admission enforcement | Implemented; representative tagged GHCR publication and cluster rejection proof pending | B-007, B-210 |
+| Production observability/SLOs | deep readiness, Prometheus metrics, trace correlation, alert rules, System Health, authenticated synthetic probe | Partial; external retention, delivery, SLO dashboards and on-call exercise remain | B-070 |
+
+<a id="section-traceability_matrix--connection-dependent-capability-boundary"></a>
+### Connection-dependent capability boundary
+
+The following require the deploying organization's systems, policies,
+credentials, and representative test environments: MFA/SCIM, email/SMS/contact
+center, SIEM/EDR/scanners, infrastructure discovery, HRIS/ERP/CRM, DevOps
+integrations, mobile/offline applications, external AI services, and regulated
+retention/eDiscovery. They must be delivered through explicit adapters and are
+not represented as built-in capabilities.
+
+
+<a id="section-traceability_matrix--b-362-ai-assistance"></a>
+### B-362 AI assistance
+
+The local 1.92.0 candidate adds tenant-administrator-controlled, disabled-by-default AI incident investigations with self-hosted and external OpenAI provider modes. See [AI operations](OPERATIONS_MANUAL.md#section-ai_operations) for setup, permissions, job lifecycle and explicit limitations, and [AI implementation plan](ENGINEERING_REFERENCE.md#section-ai_implementation_plan) for the timeline and current validation evidence. The initial release produces read-only drafts; approved actions and real-model quality acceptance remain pending.
+
+<a id="section-traceability_matrix--strict-review-correction-evidence-2026-10-03"></a>
+### Strict-review correction evidence, 2026-10-03
+
+B-411 maps the 17 reproduced authorization, tenant, transaction, input-bound, installer-recovery and checkpoint findings to implementation and route-level regressions. See [APP_STRICT_FIXES_2026-10-03.md](#section-app_strict_fixes_2026-10-03) for the complete correction matrix and real PostgreSQL/Kubo/browser acceptance evidence. Formal JPL compliance is unverified.
+
+<a id="section-traceability_matrix--fresh-review-corrections-2026-10-03"></a>
+### Fresh-review corrections, 2026-10-03
+
+B-412 maps six reproduced transaction/logging, tenant-manager, matching-key, API-input and CTASK policy findings to 23 regressions and real PostgreSQL/IPFS/browser verification. [Detailed evidence](#section-app_fresh_fixes_2026-10-03).
+
+---
+
+<a id="section-app_fresh_fixes_2026-10-03"></a>
+
+## ServiceOps fresh review and corrections — 2026-10-03
+
+<a id="section-app_fresh_fixes_2026-10-03--serviceops-fresh-review-and-corrections--2026-10-03"></a>
+
+<a id="section-app_fresh_fixes_2026-10-03--scope-and-outcome"></a>
+### Scope and outcome
+
+The user requested a new review from the beginning and correction of discovered issues. Current source was reviewed from governed release commit 979e18c plus the previously accepted uncommitted corrections. Those changes were preserved. The source review covered authentication/session boundaries, tenant references, API mutations, transaction/error handling, application logging, worker ownership, storage, installer state and external-input bounds. Full application and browser suites cover the broader existing product; this does not establish exhaustive absence of defects.
+
+<a id="section-app_fresh_fixes_2026-10-03--technical-design-analysis"></a>
+### Technical Design Analysis
+
+Validate identities, field types and matching keys before mutation. Roll back failed requests before rendering their error response. Logging must never commit or roll back the business transaction. Queue sanitized diagnostic payloads in the current SQLAlchemy session, bounded to 256 entries, and write them through a separate diagnostic session after the outer business transaction ends. This also protects the shared SQLite connection used by the IPFS projection. A diagnostic-storage failure attempts a fixed, non-secret message to stderr and never commits business state. A closed or unavailable fallback stream also cannot interrupt rollback. Failed-request cleanup uses that same nonthrowing reporter. If both diagnostic storage and its fallback stream are unavailable, that sink cannot persist the diagnostic; other configured stream/file handlers remain independent. Existing PostgreSQL schema and deployed migration history remain unchanged.
+
+<a id="section-app_fresh_fixes_2026-10-03--reproduced-corrections"></a>
+### Reproduced corrections
+
+| Finding | Reproduction | Correction |
+| --- | --- | --- |
+| Diagnostic logging commits business changes | A route dirtied a user then raised; the error log committed the changed user. A warning before rollback did the same. | New serviceops_core/log_storage.py defers sanitized diagnostic persistence until the outer transaction ends; it never commits the business session. Tests include pending and flushed changes, shared SQLite, and a failing diagnostic store. |
+| Failed HTTP requests retain partial state into error rendering | 400/403/404/409/413 rejection left a changed model visible to response processing; a later log could persist it. | All HTTP, tenant-resolution and unexpected-error handlers roll back before rendering/logging. Tests verify both unchanged response-processing observations and retained database state. A real rejected ticket PATCH preserves earlier resolution notes and priority. |
+| Cross-tenant or nonexistent manager assignment | ITIL team-manager configuration accepted a foreign user or persisted a nonexistent id. | Resolve active managers within the current tenant before changing memberships or manager id. Malformed ids return controlled 400 errors. |
+| Truncated CMDB matching key overwrites another record | A name longer than 160 characters matched the existing 160-character prefix and updated that CI. | Reject overlong matching names instead of truncating them. CI class and IP text length limits are enforced before mutation. |
+| Invalid API field types are silently coerced | Object/list values became CI names/classes/IP strings or incident title/description; a fractional team id selected its integer prefix. | CI and incident text fields must be strings. Lossy boolean/float team-id conversion is rejected. Existing integer and integer-string clients remain supported. |
+| CTASK API bypasses a revoked role action | An acting administrator with update explicitly revoked could still update task notes through tickets:update. | Evaluate the acting user's tenant-scoped effective update permission; state changes also require transition permission. Scope and ticket visibility checks remain in force. |
+
+Initial reproduced failures were recorded in disposable tests before correction. One test fixture initially supplied tenant_id to dependent models that do not define it; the fixture was corrected against the actual model definitions before accepting the CTASK reproduction. Those records derive tenancy from their parent and assignment group; no invented field was added to application models.
+
+<a id="section-app_fresh_fixes_2026-10-03--verification"></a>
+### Verification
+
+- 23 new regressions cover transaction state visible during response processing and combined diagnostic-store/stream failures. The focused final gate includes two existing application-log/System Health regressions: 25 passed. A PostgreSQL test initially shared the injected closed stream with Flask logging; the injection was isolated to the diagnostic reporter and cleanup dependencies before the successful 66-case rerun.
+- Real PostgreSQL: 66 combined previous/new regressions pass. Migration downgrade/re-upgrade preserves all 4,098 records across 126 tables at 20261003_0110. An initial scratch-template contention run was interrupted and superseded by the successful isolated run.
+- Real Kubo/application verification: the IPFS relational projection restores after a checkpoint and application restart with the diagnostic intact and failed business change absent.
+- Final production Dockerfile image built for linux/amd64. Chromium/accessibility: 106 passed, including rack equipment images and fallbacks at multiple viewports.
+- Final image scan: zero fixable HIGH/CRITICAL vulnerabilities in the checked OS/Python scope. Existing dependencies are unchanged from the preceding audited candidate.
+- Ruff, compilation, version consistency, whitespace, Helm lint and client-side resource validation pass.
+- Fresh live backup serviceops-backup-fresh-diagnostic-20261003, /backups/serviceops-20261003T085116Z.dump, restored into disposable PostgreSQL at 20261003_0110 with 127 tables, 8 users and 20 tickets. The earlier pre-first-rollout backup also restored successfully.
+
+Final full suite: **1,382 passed, 125 skipped, two existing ldap3 deprecation warnings**, in 402.18 seconds. Final focused regression/documentation/version gate: **37 passed**.
+<a id="section-app_fresh_fixes_2026-10-03--microk8s-acceptance"></a>
+### MicroK8s acceptance
+
+Final **Helm revision 148**, deployed, using --wait without --atomic. The first candidate at revision 147 was superseded by the completed diagnostic/cleanup guards. The immutable final image is **localhost:32000/serviceops-fresh@sha256:ee39f15e4926a7d6332b0eb15b6e8b014ca1587bff4f81d0ef7c9b1955efc133**, a temporary local acceptance candidate based on governed version **1.110.1**.
+
+- Web, outbox and AI worker are each ready 1/1 using the exact final digest.
+- /health and /ready return 200. Audit encryption, database, uploads and worker readiness pass. Current and expected Alembic head remain 20261003_0110.
+- Retained serviceops-health-test succeeded at revision 148.
+- All 8 users and 20 tickets are preserved; PostgreSQL/uploads/backups PVCs remain Bound.
+- Unauthenticated SCIM returns 401; malformed mobile refresh returns 400. Public serviceops.wijesundara.com redirects to Cloudflare Access with 302.
+- 270 deployed runtime source/static/migration files match the tested primary checkout. The deployed migration file is unchanged.
+- Filtered web/outbox/AI logs in the checked three-minute post-deployment window contain zero ERROR/CRITICAL, traceback or HTTP-5xx entries.
+- Live settings were preserved through a snapshot and explicit image/backup overrides; canonical MicroK8s values now match the accepted final digest and restore-tested backup.
+
+Files changed for this fresh pass: app.py failure handling and log-handler import; new serviceops_core/log_storage.py; serviceops_core/web/administration.py manager validation; serviceops_core/web/api.py input/key/CTASK policy checks; tests/test_fresh_review.py; public/sibling API reference; this evidence report, backlog B-412, documentation index and traceability matrix. Earlier working-tree fixes were retained.
+
+<a id="section-app_fresh_fixes_2026-10-03--boundaries"></a>
+### Boundaries
+
+No new schema migration or manual version change. This is a local acceptance candidate based on 1.110.1; no commit, push, tag, publication or GitHub pipeline was requested or performed. External production LDAP/OIDC, SMTP/IMAP, NetBox/Snipe-IT, commercial AI, load and failover matrices were not comprehensively live-tested. Environment-gated skips are verification gaps. Formal JPL conformance, literal every-function exception wrappers and zero-defect guarantees remain unestablished.
+
+<a id="section-app_fresh_fixes_2026-10-03--cleanup-and-final-log-check"></a>
+### Cleanup and final log check
+
+Task-owned disposable Compose/PostgreSQL/Kubo containers, backup-reader pod, registry port forward, credential files and live-values snapshots were removed. Completed backup jobs and the durable backup PVC are retained. A final expanded five-minute log filter also found zero error-level, HTTP-5xx, traceback, diagnostic-persistence or failed-request-cleanup failures.
+
+---
+
+<a id="section-app_strict_fixes_2026-10-03"></a>
+
+## ServiceOps strict-review corrections — 2026-10-03
+
+<a id="section-app_strict_fixes_2026-10-03--serviceops-strict-review-corrections--2026-10-03"></a>
+
+<a id="section-app_strict_fixes_2026-10-03--outcome-and-design"></a>
+### Outcome and design
+
+This change closes the 17 reproduced findings in [the renewed review](#section-app_strict_review_2026-10-03). The current governed release v1.110.1 already supplies the initial ten corrections. Additional source corrections are composed onto release commit 979e18c, retaining its exact deployed migration 20261003_0110. Original pre-reconciliation work is preserved in a local Git stash. No new release commit, tag, publication, or hosted pipeline was created by this task.
+
+Technical Design Analysis: validate external shapes and references before mutation; enforce bounds before allocating or downloading; keep failed installer writes atomic and preserve the prior configuration; recover interrupted synchronization only under exclusive ownership; reject unreadable encrypted checkpoints before a process can overwrite their durable pointer. Use existing Flask, SQLAlchemy, PostgreSQL, Requests and Kubo interfaces and explicit failure responses. Preserve live configuration and data. This is evidence for the identified corrections, not a zero-defect or formal JPL certification.
+
+<a id="section-app_strict_fixes_2026-10-03--corrections"></a>
+### Corrections
+
+| Finding | Resulting behavior |
+| --- | --- |
+| 1. CMDB REST authorization | Acting role and per-class create/update permissions are enforced. |
+| 2. Foreign tenant references | Rack, group and owner ids are tenant-scoped. All CI edit references are validated before any field mutation; rejected edits leave the CI intact. Incident owning groups are tenant-scoped. |
+| 3. SLA tenant selection | Definitions are selected using the persisted target's tenant, including background execution. |
+| 4. Mobile password rotation | Access and refresh sessions are bound to the user's credential version and rejected after rotation. The existing deployed migration backfills sessions rather than forcing every user to sign in again. |
+| 5. Disabled tenant authentication | Web sessions and mobile/integration authentication reject disabled tenants. |
+| 6. HTTPS proxy transport | The released verified outer TLS transport and destination TLS relay are preserved and tested with actual loopback sockets. |
+| 7. Recovery-token logging | Messages, path metadata and exception formatting redact recovery tokens. Existing reset-page referrer protection is retained. |
+| 8. Inbound email transaction | PEEK retrieval leaves failed transactions unread; Seen is acknowledged after commit. A committed Message-ID or raw-message fingerprint makes acknowledgement retries idempotent. |
+| 9. Pending MFA state | Credential version is checked and pending authentication expires after five minutes; future timestamps are rejected. |
+| 10. Malformed API JSON | Non-object payloads and malformed nested passkey response/transports receive controlled 400 responses. |
+| 11. Discovery allocation | islice consumes no more than the validated host cap, with finite worker and timeout bounds. |
+| 12. Artwork resource use | Metadata and image streaming enforce one-MiB and five-MiB limits, bounded read/elapsed times and response cleanup. |
+| 13. Artwork provider shapes | Provider objects, nested ids and same-origin image URLs are validated; malformed providers return controlled upstream failures. |
+| 14. Installer invalid input/write failures | Types and port ranges are checked before persistence. Atomic restricted-permission writes preserve old state and expose structured failure responses. |
+| 15. Corrupt installer state | An existing unreadable or malformed configuration enters an explicit recovery failure, instead of silently loading fresh defaults. |
+| 16. Interrupted sync jobs | Dedicated PostgreSQL session advisory locks survive transaction commits and release on process loss. Ownerless Running jobs become Failed or Cancelled; ambiguous writes are not silently replayed. Operators can review and enqueue again. Live owners are left intact. SQLite/IPFS retain their single-process ownership model. |
+| 17. IPFS checkpoint decryption | Missing checkpoints remain valid first-run state. Existing unreadable checkpoints fail startup and block saves, preserving the active pointer. Local offline IPNS publication is verified against real Kubo. |
+
+The storage interface now describes implemented attachment operations, removing unsupported generic PostgreSQL adapter stubs. Unsupported legacy IPFS entities/filters fail explicitly. Best-effort attachment cleanup logs failure. urllib3 is pinned to 2.8.0 and the exact dependency list is audited.
+
+<a id="section-app_strict_fixes_2026-10-03--validation"></a>
+### Validation
+
+- Focused combined regressions: 94 passed, two existing ldap3 deprecation warnings.
+- Disposable PostgreSQL: 43 new regressions passed; deployed migration downgrade/re-upgrade retained all 3,098 records across 126 tables.
+- Real disposable Kubo: three checkpoint/restart/wrong-key tests passed.
+- Final container Chromium/accessibility: 106 passed, including rack equipment artwork and fallback categories on multiple viewports.
+- Exact dependency audit: zero known vulnerabilities. Exact container archive: zero fixable HIGH/CRITICAL vulnerabilities in OS/Python scan scope.
+- Ruff, whitespace, release-version consistency and Helm lint/render checks pass. The rendered web/outbox/AI workloads retain one replica each and point to the verified immutable candidate digest.
+- Fresh backup serviceops-backup-strict-final-20261003, /backups/serviceops-20261003T080157Z.dump: restored into isolated PostgreSQL at 20261003_0110 with 127 tables, 8 users and 20 tickets.
+
+Full application suite: **1,358 passed, 126 skipped, two existing ldap3 deprecation warnings** in 393.67 seconds. The worktree lacked the sibling documentation directory, accounting for one skip; the synchronized documentation/version gate was subsequently run with its explicit sibling path: **14 passed**. Other skips are environment-gated checks and remain verification limits.
+
+<a id="section-app_strict_fixes_2026-10-03--microk8s-acceptance"></a>
+### MicroK8s acceptance
+
+Helm **revision 146**, status deployed, completed using --wait without --atomic. Image is **localhost:32000/serviceops-strict-fixes@sha256:f14e93aea1db582d4709504bd272b14d006d58f341b527d3af9e156e74b0db3a**; it is a temporary local acceptance candidate based on governed version **1.110.1**. No version files were manually changed. The unchanged deployed migration file has SHA256 48769f0a62497aa4f2821e297a5c8ac9e52e6a98676d7c8e2c26bbc57f267270.
+
+- Web, outbox and AI worker each rolled out ready 1/1 with zero observed restarts.
+- /health and /ready return 200 at 1.110.1; current and expected Alembic head are both 20261003_0110. Audit encryption, database, uploads and worker readiness pass.
+- Retained serviceops-health-test succeeded.
+- Unauthenticated SCIM returns 401; malformed mobile refresh returns 400. Public serviceops.wijesundara.com redirects to Cloudflare Access with 302.
+- All 8 users and 20 tickets remain intact. serviceops-postgresql, serviceops-uploads and serviceops-backups PVCs remain Bound.
+- 269 runtime source/static/migration files match the tested primary checkout, including the retained deployed migration and new ownership helper.
+- Filtered web/outbox/AI logs over the checked three-minute post-deployment window contain zero ERROR/CRITICAL, traceback or HTTP-5xx entries.
+- Canonical MicroK8s values now match the accepted candidate and backup reference. Current live settings were preserved through an explicit snapshot and image/backup overrides.
+
+The primary checkout is on existing release commit 979e18c with the additional fixes uncommitted. Development evidence, backlog B-411, traceability and public API mirror are synchronized. No GitHub operations were requested or performed by this task.
+
+<a id="section-app_strict_fixes_2026-10-03--limits"></a>
+### Limits
+
+Formal JPL conformance, literal every-function exception wrappers and mathematical zero-defect guarantees are not established. The external provider matrix (production LDAP/OIDC, SMTP/IMAP servers, NetBox/Snipe-IT and commercial AI providers) is not comprehensively live-tested here. Failure paths are covered by bounded regression doubles; PostgreSQL, Kubo, actual container builds and browser workflows use real disposable dependencies. Production browser identity flows are not exercised with administrator credentials. The local image is a temporary acceptance candidate based on v1.110.1, not a new governed release.
+
+<a id="section-app_strict_fixes_2026-10-03--cleanup"></a>
+### Cleanup
+
+Task-owned disposable Compose, PostgreSQL and Kubo containers, temporary read-only backup-reader pods, registry port forward, credential files and live-values snapshots were removed. The completed backup job and durable backup PVC remain retained.
+
+---
+
+<a id="section-app_strict_review_2026-10-03"></a>
+
+## ServiceOps renewed strict-quality review — 2026-10-03
+
+<a id="section-app_strict_review_2026-10-03--serviceops-renewed-strict-quality-review--2026-10-03"></a>
+
+Reviewed checkout: `dc2b5487b20b547358c85630fd1601de10614099`. Application code was not changed, committed, published, or deployed. This review applies the user's four explicit quality requirements; it is not a claim of formal JPL conformance or zero defects.
+
+<a id="section-app_strict_review_2026-10-03--technical-design-analysis"></a>
+### Technical Design Analysis
+
+Review the existing documented contracts and actual failure boundaries before proposing changes. Trace authentication, tenant isolation, transactions, external input validation, bounded resource use, durable job state, and recovery behavior. Reproduce failures using disposable data and finite test doubles; distinguish observed behavior from inferred production impact. Maintain a finding record with trigger, expected behavior, observed behavior, correction, and validation limits. Preserve live configuration and production data.
+
+The user's requirements are complete implementations without placeholders; documented and verified interfaces; explicit, logged and graceful failure handling; and a Technical Design Analysis before code changes. Their literal every-function catch/log requirement is not currently satisfied. Formal conformance requires an agreed standard revision, language applicability, and evidence matrix. External clocks, random identifiers, and remote services also require explicit deterministic contracts rather than an absolute determinism claim.
+
+<a id="section-app_strict_review_2026-10-03--result"></a>
+### Result
+
+**17 confirmed findings: ten previous findings remain and seven additional findings were reproduced.** Passing controls do not establish absence of defects. Prior findings and their detailed evidence remain in [APP_REVIEW_2026-10-03.md](#section-app_review_2026-10-03).
+
+<a id="section-app_strict_review_2026-10-03--previously-reported-findings-rechecked"></a>
+#### Previously reported findings, rechecked
+
+| Priority | Finding | Main source |
+| --- | --- | --- |
+| P1 | CMDB REST upsert accepts requester integration credentials without the required acting-role/class authorization. | `serviceops_core/web/api.py:1114–1154` |
+| P1 | Submitted foreign-tenant rack and owning-group identifiers persist in CMDB and incident records. | `serviceops_core/web/cmdb.py:310–317`; `serviceops_core/web/tickets.py:493–498` |
+| P1 | SLA initialization selects active definitions across tenants. | `app.py:3961` |
+| P1 | Password rotation leaves old mobile access and refresh credentials usable. | `app.py:985–1012`; `serviceops_core/web/workspace.py:126–130`; `serviceops_core/web/api.py:618–629` |
+| P1 | Tenant deactivation does not reject existing web sessions or fresh mobile authentication. | `serviceops_core/web/administration.py:825–833`; authentication paths |
+| P1 | An HTTPS-configured proxy receives CONNECT and Basic credentials over plaintext. | `serviceops_core/proxy_tunnel.py:33–71` |
+| P1 | Recovery-token paths survive the actual log redactor and JSON formatter. | `app.py:7772–7778`; `serviceops_core/security.py:51–68` |
+| P1 | Email ingestion marks messages Seen before the ticket transaction commits; a failed message is not retried. | `app.py:4123` and the UNSEEN polling loop |
+| P2 | Pending MFA authentication survives password/auth-version changes and completes using the new version. | `serviceops_core/web/auth.py:156–169,274–314` |
+| P2 | Non-object JSON and malformed nested values cause unhandled API failures. | `serviceops_core/web/api.py:615–616` and related input paths |
+
+Disposable PostgreSQL reproduced the seven authorization/session/input/SLA checks from the earlier harness. Transport, redaction, ingestion, and foreign incident-group reproductions were also repeated. These are security and correctness findings; no real credentials were used in transport or token-log tests.
+
+<a id="section-app_strict_review_2026-10-03--additional-findings"></a>
+#### Additional findings
+
+<a id="section-app_strict_review_2026-10-03--11-p1--discovery-materializes-the-entire-subnet-before-enforcing-its-host-cap"></a>
+##### 11. P1 — Discovery materializes the entire subnet before enforcing its host cap
+
+Source: `serviceops_core/network_discovery.py:373–374`; accepted CIDRs enter through `serviceops_core/web/cmdb.py:1033,1065` and scheduled work in `app.py:5318`.
+
+`list(network.hosts())[:max_hosts]` enumerates every host before slicing. A finite guarded iterator with a cap of four was consumed beyond that cap. Large IPv4 networks and IPv6 networks can consequently exhaust memory or stall processing; no destructive large-network experiment was performed.
+
+Required correction: validate positive limits and supported CIDR sizes, consume only a bounded iterator, and define time/cancellation limits. Regression: prove bounded consumption for IPv4/IPv6 and invalid limits without a real scan.
+
+<a id="section-app_strict_review_2026-10-03--12-p2--the-artwork-body-size-limit-is-applied-after-loading-the-body"></a>
+##### 12. P2 — The artwork body-size limit is applied after loading the body
+
+Source: `serviceops_core/web/cmdb.py:932–940`.
+
+The request does not enable streaming and reads `response.content` before checking the five-MiB limit. A bounded six-MiB response double produced HTTP 415 after the full body was loaded. The rejection is correct but does not bound resource consumption.
+
+Required correction: stream with an enforced chunk ceiling, bounded elapsed time, cleanup on every exit, and bounded metadata responses. Test oversized and interrupted streams. Actual out-of-memory behavior was not induced.
+
+<a id="section-app_strict_review_2026-10-03--13-p2--malformed-artwork-provider-json-raises-an-unhandled-exception"></a>
+##### 13. P2 — Malformed artwork-provider JSON raises an unhandled exception
+
+Source: `serviceops_core/web/cmdb.py:910,919,945`.
+
+A successful provider response containing a truthy JSON list reaches `.get()` and returns HTTP 500. The session closes, but the Requests exception handler does not handle invalid decoded shapes.
+
+Required correction: validate object and nested device-type shapes before use and return a controlled upstream failure with sanitized diagnostics. Test invalid top-level/nested types and malformed URLs.
+
+<a id="section-app_strict_review_2026-10-03--14-p2--installer-validation-persists-invalid-configuration-and-returns-generic-failures"></a>
+##### 14. P2 — Installer validation persists invalid configuration and returns generic failures
+
+Source: `installer/app.py:28–32,150–158,291–296`.
+
+Non-numeric, negative, out-of-range, and object-valued ports produced HTML HTTP 500 responses; configuration was saved before validation. An injected configuration-write error also produced HTML 500 rather than the API's structured validation result.
+
+Required correction: validate types and ranges before persistence; preserve the previous valid configuration; use atomic writes and explicit, sanitized JSON error outcomes for validation and I/O failures.
+
+<a id="section-app_strict_review_2026-10-03--15-p2--corrupt-existing-installer-configuration-silently-becomes-defaults"></a>
+##### 15. P2 — Corrupt existing installer configuration silently becomes defaults
+
+Source: `installer/app.py:21–25`.
+
+An existing malformed JSON file loaded as an empty configuration with no captured diagnostic. A missing file on first installation is a different state from corruption or unreadable existing state.
+
+Required correction: distinguish first-install absence from existing-state failure, log safely, and expose a recovery outcome instead of silently proceeding with defaults.
+
+<a id="section-app_strict_review_2026-10-03--16-p1--abandoned-running-synchronization-jobs-permanently-block-later-work"></a>
+##### 16. P1 — Abandoned Running synchronization jobs permanently block later work
+
+Source: `app.py:5135,5142–5153`; `serviceops_core/web/cmdb.py:631–649`; `IntegrationSyncJob` in `serviceops_models.py:470–500`.
+
+The worker commits Running before external work, skips pending work whenever a Running row exists, and has no lease-expiry recovery. A two-day-old Running job with cancellation requested remained Running; a Pending job remained Pending across three worker passes. This reproduced on SQLite and PostgreSQL.
+
+Required correction: durable ownership leases and heartbeat/expiry recovery, terminal cancellation transitions, and idempotent reconciliation after interruption. Test crash/restart and concurrent ownership. Actual process-kill/failover testing was not performed.
+
+<a id="section-app_strict_review_2026-10-03--17-p1--failed-ipfs-checkpoint-loading-permits-replacing-the-existing-pointer-with-empty-state"></a>
+##### 17. P1 — Failed IPFS checkpoint loading permits replacing the existing pointer with empty state
+
+Source: `serviceops_core/storage/ipfs_backend.py:57–71`; backend construction and startup projection/checkpoint flow in `app.py:7490–7510`.
+
+Using the repository's fake IPFS client, an existing encrypted checkpoint failed to load with a wrong key, logged the error, and returned empty indexes/state. Calling `save_checkpoint()` then replaced its active pointer with an empty checkpoint. Startup can proceed through empty restoration and forced checkpointing. Original content-addressed objects were not deleted; the demonstrated failure is pointer replacement and loss of active state access.
+
+Required correction: distinguish missing initial state from an unreadable existing checkpoint; fail closed or enter explicit recovery/read-only mode; preserve the old pointer until verified restoration. Test wrong keys, corrupt payloads, and remote outages. No live Kubo/Pinata acceptance was performed.
+
+<a id="section-app_strict_review_2026-10-03--additional-conformance-gaps"></a>
+### Additional conformance gaps
+
+Concrete generic storage operations still raise `NotImplementedError` (`storage/postgres_backend.py:29–63`, and IPFS relation/unit-of-work methods). Ordinary domain CRUD currently uses SQLAlchemy directly; these stubs do not establish that ordinary CRUD is broken. They do violate the requested complete-implementation rule for the advertised generic contract. Complete the documented contract or segregate supported interfaces rather than disguising unsupported behavior.
+
+Some catches intentionally suppress errors, including best-effort S3 deletion; log visibility and a documented outcome are still required under the user's rule. No active data-loss defect is asserted solely from an unused call site. The literal every-function handling requirement needs an explicit conformance inventory; it cannot be certified by passing lint or tests.
+
+<a id="section-app_strict_review_2026-10-03--validation-and-limits"></a>
+### Validation and limits
+
+Fresh checks in this review:
+
+- 143 existing control tests passed, with two existing dependency deprecation warnings: SCIM, security hardening, operational resilience, network discovery, installer, storage, DNS pinning, and proxy tunneling.
+- Eleven bounded negative-path checks passed by asserting the reproduced incorrect behavior. These are disposable diagnostic tests, not permanent regressions or evidence that the defects are fixed.
+- Fresh PostgreSQL migration from an empty disposable database reached `20261003_0109`. The migration rehearsal downgraded to `20261002_0108` and rolled forward to `20261003_0109`; its checked data was preserved across 126 tables, 1,163 records, and 1,000 synthetic rows. This is not a backup-restore test or a fingerprint of every column.
+- Existing defect reproductions and the stale-job case ran against PostgreSQL. Transport/logging and ingestion reproductions ran independently.
+- Compilation, Ruff, release-version checking, and whitespace checks passed. Application checkout remained unchanged.
+
+The earlier same-checkout report records 1,294 passed / 124 skipped tests and 106 browser checks; those broad results were not rerun in this renewed pass. No production deployment was changed. Live health was not reverified in this pass. Load/failover, backup restore, third-party service acceptance, formal standard conformance, and proof of zero defects remain unverified.
+
+Disposable test evidence is under `/private/tmp/serviceops-strict-review-*.log`; these local diagnostic logs are not committed release artifacts. The temporary PostgreSQL container and credential file are removed after the review.
+
+---
+
+<a id="section-app_review_2026-10-03"></a>
+
+## ServiceOps application review — 2026-10-03
+
+<a id="section-app_review_2026-10-03--serviceops-application-review--2026-10-03"></a>
+
+Reviewed checkout: `dc2b5487b20b547358c85630fd1601de10614099` (clean application working tree). This is a broad review of the current application, not a claim that every possible defect has been found. No application fixes, schema changes, release changes, or production mutations were made.
+
+<a id="section-app_review_2026-10-03--confirmed-findings"></a>
+### Confirmed findings
+
+Priority P1 means a security, tenant isolation, or data-loss issue requiring prompt correction. P2 means a correctness issue to schedule after P1 work. All reproductions used synthetic data and disposable local databases or socket servers.
+
+1. **P1 — CMDB REST upsert bypasses the acting user's class permissions.** `serviceops_core/web/api.py:1114–1154` checks `cmdb:write` but never checks the acting user's role or `ci_class_action_allowed` for the existing or requested class. A token with that scope and a requester acting user created a Server CI with HTTP 201, although the policy helper returned False for that user's create permission. A client scope should be a ceiling on the acting user's authority, as the ticket API already enforces. Validate create/update and both classes when changing a class; reject unauthorized actors before mutation.
+
+2. **P1 — Submitted foreign keys can cross tenant boundaries.** `serviceops_core/web/cmdb.py:310,317` and the corresponding edit path directly assign submitted support-group, owner, and rack IDs. `serviceops_core/web/tickets.py:493–498` loads the submitted owning group globally and checks type/activity without checking tenant. Reproductions created a tenant-1 CI assigned to a tenant-2 rack, and a tenant-1 incident assigned to a tenant-2 IT fulfillment group. Both requests returned HTTP 302 and persisted the cross-tenant relationship. Resolve all submitted related records through tenant-scoped queries and enforce relationship consistency at the service boundary. Extend coverage to analogous relationship writes; do not rely on the options shown in a form.
+
+3. **P1 — SLA attachment reads definitions across all tenants.** `app.py:3961` selects every active definition for a target type. Creating a tenant-1 incident attached definitions from tenants 1 and 2. This exposes another tenant's SLA configuration in task details and creates incorrect deadlines and reporting. Resolve the tenant from the target record and restrict SLA definitions, organization overrides, and schedules to it; deriving it only from the web session would still be wrong for inbound email/background callers.
+
+4. **P1 — Password rotation does not revoke mobile sessions.** `serviceops_core/web/workspace.py:126–130` and `serviceops_core/web/auth.py:258–267` increment `User.auth_version`; mobile API clients have no captured authentication version, and `app.py:985–1012` / `serviceops_core/web/api.py:618–629` do not check one. After a successful password change, the original mobile access token still returned HTTP 200, and the original refresh token issued new credentials with HTTP 200. Revoke mobile clients on credential/security changes or bind them to an authentication version checked at both access and refresh. Retest self-service reset and deactivate/reactivate flows too.
+
+5. **P1 — Tenant deactivation does not block ordinary application access.** The platform administration action at `serviceops_core/web/administration.py:825–833` changes `Tenant.active`, but normal login, web session validation, and bearer authentication do not enforce that flag. With the fixture tenant disabled, an existing web session opened `/profile` with HTTP 200 and a fresh mobile password login also returned HTTP 200. AI scope construction and public status pages already check activity. Add a shared active-tenant gate for new sessions, existing sessions, bearer access, and refresh, with an explicitly controlled platform-admin path if needed.
+
+6. **P1 — HTTPS forward-proxy settings send credentials over cleartext.** `serviceops_core/proxy_tunnel.py:33–36` accepts `https` but discards the scheme. The connection path at lines 62–71 opens a raw TCP socket and sends CONNECT and optional Basic proxy credentials before any TLS wrapping. An `https://` proxy URL successfully exchanged data with a deliberately cleartext local HTTP CONNECT server, including synthetic Basic credentials. Preserve the scheme and establish verified TLS to an HTTPS proxy before CONNECT, or reject HTTPS proxy configuration until supported. Test with an actual TLS proxy and certificate failures.
+
+7. **P1 — Password recovery tokens are written to request logs.** `app.py:7772–7778` logs `request.path` in both the message and structured metadata, including `/reset-password/<token>`. The redactor in `serviceops_core/security.py:51–68` does not recognize path tokens, and `JsonLogFormatter` emits metadata unchanged. A synthetic recovery token survived both fields after the configured redacting filter and formatter. These URLs contain active recovery credentials. Log the route pattern or redact sensitive path segments at every sink, including Gunicorn and database-backed error paths; avoid retaining secrets in exceptions as well.
+
+8. **P1 — Inbound email is acknowledged before its database transaction succeeds.** `app.py:4123` marks the message Seen before parsing and persistence; `_poll_client_mailbox` later rolls back on failure and searches only UNSEEN mail. Failure injection during ticket creation left the message Seen, no saved ticket, and zero messages processed on a second poll after the transient failure was removed. The IMAP adapter was simulated with UNSEEN semantics; the application parsing/transaction path was real. Mark mail Seen after successful commit and use stable message identifiers for deduplication/retry so crashes do not lose or duplicate requests.
+
+9. **P2 — Pending MFA authentication survives credential invalidation.** `serviceops_core/web/auth.py:156–169` stores only the pending user/provider. `login_mfa` at lines 274–281 checks activity/enrollment, but not the authentication version or a short first-factor expiry; on success it adopts the current version at line 314. Completing the password step, rotating the password and incrementing `auth_version`, then supplying a valid TOTP still issued a usable session (`/profile` HTTP 200). Bind the pending challenge to the first-factor authentication version and timestamp, reject it after rotation/lockout/expiry, and consume it on completion.
+
+10. **P2 — Several JSON routes treat non-object bodies as dictionaries.** `serviceops_core/web/api.py:615–616` accepts a truthy JSON list and calls `.get`, producing an unhandled `AttributeError` and HTTP 500 from the unauthenticated mobile refresh route. The same pattern occurs in passkey/mobile and some AI routes. Centralize object-body validation, return HTTP 400 for arrays/scalars, and test malformed nested fields separately. The SCIM routes already implement the appropriate object check.
+
+<a id="section-app_review_2026-10-03--verification-evidence"></a>
+### Verification evidence
+
+- Full current-checkout pytest run: **1,294 passed, 124 skipped, 2 warnings in 369.96 seconds**. Warnings are the existing ldap3/pyasn1 deprecations. Loopback access was enabled for socket tests. Skipped browser/live-infrastructure checks are not counted as passing here.
+- Disposable SQLite-backed browser instance with random administrator credentials: **100 passed, 6 rack-fixture checks skipped in 80.72 seconds**. Responsive, keyboard, browser-console, and WCAG checks ran across existing journeys. Rack checks were run separately after adding their synthetic equipment fixture: **6 passed, 100 deselected in 8.41 seconds**. Combined browser coverage: **106 passed**.
+- Ruff, Python compilation, release-version consistency, single Alembic head, and Git whitespace checks passed. The checkout's version is 1.108.5; the governed release image is 1.110.0. This alone is not a version inconsistency: the release workflow owns its release commit/version files.
+- Reproduction scripts and logs are in `/private/tmp/serviceops_review_repro.py`, `/private/tmp/serviceops_review_transport_repro.py`, `/private/tmp/serviceops_review_ingest_repro.py`, and their review logs. They are local review evidence, not permanent regression coverage.
+
+<a id="section-app_review_2026-10-03--read-only-live-checks"></a>
+### Read-only live checks
+
+At review time, MicroK8s namespace `operations` had Helm revision **144**, version **1.110.0**, image `ghcr.io/awijesundara/serviceops-server@sha256:777eb351cec1cbbb3195ad61dfd9641f17db492996ba145d2ffa6250e6e388b6`. Web, outbox worker, and AI worker each had one ready replica. The web pod showed zero restarts. `/health` and `/ready` returned HTTP 200; readiness confirmed live migration head **20261003_0109** against the image's expected head, database, uploads, audit encryption, and worker heartbeat. The retained health-test pod and migration job were successful. Public access returned Cloudflare HTTP 302 to the Access login domain. Recent sampled logs had zero ERROR/CRITICAL/Traceback/timeout/OOM matches (web 300 lines, outbox 2, AI 2).
+
+Live health does not prove the identified authorization paths are safe. No exploit reproductions or test records were sent to production.
+
+<a id="section-app_review_2026-10-03--scope-and-limitations"></a>
+### Scope and limitations
+
+Reviewed authentication/session/API boundaries; tenant and CI-class checks; incident/change/catalog/approval/task lifecycles; CMDB/rack/import/discovery paths; knowledge; client management/email; AI read/action/provider boundaries; attachment/storage controls; worker scheduling/delivery; migration/recovery and container/Helm configuration. Automated tests provide additional coverage beyond manual source inspection.
+
+The new defect reproductions and browser run used disposable SQLite, not PostgreSQL. No fresh PostgreSQL migration downgrade/restore exercise, load/failover test, actual LDAP/Keycloak/SMTP/IMAP/Teams integration, malware-scanner deployment, IPFS infrastructure test, or new dependency/container vulnerability scan was performed in this review. These remain verification gaps. Corrective work should add permanent negative regressions and PostgreSQL/integration evidence for the affected paths before deployment.
+
+---
+
+<a id="section-rack_image_verification_2026-10-03"></a>
+
+## Rack equipment image verification — 2026-10-03
+
+<a id="section-rack_image_verification_2026-10-03--rack-equipment-image-verification--2026-10-03"></a>
+
+Requested behavior: show datacenter equipment images in CMDB rack views and
+identify equipment from existing metadata without inventing an exact model.
+
+<a id="section-rack_image_verification_2026-10-03--implemented-behavior"></a>
+### Implemented behavior
+
+- Offline identification from recorded role, CI class, exact model/model family,
+  then bounded name hints. Vendor aliases, repeated manufacturer names and model
+  punctuation normalize conservatively; contradictory vendors or approximate
+  models never become an exact bundled-image match.
+- Original front/rear illustrations for 13 equipment categories plus unknown
+  devices. Existing exact Dell/Cisco/Juniper images and authenticated NetBox
+  model imagery remain preferred. Missing images follow a finite fallback chain.
+- Every readable rack-linked device appears in the inventory. Horizontal PDUs
+  mount at their U position; 0U/missing-position/out-of-bounds devices remain
+  visible separately instead of being placed at U1. Fractional U usage is the
+  union of mounted intervals, including front/rear overlaps.
+- Names/model/status/category and identification basis are visible in inventory
+  cards; category illustrations are explicitly distinguished from model images.
+  Existing tenant/class access and the server-side NetBox credential boundary
+  remain enforced. No external AI/image search service is involved.
+
+<a id="section-rack_image_verification_2026-10-03--verification"></a>
+### Verification
+
+- Ruff, whitespace and synchronized version checks passed (v1.109.0).
+- Focused identification, asset and authenticated rack route tests: 48 passed.
+- Full Python suite: 1,284 passed, 124 environment-gated skips, two existing
+  ldap3/pyasn1 deprecation warnings. Six skips are the added browser cases, run
+  separately below. The final fractional-U regression also passed in the focused
+  gate after the broad suite began; no schema change was introduced.
+- Actual Dockerfile Linux/amd64 build with separate migration job and Gunicorn
+  entrypoints; 527 shipped source/artwork checksums and executable entrypoints
+  verified in the final candidate.
+- Disposable PostgreSQL 16 upgraded from empty through 20261002_0108. Final
+  authenticated route/image checks covered 22 devices in full/embed views
+  (44 checks), plus authorization, tenant/class filtering, 0U/invalid placement,
+  image availability and space usage.
+- Chromium suite: 106 passed, including all six new desktop/mobile rack checks,
+  WCAG scans, keyboard focus, no horizontal page overflow, escaped equipment
+  names, missing NetBox and model image fallback, and compact embedded views.
+  Fault simulation blocks service workers so network interception is effective.
+  Browser acceptance uses an isolated database; no production credentials or
+  production test data were changed.
+
+<a id="section-rack_image_verification_2026-10-03--backup-and-deployment"></a>
+### Backup and deployment
+
+- Verified live baseline: v1.108.6, Helm revision 142, head 20261002_0108,
+  two web replicas. Live shipped source matched this checkout apart from
+  synchronized release-version files; newer deployed behavior was retained.
+- Pre-upgrade backup job: serviceops-backup-rack-20261003.
+  Archive: /backups/serviceops-20261003T014043Z.dump.
+- Restore job serviceops-restore-rack-20261003 restored into a unique temporary
+  database, verified head 20261002_0108, 6,006 configuration items and two racks,
+  then dropped only the temporary restore database.
+- Candidate digest: sha256:4f4340699858860b4f1e9e085d3067ac0608e4e696a2ca4fa1eda9216661a4ef.
+- Helm render comparison verified only application image and backup reference
+  changes. Existing live settings, two web replicas, both workers, external
+  PostgreSQL and existing PVC references were preserved.
+- Atomic upgrade succeeded: Helm revision 143, v1.109.0. Running web (2/2),
+  outbox worker (1/1) and AI worker (1/1) all use the verified immutable digest.
+  All 527 source/artwork checksums and executable entrypoints match live.
+- /health and /ready returned 200; representative front/rear artwork assets
+  returned 200. Migration job and retained Helm health test succeeded at
+  unchanged head 20261002_0108. PostgreSQL retains 6,006 CIs and both racks;
+  original PostgreSQL/uploads/backups PVCs remain Bound.
+- Recent web/worker logs: 154 / 3 / 3 lines, zero error/critical/traceback/5xx
+  matches. Public request with browser User-Agent returns Cloudflare Access
+  302 to the protected login hostname (generic Python User-Agent was refused).
+- Canonical MicroK8s values synchronized to the verified digest and backup
+  reference after deployment, with all other live settings retained.
+
+No commits, pushes, tags, GitHub pipeline or public release were created.
+
+---
+
+<a id="section-scim_fix_verification_2026-10-02"></a>
+
+## SCIM provisioning corrections — 2026-10-02 (verified 2026-10-03)
+
+<a id="section-scim_fix_verification_2026-10-02--scim-provisioning-corrections--2026-10-02-verified-2026-10-03"></a>
+
+The project review reproduced three defects through authenticated SCIM routes:
+a valid pathless `replace` with `value: {"active": false}` returned 200 while
+leaving the account active; replacing an email with an existing user's email
+returned 500; and non-object JSON bodies returned 500.
+
+The fix validates request objects, attribute types, and every PATCH operation
+before applying changes. Both explicit paths and pathless objects support
+`active`, `displayName`, and `emails`. Unsupported operations and paths return
+400 rather than reporting a successful no-op. Deactivation increments
+`auth_version` and revokes active sessions through the existing audited
+transaction. Invalid later operations leave earlier operations unapplied.
+
+Email updates check case-insensitive uniqueness while excluding the current
+user. The SCIM transaction catches database unique violations during flush,
+audit, and commit, rolls back, and returns 409 `uniqueness`; unrelated integrity
+failures are not mislabeled. Malformed requests return SCIM error documents
+with 400 status. Existing administrator, bearer scope, and tenant checks remain
+in place. No schema or migration change is needed.
+
+Regression coverage is in `ServiceOps/tests/test_scim.py`, alongside the existing
+SCIM lifecycle test in `tests/test_operational_resilience.py`. Focused validation
+passed 66 tests. The first full run passed 1,143 tests and skipped 118, with
+31 local socket/network checks denied by the execution sandbox; all 31 passed
+when rerun with the required access. The clean full run passed 1,174 tests,
+skipped 118 environment-gated tests, and emitted two existing ldap3/pyasn1
+deprecation warnings. There are 54 new SCIM regression cases. Ruff, Python
+compilation, canonical-version consistency, supply-chain policy, Helm lint,
+candidate upgrade rendering, and whitespace checks passed.
+
+Pre-upgrade backup: `/backups/serviceops-20261002T143318Z.dump`, created by
+`serviceops-backup-scim-20261002`. Restore Job
+`serviceops-restore-test-scim-20261002` succeeded against an isolated database,
+verifying migration head `20260928_0107` and 20 restored tickets. The original
+PostgreSQL and uploads PVCs remain in place.
+
+Docker Desktop returned daemon API errors and could not restart. A fresh
+amd64 OCI image was assembled with `crane append` from the current verified
+runtime image `ghcr.io/awijesundara/serviceops-server@sha256:f79ed751abca0fb1e440602989463b2748fdf94c221018ea2dcf6fdb17afe139`
+and a deterministic layer containing all 539 eligible files from the current
+checkout, including the new regression tests. Secrets, runtime state, and the
+three production-excluded disposable fixture loaders were excluded. Runtime
+dependencies and startup configuration are inherited from the verified base;
+this is an OCI source-layer build, not a Dockerfile rebuild. The candidate is
+stored only in the local MicroK8s registry as
+`localhost:32000/serviceops@sha256:472a394e631010efcaa4c08333139532340a08d19378e341a8776d19bcfcc3fd`.
+The application version remains 1.108.0; the local image tag is
+`1.108.0-scim-20261002-r2`. No GitHub commit, push, tag, pipeline, or release was
+requested or performed.
+
+<a id="section-scim_fix_verification_2026-10-02--final-acceptance"></a>
+### Final acceptance
+
+- The exact candidate image verified all 539 source checksums and passed
+  33 SCIM checks against the freshly migrated isolated PostgreSQL database
+  `serviceops_20261002_scim_test`. The checks include deactivation/revocation,
+  pathless add/replace, duplicate and case-variant email conflicts, a real
+  PostgreSQL unique violation after the precheck, malformed bodies and
+  operations, atomic rejection, and successful subsequent reads.
+- Real browser tests against that image/database passed 14 checks for profile,
+  session inventory, security settings, keyboard access, focus visibility,
+  320px reflow, and axe accessibility. An additional Playwright journey signed
+  in as the isolated employee, sent pathless SCIM deactivation through a
+  separate bearer client, and confirmed the existing browser session redirected
+  to login on its next protected request.
+- During validation the shared values file changed independently to 1.108.4.
+  The user explicitly selected the current live configuration for this fix.
+  The canonical values now preserve that configuration, including two web
+  replicas, with only the local image and verified backup reference changed.
+  Its rendered upgrade manifest is byte-identical to the candidate rendered
+  from the captured live values. A further shared-file reversion made revision
+  139 retain the original image; the successful upgrade used the captured
+  approved values plus explicit image and backup overrides. Canonical values
+  were synchronized afterward with the verified deployment.
+- Dockerfile/Compose rebuilds remain unavailable because Docker Desktop is
+  unhealthy. The verified OCI image and isolated PostgreSQL/browser checks
+  above are actual evidence; they do not claim a Dockerfile rebuild or external
+  identity-provider acceptance.
+
+<a id="section-scim_fix_verification_2026-10-02--deployment-interruption-and-recovery"></a>
+### Deployment interruption and recovery
+
+The first upgrade attempt started with the pending values because the Python
+values-preparation command failed on an unavailable YAML import and the shell
+sequence did not stop on that failure. The Helm process was promptly canceled
+and rolled back, but its pre-upgrade hook had already applied the unrelated
+1.108.4 migration `20261002_0108`, making the original image fail readiness.
+This was an execution error, not a SCIM regression.
+
+The unexpected migration was inspected directly from its image. Its new
+`configuration_item.field_sources` column contained no values other than `{}`.
+Recovery Job `serviceops-scim-recovery-20261002` restored a fresh isolated copy
+of the verified pre-upgrade backup, restored only the 12 CMDB fields the
+migration had cleared (where still null), and ran the inspected Alembic
+downgrade to `20260928_0107`. It preserved all 20 tickets and 8 users and removed
+its temporary restore database. The web, outbox, and AI worker were confirmed
+healthy after Helm rollback revision 136. Values preparation, rendering,
+comparison, and mutation were then performed in separate checked steps before
+retrying the tested image through atomic Helm.
+
+The second candidate rollout exposed missing executable permissions on the
+startup scripts in the OCI source layer. The Dockerfile explicitly sets those
+files to 755, whereas their checkout modes are 644. That rollout was canceled
+and atomically rolled back at revision 138; the original web replicas remained
+available. The source-layer build was corrected to reproduce the Dockerfile
+chmod for `tools/container-entrypoint.sh` and `tools/gunicorn-entrypoint.sh`.
+The final image above again verified all 539 source checksums and passed all
+33 PostgreSQL checks. It then launched through the real container and Gunicorn
+entrypoints; the 14 focused browser/accessibility checks and real-browser
+pathless deactivation journey passed again on that exact image.
+
+<a id="section-scim_fix_verification_2026-10-02--verified-deployment--2026-10-03"></a>
+### Verified deployment — 2026-10-03
+
+Atomic Helm revision **140** is deployed in `operations`. All production
+workloads consume the final immutable digest `sha256:472a394e631010efcaa4c08333139532340a08d19378e341a8776d19bcfcc3fd`: web 2/2,
+outbox worker 1/1, and AI worker 1/1. All three rollouts completed. The live
+container verified all 539 source checksums and both executable startup scripts.
+
+`/health` returned 200 (`status: ok`, version 1.108.0). `/ready` returned 200
+with database, migration, uploads, worker, and audit-encryption checks passing.
+Both image and database migration heads are **20260928_0107**. Unauthenticated
+SCIM returned 401. The retained `serviceops-health-test` Helm test succeeded.
+Public `https://serviceops.wijesundara.com/` returned the expected Cloudflare
+Access 302. Both new web pods and both workers had zero recent
+error/critical/traceback/5xx log entries. PostgreSQL, uploads, and backups PVCs
+remain bound to their original volumes. Production still has 20 tickets and
+8 users. The verified pre-upgrade backup reference is recorded in Helm.
+
+The disposable SCIM/browser pod and its ConfigMap were removed after
+acceptance; its isolated database was dropped. Backup/restore evidence and
+the retained Helm health test remain. The full-suite skips and unavailable
+Dockerfile/Compose rebuild described above remain validation boundaries. No
+external IdP interoperability, real Kubo, or broad unselected browser journeys
+are claimed by this correction.
+
+<a id="section-scim_fix_verification_2026-10-02--follow-up--published-as-11085-2026-10-03"></a>
+### Follow-up — published as 1.108.5 (2026-10-03)
+
+The interim local image was superseded by the governed release. The fix was
+committed to ServiceOps main as `f8840fb` (rebased onto 1.108.4; full suite
+1243 passed / 118 skipped) and released as v1.108.5 (`94327ba`, image
+`ghcr.io/awijesundara/serviceops-server@sha256:c9772cf3a8d5ffd1d6ed91acf97099fba87f0b834fd08f1991fcf913e4976ccf`).
+Pre-upgrade backup `serviceops-20261002T231916Z.dump` was restore-verified
+(`20260928_0107`, 20 tickets). Helm revision 141 applied migration
+`20261002_0108`; web 2/2 and both workers ready, helm test passed, 20 tickets
+and 8 users preserved, Cloudflare Access 302 and public status page 200.
+
+---
+
+<a id="section-remediation_plan_1.39.0"></a>
+
+## ServiceOps 1.39.0 operational-resilience release
+
+<a id="section-remediation_plan_1.39.0--serviceops-1390-operational-resilience-release"></a>
+
+> **Historical — superseded.** Target version 1.39.0 is ~23 releases behind
+> current (1.62.5 as of this note). The gaps and evidence below are a
+> point-in-time snapshot of that release; `BACKLOG.md` carries the current
+> status for every item referenced here. Kept for historical record, not as
+> a live plan.
+
+<a id="section-remediation_plan_1.39.0--objective"></a>
+### Objective
+
+Close the application-controlled monitoring, authentication recovery, session
+lifecycle, SCIM, storage, recovery-safety, and discovery-review gaps found in
+the 2026-08-05 whole-project review without claiming evidence that requires an
+independent assessor or the deploying organization's external systems.
+
+<a id="section-remediation_plan_1.39.0--delivered-controls"></a>
+### Delivered controls
+
+- `/live` remains process-only; `/ready` validates database access, exact
+  migration head, audit-key decryptability, worker heartbeat, uploads, and
+  configured S3 storage.
+- `/metrics`, W3C trace correlation, Prometheus alerts, backup-age signals,
+  System Health recovery status, and an external authenticated synthetic probe.
+- Throttled and non-enumerating local password recovery with hashed,
+  single-use, 30-minute tokens; successful reset unlocks the account and
+  revokes all sessions.
+- User and tenant-administrator browser-session inventory and immediate
+  revocation.
+- Tenant-scoped SCIM user create/update/deactivate through limited API clients;
+  deactivation invalidates sessions. Keycloak can require an exact MFA `acr`.
+- Guarded recovery diagnosis, administrator reset, and explicit audit-key
+  recovery-boundary commands with mandatory pre-mutation recovery sets.
+- Recovery manifests reference the encryption key by non-secret fingerprint;
+  optional S3-compatible Object Lock archival provides off-site immutability.
+- Optional S3-compatible attachment storage with local fallback and readiness
+  validation.
+- Discovered-device review supports compound search/class/vendor/source
+  filtering, live counts, filter-aware selection, and whole-batch selection.
+
+<a id="section-remediation_plan_1.39.0--verification-gates"></a>
+### Verification gates
+
+- Full isolated application suite: `310 passed, 1 skipped`; the only skip is
+  the cross-repository documentation test because the sibling notes checkout
+  is intentionally absent from the application image.
+- Focused resilience, recovery, health, and discovery suite: `14 passed`.
+- Ruff correctness, Python compilation, shell syntax, whitespace, canonical
+  version, and supply-chain control verification passed.
+- Live PostgreSQL migrated to `20260805_0058`; the app/database/worker are
+  healthy on `http://localhost:80`; deep readiness and audit-key diagnosis
+  pass; metrics report a fresh backup and worker; the login page is responsive
+  and protected routes redirect unauthenticated callers. A 1,000-request,
+  concurrency-20 stability probe completed with zero errors, 27.66 ms p95 and
+  1,125.14 requests/s. Recent post-correction logs contain no traceback,
+  critical, encryption-key, or migration failure.
+
+<a id="section-remediation_plan_1.39.0--honest-external-boundaries"></a>
+### Honest external boundaries
+
+The release does not manufacture external evidence. Penetration testing,
+independent tenant-isolation review, representative IdP/SCIM/S3/SMTP and alert
+delivery validation, hardware WebAuthn/passkeys, organization-approved RPO/RTO,
+real Kubernetes failure/rollback, and on-call/runbook exercises remain open
+until those environments and independent reviewers are available.
+
+---
+
+<a id="section-remediation_plan_1.38.2"></a>
+
+## ServiceOps 1.38.2 remediation and release plan
+
+<a id="section-remediation_plan_1.38.2--serviceops-1382-remediation-and-release-plan"></a>
+
+> **Historical — superseded.** This plan's date (2026-08-05) and target
+> version (1.38.2) are ~24 releases behind current (1.62.5 as of this note).
+> Every gap it lists as open is tracked with materially more current status
+> directly in `BACKLOG.md` (e.g. the privacy/data-governance item this plan
+> treats as not-yet-started is B-090, now Verified). Kept for historical
+> record of that release's scope and evidence, not as a live plan.
+
+Date: 2026-08-05
+Release type: patch
+Owner: ServiceOps maintainers
+
+<a id="section-remediation_plan_1.38.2--release-goal"></a>
+### Release goal
+
+Ship a reproducible 1.38.2 patch that closes the defects confirmed by the
+whole-project review without overstating production readiness. The release
+must keep runtime, installer, chart, documentation badge, example environment,
+and service-worker versions synchronized from `ServiceOps/VERSION`.
+
+<a id="section-remediation_plan_1.38.2--included-remediation"></a>
+### Included remediation
+
+| Area | Change | Acceptance evidence |
+|---|---|---|
+| Release integrity | Extend the version synchronizer to the CLI installer and Helm image tag; release automation stages every governed version file | `tools/release_version.py --check`; release-version regression tests |
+| Application security | Reject scheme-relative external return paths from improvement creation | Negative redirect regression test |
+| Continuous integration | Run Ruff correctness checks, bytecode compilation, single-Alembic-head validation, the complete test suite, shell syntax, JavaScript syntax, and both Compose configuration modes before image publication | Successful supply-chain workflow and local equivalent checks |
+| Accessibility baseline | Add a shared skip link and focusable main landmark; expose navigation expansion state; name the CI browser dialog | Rendered-layout regression test; independent WCAG audit still required |
+| Deployment metadata | Replace stale CLI and Helm default image tags with 1.38.2 | Version consistency test and rendered Compose/Helm review |
+| Read-only runtime | Disable Gunicorn 26's unused control socket so it does not write beneath the non-login user's `/nonexistent` home | Entrypoint regression assertion and clean deployed logs |
+
+No database schema change is included. The expected migration head remains
+`20260805_0056`.
+
+<a id="section-remediation_plan_1.38.2--release-sequence"></a>
+### Release sequence
+
+1. Complete the local quality gates and full containerized test suite.
+2. Build `serviceops-app:1.38.2` from the exact reviewed tree.
+3. Deploy it to the local Docker Compose environment without destroying its
+   database or uploads, then verify app, worker, database, migration head, and
+   `/health`.
+4. Commit the ServiceOps implementation and this controlled documentation in
+   their respective repositories.
+5. Create immutable `v1.38.2` tags and push the reviewed commits/tags.
+6. Retain the GitHub Actions run, image digest, scan, SBOM, signature, and
+   attestations as the remote supply-chain evidence. A failed gate is fixed by
+   a later patch; a published tag is never moved.
+
+<a id="section-remediation_plan_1.38.2--production-readiness-goals-that-remain-open"></a>
+### Production-readiness goals that remain open
+
+The following work cannot be completed or claimed by a local code review. It
+remains release-governed work with its existing backlog owner and evidence
+requirements:
+
+- external penetration test and remediation (`B-008`);
+- independent end-to-end tenant-isolation review, including dependent tables
+  that are scoped through their parent (`B-202`, `B-231`);
+- real GHCR signature/provenance and representative cluster admission tests
+  (`B-007`);
+- approved off-site backup/restore and production-like rollback rehearsals
+  (`B-009`, `B-010`);
+- production observability and load/soak/failover evidence (`B-070`, `B-071`);
+- governed object storage, lifecycle, and malware-scanning operations (`B-052`);
+- organization-enforced MFA, SCIM lifecycle, session controls, and emergency
+  access (`B-062`);
+- independent WCAG 2.2 AA audit (`B-080`); and
+- operational privacy, retention, legal-hold, and data-subject controls
+  (`B-090`).
+
+Production promotion remains blocked by [PRODUCTION_READINESS_PLAN.md](DEPLOYMENT.md#section-production_readiness_plan); a
+successful 1.38.2 application release is not itself a production-readiness
+approval.
+
+<a id="section-remediation_plan_1.38.2--local-acceptance-evidence"></a>
+### Local acceptance evidence
+
+- Full containerized test suite: `304 passed, 1 skipped`.
+- Cross-repository documentation/version controls: `5 passed`.
+- Ruff correctness checks, Python compilation, shell/JavaScript syntax, one
+  migration head, and bundled/external Compose rendering: passed.
+- Local Docker deployment: `serviceops-app:1.38.2`; app, worker, and PostgreSQL
+  healthy; `/health` reports `1.38.2`; migration head `20260805_0056`.
+- No `ERROR`, traceback, or Gunicorn control-socket failure appears in the
+  post-fix app/worker log window.
+
+<a id="section-remediation_plan_1.38.2--remote-release-evidence"></a>
+### Remote release evidence
+
+- Immutable application commit: `72b025d79d1b4ee3ef909f29ac4bc7a5a26cdae8`.
+- Tag workflow: `https://github.com/awijesundara/ServiceOps/actions/runs/30996357438`
+  completed successfully, including dependency audit, Trivy high/critical
+  gate, SBOM generation, Cosign signing, attestations, and verification.
+- Published image: `ghcr.io/awijesundara/serviceops@sha256:c790eec3aaab4145f68fadbbdb540e56584f3cb687904e958c57bbd43a6e8dc7`.
+- GitHub Release: `https://github.com/awijesundara/ServiceOps/releases/tag/v1.38.2`.
+
+This is real registry evidence, but not representative cluster-admission
+evidence. The latter remains open under B-007.
+
+---
+
+<a id="section-master_reference"></a>
+
+## Historical excerpts: ServiceOps master reference (for any AI or engineer touching this codebase)
+
+Historical source: `docs/MASTER_REFERENCE.md`. Exact duplicate prose already retained in the maintained sections has been omitted. Original dates, claims and superseded operating conventions in these excerpts remain historical.
+> **Note on CLAUDE.md's `.md` merge cross-reference**: this file corresponds to
+> what CLAUDE.md's "Documentation control" section calls "Controlled local
+> documentation" — the intent of that section is preserved by treating this
+> file as the entry point; the individual source documents listed in
+> [docs/DOCUMENTATION_INDEX.md](../README.md) remain the maintained originals. This file is
+> re-generated from them (see the changelog below) rather than replacing them.
+
+<a id="section-master_reference--serviceops-master-reference-for-any-ai-or-engineer-touching-this-codebase"></a>
+
+> **Current feature inventory:**
+> [FEATURE_CATALOG.md](OPERATIONS_MANUAL.md#section-feature_catalog) is the canonical code-audited
+> catalogue of every implemented ServiceOps capability (baseline ServiceOps
+> 1.73.0 as of 14 August 2026; see that file's own
+> header for its current audit date). This master reference retains
+> governance, historical audit, architecture, and operating context; use the
+> feature catalogue when determining what the product currently does.
+
+This single document merges every controlled ServiceOps planning/governance
+document, the BP-001 blueprint traceability, and a fresh whole-app audit into
+one place, so an AI agent or new engineer can get complete, precise context
+without opening a dozen files. Individual source documents remain the
+maintained originals — this file is regenerated from them; see
+[docs/DOCUMENTATION_INDEX.md](../README.md) for the authoritative source list and the
+"Keeping this synchronized" rule that still applies to each of them.
+
+**Read `CLAUDE.md` at the repository root first.** It is the top-level,
+override-everything instruction set for this project (product direction,
+production-only policy, authentication rules, ITIL record model, change
+governance, security requirements, migration rules, engineering workflow, and
+report format). Everything below is detail underneath those rules, not a
+replacement for them.
+
+---
+
+<a id="section-master_reference--current-ipfs-storage-mode-architecture-b-338"></a>
+### Current IPFS storage-mode architecture (B-338)
+
+ServiceOps 1.73.0 replaces the former login-only IPFS milestone with the full
+application. IPFS is the authoritative durable store for an encrypted
+full-state relational checkpoint and encrypted attachments. At runtime, the
+checkpoint is restored into a volatile in-memory SQLite projection so the
+existing 109-table domain model, authorization checks, UI, API, audit chain,
+session revocation, rate limiting, and scheduled operations retain their
+normal behavior without PostgreSQL or a persistent embedded database. The
+IPFS deployment is deliberately single-process, with scheduled work integrated
+into the web process to prevent divergent writers. Commits are coalesced and
+published through retrying asynchronous IPNS publication; pending durability
+is visible in `/ready`.
+
+This is not a claim of zero relational execution or production-scale parity.
+Whole-state checkpoints are O(N), a hard kill may lose the short coalescing
+window, and promotion remains blocked on scale/soak, abrupt-termination
+recovery, and independent security validation. See [IPFS_STORAGE_MODE.md](DEPLOYMENT.md#section-ipfs_storage_mode) and
+backlog B-338 for operating instructions and evidence.
+
+---
+
+<a id="section-master_reference--part-0--quick-start-for-an-ai-agent-picking-up-this-repo"></a>
+### Part 0 — Quick-start for an AI agent picking up this repo
+
+<a id="section-master_reference--local-development-deployment-convention"></a>
+#### Local development deployment convention
+
+During development on Anushka's local machine, always deploy the Docker
+Compose application at `http://localhost:80` (displayed to the user simply as
+`http://localhost`). Preserve `APP_PORT=80` in the local, untracked
+`ServiceOps/.env`, redeploy after every application update with
+`./tools/deploy-local.sh`, and verify `http://localhost/health`. Port 8080
+remains the container-internal listener; this convention changes only the
+host-port mapping and does not apply to production ingress.
+
+The untracked local `SETTINGS_ENCRYPTION_KEY` must be retained with recovery
+material and reused with the existing database. Changing `APP_PORT` never
+requires or authorizes rotating that key. On 2026-08-05, a lost prior key made
+the database's retained audit-signing keys undecryptable and caused login audit
+creation to return HTTP 500. Authorized break-glass recovery preserved the 32
+historical audit rows and key records, created a new active signing key, and
+recorded the recovery boundary; those historical rows cannot be
+cryptographically reverified without the lost key. See B-278.
+
+**What this product is**: an independent, production-oriented ITSM platform
+(Flask + PostgreSQL + SQLAlchemy + Alembic), inspired by ITIL/ServiceNow
+patterns but explicitly not claiming ServiceNow parity or compatibility (see
+Part 1, Product boundary). Single monolithic `app.py` (~8,100 lines: every
+route, every SQLAlchemy model, most business logic) plus a small
+`serviceops_core/` package (`security.py`, `priority.py`, `workflow.py`,
+`projections.py`, `business_time.py` — ~400 lines total) that the project is
+slowly extracting bounded logic into. Templates are server-rendered Jinja2 in
+`templates/`. Alembic migrations live in `migrations/versions/`, one file per
+schema change, always additive/reversible — see CLAUDE.md's migration rules.
+
+**Architecture map**:
+
+| Layer | Where |
+|---|---|
+| Routes + business logic + all ORM models | `app.py` (single file, being decomposed incrementally — see Part 4 finding #1) |
+| Extracted bounded services | `serviceops_core/{security,priority,workflow,projections,business_time}.py` |
+| Schema history | `migrations/versions/*.py` (Alembic; head as of this document: `20260729_0023`) |
+| Views | `templates/*.html` (Jinja2, server-rendered, light-mode only per ADR-012) |
+| Static assets | `static/*.css`, `static/*.js` |
+| CLI / lifecycle | `./serviceops` (install, status, health, backup, restore, rehearsals, retire-bootstrap-secret) |
+| Deployment | `compose.yaml` / `compose.external-db.yaml` (Docker), `charts/serviceops` (Helm/Kubernetes), `packaging/` (RPM) |
+| Ops tooling | `tools/*.py`/`*.sh` (migration rehearsal, recovery verify, release evidence, supply-chain verify, outbox worker, CMDB sync agent, demo/test data loaders) |
+| Tests | `tests/test_app.py` (bulk of coverage), `tests/test_installer.py`, `tests/test_recovery_verify.py` |
+| Config-as-code | `config/*.json` (authorization vocabulary, field projections, priority matrix, workflows) — Git-backed per CLAUDE.md rule 7 |
+
+**Non-negotiable rules an agent must not violate** (full detail in
+`CLAUDE.md`, restated here because it's the single most common way an AI
+agent gets this codebase wrong):
+
+- Never add a demo mode, shared demo accounts, sample records seeded into a
+  *production* path, or a weak default password. `tools/load_test_fixture.py`
+  and `tools/load_demo_dataset.py` are the only sanctioned non-production data
+  loaders, both explicitly excluded from the production Docker image (see
+  `Dockerfile`'s `rm -f` line) and both requiring an explicit
+  `--confirm-non-production` flag.
+- Tenant resolution fails closed (`tenant_context_id()` in `app.py`) — never
+  make an authenticated user with no `tenant_id` silently fall back to tenant
+  1. Every new tenant-owned table needs its own `tenant_id` column with
+  `default=tenant_context_id, index=True`, following the existing ~30 tables
+  that already do this (Part 4, finding #4 lists which dependent child tables
+  still don't and why that's currently safe-by-construction, not safe-by-design).
+- Don't collapse INC/PRB/PTASK/CHG/CTASK/REQ/RITM/SCTASK/KB/CI into one
+  generic ticket table. See Part 3 (ITIL hierarchy) for the exact mapping
+  ServiceOps uses instead of ServiceNow's literal table names.
+- A change cannot reach implementation states without its full approval chain
+  satisfied; material post-approval edits must supersede the prior approval
+  and start a fresh cycle (see Part 3 §7, Part 2 B-036/B-231/B-251).
+- Every migration is additive and reversible; never rewrite a deployed
+  migration or reset a database without explicit user authorization. See
+  `CLAUDE.md`'s "Migrations and releases" section.
+- Keep new business logic out of the ever-growing `app.py` where practical —
+  prefer `serviceops_core/`. See Part 4 finding #1: this rule is currently
+  being under-observed and is worth actively pushing back toward.
+
+**Current schema head**: `20260729_0023` (this session's CMDB enrichment —
+see Part 5). Verify with:
+```sql
+SELECT version_num FROM alembic_version;
+```
+
+**Current deployed local dev image**: `serviceops-app:1.27.18`, rebuilt this
+session with the changes in Part 5; running via `compose.yaml`
+(`serviceops-app-1`, `serviceops-db-1`, `serviceops-worker-1`), verified
+healthy and end-to-end smoke-tested (login, `/cmdb`, `/tickets/incident`,
+`/tickets/change`, `/work/open`, `/knowledge`) against a freshly flushed and
+reseeded database — see Part 5 for exact verification steps and output.
+
+---
+
+<a id="section-master_reference--part-1--product-governance-and-non-deviation-policy"></a>
+### Part 1 — Product governance and non-deviation policy
+
+(Full text of [docs/GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance))
+
+<a id="section-master_reference--product-boundary"></a>
+#### Product boundary
+
+ServiceOps is an independently implemented service-management platform. It
+must not be described as ServiceNow, ServiceNow-compatible, certified, or as
+containing "all ServiceNow features." Reference material may inform workflows
+and usability; implementation status is proven only by repository evidence and
+tests in the traceability matrix.
+
+<a id="section-master_reference--non-negotiable-controls"></a>
+#### Non-negotiable controls
+
+1. Production-only runtime: no demo mode, shared personas, sample records, or
+   default credentials.
+2. No requirement is "done" without acceptance criteria, implementation
+   evidence, tests, documentation, and an accountable reviewer.
+3. Existing audit and approval history is preserved. Referenced removed users
+   are tombstoned, never silently deleted.
+4. Security-sensitive defaults fail closed. Secrets are supplied externally,
+   encrypted where persisted, and never printed in validation results.
+5. Schema changes require versioned, reversible migrations and backup/restore
+   evidence before production rollout.
+6. Production releases use immutable image tags or digests, two or more
+   replicas on Kubernetes, external highly available PostgreSQL, TLS, and
+   tested recovery.
+7. LDAP/Keycloak, Kubernetes, restore, load, and security claims require tests
+   against representative external systems. Static configuration is not proof.
+8. Product changes update `BACKLOG.md`, [TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix), the decision
+   log below when applicable, and the relevant manual in the same change.
+
+<a id="section-master_reference--change-gate"></a>
+#### Change gate
+
+<a id="section-master_reference--architecture-decision-log"></a>
+#### Architecture decision log
+
+<a id="section-master_reference--governed-non-requirements"></a>
+#### Governed non-requirements
+
+<a id="section-master_reference--current-production-readiness-verdict"></a>
+#### Current production-readiness verdict
+
+The only exception is the explicit `tools/load_test_fixture.py` (and now
+`tools/load_demo_dataset.py`) workflow on an intentionally reset, isolated
+test database. Neither is ever automatic, both are excluded from the
+production image, and both must be destroyed before any production assessment.
+
+---
+
+<a id="section-master_reference--part-2--governed-backlog-authoritative-work-register"></a>
+### Part 2 — Governed backlog (authoritative work register)
+
+<a id="section-master_reference--1382-remediation-checkpoint-2026-08-05"></a>
+#### 1.38.2 remediation checkpoint (2026-08-05)
+
+The live backlog now includes B-277 and [docs/REMEDIATION_PLAN_1.38.2.md](BACKLOG.md#section-remediation_plan_1.38.2) as the
+controlled scope for the next patch. That release synchronizes every governed
+version-bearing runtime, installer, and Helm location; adds CI correctness,
+compilation, migration-head, test, shell, JavaScript, and Compose-mode gates;
+closes a scheme-relative improvement return-path redirect; and improves shared
+keyboard/navigation/dialog semantics. The deployment pass also disables
+Gunicorn 26's unused control socket, which could not be created beneath the
+non-login user's home in the read-only container. It makes no schema change and does not
+claim that the external penetration test, independent tenant review, real
+registry/cluster validation, production recovery/rollback rehearsals,
+observability, load testing, object storage, organization-enforced MFA/SCIM,
+independent accessibility audit, or privacy controls are complete. Read the
+live backlog and remediation plan for current acceptance evidence.
+
+(Full text of `docs/BACKLOG.md` as last fully merged here; the live file has
+since grown well past the entries reproduced below — as of this note it runs
+through B-261 (whole-application audit follow-through: tenant_id on the three
+approval/change-governance tables, attachment malware scanning and
+cryptographic hashing, dashboard query batching, nine new regression tests
+for the B-258 security fixes, and two already-deployed migrations'
+`downgrade()` paths made to actually work). Re-merging the full text on every
+backlog change isn't done every session (see the identical, deliberate
+choice in Part 9) — read `docs/BACKLOG.md` directly for the current register.
+"Done" requires code, tests, documentation, and evidence. Priority: P0
+release blocker, P1 required for enterprise production, P2 planned
+enhancement.)
+
+| ID | Priority | State | Work and acceptance criteria |
+|---|---|---|---|
+| B-001 | P0 | Implemented | Remove demo mode/personas/sample seeding/default passwords; fresh-install and cleanup tests pass. |
+| B-002 | P0 | Verified | Production uses an Alembic migration gate with safe fresh-schema creation, existing-schema adoption, version verification, dedicated Kubernetes migration Job and tenant backfill. Re-verified 2026-07-28 at full scale: 100,717 records across 63 tables, fingerprints preserved. Independent tenant-isolation review remains open under B-231. |
+| B-003 | P0 | Verified | Central CSRF enforcement protects every unsafe browser request; rendered forms and JavaScript actions carry session-bound tokens, authentication rotates tokens, and tests prove missing-token rejection and authenticated acceptance. |
+| B-004 | P0 | In progress | Tenant-specific chained HMAC evidence, correlation, database mutation denial, verification-gated signed export and adversarial tests are implemented. Per-event key identifiers, non-destructive governed key rotation, file-mounted key support, minimum seven-year retention/legal-hold policy, and signed durable SIEM-only outbox delivery are in place. Representative external WORM/SIEM validation and independent security review remain. |
+| B-005 | P0 | In progress | Central object policies and adversarial coverage protect ticket, request, approval-chain, attachment, enterprise/problem, analytics and search surfaces, plus a validated fail-closed Git-backed field-projection registry. Independent authorization review remains. |
+| B-006 | P0 | Implemented | File-mounted bootstrap secrets, bootstrap-password exclusion from workers, split Kubernetes bootstrap/runtime Secrets, retirement tooling, credential rotation. External vault rotation ceremony remains. |
+| B-007 | P0 | In progress | Digest-pinned images, full-SHA-pinned CI actions, Trivy blocking, CycloneDX SBOM, keyless Cosign signing, SLSA/SBOM attestations, Sigstore admission enforcement. A real tagged GHCR run and cluster admission rejection test remain. |
+| B-008 | P0 | Open | Run penetration test and remediate critical/high findings. |
+| B-009 | P0 | In progress | SHA-256 recovery-set manifests, archive traversal protection, isolated logical restore, non-destructive `pg_basebackup` + continuous-WAL rehearsal. Off-site immutable recovery storage and organisation-approved RPO/RTO targets remain. |
+| B-010 | P0 | In progress | Guarded candidate-image rehearsal, pre-upgrade recovery set, migration gate, Kubernetes retains five revisions with `maxUnavailable: 0`. A real two-version cluster rollout and forced-failure rollback test remain. |
+| B-021 | P1 | Verified | Unified navigation, search, history, favorites and light-only preferences. |
+| B-022 | P1 | Implemented | Ticket lists/forms/activity/attachments/checklists; pagination/saved-filter/malware-scanning gaps remain. |
+| B-023 | P1 | Verified | Visual task board and state movement. |
+| B-024 | P1 | Implemented | Post-install branding/settings/logo. |
+| B-030 | P1 | Implemented | Named team managers, explicit CCB approver authority and approval chains. |
+| B-031 | P1 | Implemented | Core INC/PRB/PTASK/CHG/CTASK/REQ/RITM/SCTASK lifecycle and relationship network, known errors, major-incident extension. |
+| B-032 | P1 | Implemented | Primary/affected CI and impacted-service task relationships, CI-aware conflict detection, `/cmdb` manual CI+relationship CRUD, `PUT /api/v1/cmdb/configuration-items` (`cmdb:write`), `tools/cmdb_sync_agent.sh`. **This session extended the CI schema itself** — see Part 5. Discovery ingestion beyond self-reported facts remains open. |
+| B-033 | P1 | Implemented | Multi-RITM requests, multiple independently assigned SCTASKs, sequential/parallel task control, closure roll-up, approvals and SLAs. |
+| B-034 | P0 | Verified | Central server-side lifecycle guards prevent approval bypass through any surface. |
+| B-035 | P0 | Verified | Explicit owning teams for incidents/requests/changes; only active owning-team members/managers/admins mutate operational fields. |
+| B-036 | P0 | Verified | Append-only in-record task history; material CHG plan changes supersede prior approvals and notify. |
+| B-037 | P1 | Verified | Governed related-record network (parent/child INC, INC↔PRB/CHG links, PRB knowledge, RITM↔CHG, PTASK/CTASK). |
+| B-038 | P1 | Verified | Administrator-managed catalog-item fulfillment routing; Laptop/Software default to Windows. **Note:** as of this session, `Laptop Request`/`Software Request` catalog items themselves are now auto-created on fresh install (see Part 4 finding, "Part 5" fix) — previously a fresh install had zero catalog items despite this routing default existing in code. |
+| B-039 | P0 | Verified | Scope REQ/RITM visibility to requested-by/for, fulfillment teams, SCTASK teams, named approvers, admins. |
+| B-040 | P0 | Verified | Object-level authorization across ticket/enterprise lists, direct IDs, dashboards, boards, analytics, searches, attachments, approvals, CI links, REQ/SCTASK creation. |
+| B-041 | P1 | Verified | Catalog item admin CRUD with governed fields; inactive items fail closed. |
+| B-042 | P0 | Verified | All active IT fulfillment-team members/managers read every INC/CHG; mutation stays owning-team/admin only. |
+| B-050 | P1 | Implemented | Docker bundled/external PostgreSQL deployment; restore/rolling-upgrade proof pending completion. |
+| B-051 | P1 | Implemented | Helm HA scaffolding; real multi-zone cluster validation pending. |
+| B-052 | P1 | In progress | S3-compatible attachment storage with a supported local-to-S3 migration tool, real MinIO round-trip evidence, and graceful degradation on storage outage; representative encryption/retention testing against a real cloud provider remains. |
+| B-061 | P1 | Implemented | LDAP/Keycloak/local admin plus AD-group-to-team login sync; representative external validation pending. |
+| B-062 | P1 | In progress | Local TOTP MFA is implemented; organization-enforced IdP MFA, SCIM lifecycle, session inventory/revocation and emergency access controls remain. |
+| B-070 | P1 | In progress | Metrics, structured logs, traces, alerting, deployable alert rules and readiness signals are implemented with real Prometheus/Alertmanager rehearsal evidence; SLO dashboards, capacity model and exercised runbooks remain. |
+| B-071 | P1 | In progress | Real authenticated load-test tooling with concurrency/latency/error evidence against a live deployment; production-scale (not simulated) soak and independently-set capacity targets remain. |
+| B-080 | P1 | In progress | Shared preferences and 1.38.2 landmark/navigation/dialog improvements are implemented; independent WCAG 2.2 AA audit evidence remains. |
+| B-090 | P1 | Verified | Data classification, retention, legal hold, and GDPR-style privacy export/deletion for client contacts. |
+| B-100 | P2 | Implemented | Administrator post-deployment settings; extend to workflows/numbering/states/notifications/policy versioning. |
+| B-101 | P2 | Verified | Consolidate lifecycle operations behind `./serviceops`. |
+| B-102 | P2 | Verified | Explicit isolated test-fixture loader (`tools/load_test_fixture.py`). **This session added a second, richer loader**, `tools/load_demo_dataset.py` (full CMDB, INC/PRB/CHG/REQ/RITM/SCTASK/KB spread) — see Part 5. |
+| B-120 | P2 | Verified | Guided tours and contextual help with versioned content and role targeting. |
+| B-121 | P2 | Verified | Configurable workspace ("My Workspace") from a closed, code-defined widget catalog; a general-purpose page/metadata-runtime designer remains out of scope. |
+| B-130 | P1 | In progress | Durable outbox, worker coordination, bounded retry, SMTP/webhooks/Teams, encrypted secrets, delivery evidence, monitoring ingestion, and real DNS-rebinding egress rejection are implemented and evidenced; live delivery to a real public HTTPS receiver remains structurally out of reach for this environment. |
+| B-200 | P0 | In progress | Decompose BP-001 into atomic requirements and governed release epics (ADR-010–019). |
+| B-201 | P0 | Verified | Foundation CSRF/session/cookie/deployment release. |
+| B-202 | P0 | In progress | Default tenant creation, 15 tenant-owned roots backfilled, tenant-aware query conventions. Independent tenant-isolation review remains. |
+| B-203 | P0 | In progress | First stable bounded interface `serviceops_core.security`. Further extraction remains (see Part 4 finding #1 — this is the area most in need of continued work). |
+| B-204 | P0 | In progress | REST v1 tenant/user-bound clients, scopes, cursor pagination, idempotent writes, OpenAPI, live docs at `/api/v1/docs`. Broader resources/OAuth2/rate limits remain. |
+| B-205 | P1 | Implemented | Installable PWA manifest, privacy-safe shell-only service worker. |
+| B-206 | P0 | Implemented | Git-backed impact/urgency matrix, documented priority overrides, business schedules, SLA lifecycle evidence, breach escalation. |
+| B-207 | P0 | Implemented | Git-backed workflow packages, immutable versions, state-entry jobs, retries/dead-letter. |
+| B-208 | P0 | Implemented | Durable wait cursors, per-workflow rate limits, manual/API/SLA triggers, idempotency, dead-job replay. |
+| B-209 | P0 | Implemented | Reusable subflows, tenant-aware recurring schedules, SKIP LOCKED scheduler claims. |
+| B-210 | P0 | Implemented | Credential auth-version invalidation, mounted bootstrap-secret loading, split Kubernetes Secrets. |
+| B-211 | P0 | Implemented | Local-auth login lockout with audited events. |
+| B-220 | P1 | Implemented | `/work/tasks` unified CTASK/PTASK/EVTASK/SCTASK queue; `/manager/portal`. |
+| B-221 | P1 | Implemented | Dashboard "Assigned to me"/SLA breach/Incidents tiles, admin-toggleable. **Note:** this session added pagination/caps to `/work/open` — see Part 4/5. |
+| B-222 | P1 | Implemented | Notifications carry target links. |
+| B-223 | P1 | Implemented | Team-to-team reassignment for incidents/changes, restarting change approval. |
+| B-224 | P1 | Implemented | Type-ahead lookups for CIs and cross-record references. |
+| B-225 | P2 | Open | Git history predates 2026-07-27; not recoverable further back. |
+| B-230 | P0 | Implemented | Migration rehearsal script derives head/prior revision dynamically instead of hardcoding. |
+| B-231 | P0 | Implemented | `tenant_context_id()` fails closed instead of defaulting to tenant 1. Tenant-scoping remaining dependent tables (approvals/gates/votes, comments, catalog routing, group membership, directory mappings, requested items, catalog tasks, task history, record links, attachments) remains open — the larger follow-up. **This session added `tenant_id` to `CIRelationship`** as one instance of this follow-up (Part 5) and fixed a related cross-tenant lookup gap in `find_record_by_number()` (Part 4/5). |
+| B-232 | P1 | Implemented | Reapproval notification deduplication. |
+| B-233 | P1 | Implemented | Secure session cookie defaults with explicit insecure-cookie escape hatch. |
+| B-234 | P1 | Implemented | Open-redirect guard on `UserPreference.start_page`. |
+| B-235 | P1 | Implemented | Content-Security-Policy header. `style-src 'unsafe-inline'` noted as a residual weakening in Part 4 finding — worth tightening with nonces if inline styles can be removed. |
+| B-236 | P1 | Implemented | Webhook DNS-rebinding/redirect-SSRF re-validation per hop. True DNS pinning remains open. |
+| B-237 | P1 | Implemented | Gunicorn timeout/worker-recycling configuration. Root-cause (timeout vs. OOM) memory-profiling evidence still not gathered. |
+| B-238 | P1 | Implemented | Version-string alignment across installer/Compose/Helm/env examples. |
+| B-239 | P0 | Implemented | `.dockerignore` now excludes `backups/`, `.installer-state/`, etc. from the build context. |
+| B-240 | P2 | Implemented | Removed dead dark-mode CSS (ADR-012 light-only). |
+| B-241 | P1 | Implemented | `tools/load_test_fixture.py` excluded from the production image. **This session applied the identical exclusion to the new `tools/load_demo_dataset.py`** in the same `Dockerfile` line. |
+| B-242 | P0 | Implemented | Authlib CVE-2026-27962 fix. |
+| B-244 | P0 | Implemented | Dependency audit sweep (Flask/Authlib/requests/Werkzeug/pytest), secure-cookie default fix for `compose.external-db.yaml`/`.env.example`, digest-pinning support in `build-dist.sh`. |
+| B-243 | P2 | Implemented | RPM packaging alternative to `git clone`. |
+| B-245 | P1 | Verified | ServiceNow-inspired incident record workspace (dense two-column form, Event history). |
+| B-246 | P0 | Verified | PWA service-worker cache-versioning fix (visual delivery bug). |
+| B-247 | P1 | Verified | Governed record/list interaction model extended to Change/Problem/enterprise/REQ. |
+| B-248 | P1 | Verified | Identity and administration workspace (searchable user list, admin-only role/active/department control, preferences). |
+| B-249 | P1 | In progress | Notification read-state, profile AD-sync display, required-field-asterisk consistency, change-plan-edit state guard. |
+| B-250 | P0 | Verified | `conflict_status` column widened (`VARCHAR(40)`→`VARCHAR(500)`) after a real truncation-triggered 500; ticket-create validation now redisplays the form instead of a generic error page. |
+| B-251 | P1 | Verified | CTASK backfill migration for pre-existing changes; Change Tasks tab redesigned as a table with per-row inline update. |
+| B-252 | P1 | Verified | Dedicated `operational_task_detail` page/route for CTASK/PTASK, replacing the inline-table interface. |
+
+<a id="section-master_reference--this-sessions-additions-to-the-backlog-not-yet-assigned-formal-ids--see-part-8-for-the-sync-required-follow-up"></a>
+#### This session's additions to the backlog (not yet assigned formal IDs — see Part 8 for the sync-required follow-up)
+
+- **CMDB schema enrichment** (extends B-032): `ConfigurationItem` gained
+  `description`, `lifecycle_state`, `business_criticality`, `serial_number`,
+  `vendor`, `model`, `location`, `cost_center`, `discovery_source`,
+  `install_date`, `warranty_expiry_date`, `attributes` (JSON),
+  `support_group_id`, `created_at`/`updated_at`. `CIRelationship` gained
+  `tenant_id`, `created_at`, and a `(parent_id, child_id, relationship_type)`
+  unique constraint (previously only `(parent_id, child_id)`, allowing
+  duplicate relationship types between the same pair). Migration
+  `20260729_0023_cmdb_enrichment.py`. Routes (`/cmdb`, `/cmdb/new`,
+  `/cmdb/<id>/edit`, `/cmdb/relationships`) and templates (`ci_form.html`,
+  `cmdb.html`) updated to expose and edit the new fields.
+- **Default catalog items**: `seed_itil()` in `app.py` now creates "Laptop
+  Request" and "Software Request" catalog items on first bootstrap if none
+  exist, closing a real gap where a fresh install had the Windows-routing
+  default (B-038) wired up but zero catalog items to route.
+- **Tenant-isolation fix**: `find_record_by_number()` (used for cross-record
+  linking by number) previously had zero tenant filtering on any of its six
+  branches — a cross-tenant existence oracle. Every branch now filters by the
+  caller's tenant (joining through the owning parent for RITM/SCTASK/CTASK/
+  PTASK, which don't carry their own `tenant_id`).
+- **Performance fixes**: `/tickets/<kind>` now eager-loads
+  `requester`/`assignee` and batch-fetches owning groups for the current page
+  instead of issuing one query per row (was up to ~150 extra queries per
+  50-row page). `/work/open` is now capped at 200 rows per section instead of
+  loading a tenant's entire open-ticket/open-request backlog unbounded.
+- **Stability fix**: the admin-triggered `/admin/integrations/process` route
+  now caps synchronous outbox processing at 5 events (was up to 50, each
+  potentially making a network call with its own timeout, risking exceeding
+  the gunicorn worker timeout).
+- **New tooling**: `tools/load_demo_dataset.py` — a second non-production
+  data loader (see B-102), building a realistic, deep CMDB (business
+  services → applications → databases → servers/network/storage with
+  dependency relationships) plus per-team users and a representative spread
+  of INC/PRB/CHG/REQ/RITM/SCTASK/KB records. Excluded from the production
+  image identically to `load_test_fixture.py`.
+
+---
+
+<a id="section-master_reference--part-3--itil--servicenow-pattern-ticket-hierarchy-reference"></a>
+### Part 3 — ITIL / ServiceNow-pattern ticket hierarchy reference
+
+(Full text of [docs/ITIL_TICKET_HIERARCHY.md](ENGINEERING_REFERENCE.md#section-itil_ticket_hierarchy) — reference material, preserved
+verbatim; ServiceOps is inspired by these patterns but does not claim full
+ServiceNow compatibility, per Part 1. Where ServiceOps's model differs, that
+divergence is deliberate and documented in Part 6, the traceability matrix.)
+
+<a id="section-master_reference--governing-principle-implemented-in-serviceops-2026-07-29"></a>
+#### Governing principle implemented in ServiceOps (2026-07-29)
+
+Implemented as `change_task_gate_block()` in `app.py`, enforced both at
+change-task creation (initial state) and at every state-transition attempt
+(`transition_operational_task()` / `POST /operational-task/<id>`). See
+`tests/test_app.py::test_change_task_unlocking_model_gates_implementation_and_review`.
+
+<a id="section-master_reference--1-the-servicenow-itsm-ticket-hierarchy"></a>
+#### 1. The ServiceNow ITSM ticket hierarchy
+
+ServiceNow does not store every record as an independent, unrelated "ticket."
+Most operational records extend the base Task `[task]` table:
+
+Formal Service Catalog hierarchy: `REQ → RITM → SCTASK`.
+
+**ServiceOps mapping**: `Ticket` (`kind`=incident/change) plays the role of
+the base Task table for INC/CHG; `CatalogRequest`/`RequestedItem`/
+`CatalogTask` implement REQ/RITM/SCTASK; `EnterpriseRecord`
+(`domain`=problem/event/etc.) implements PRB; `OperationalTask` implements
+CTASK/PTASK. This is a documented, deliberate partial compromise (generic
+containers for PRB/PTASK/CTASK rather than fully distinct tables per type) —
+see Part 4 finding on schema shape for the current audit's assessment of
+whether this still satisfies CLAUDE.md's "do not collapse" rule (verdict:
+yes, because the record *types* are still genuinely distinct models/tables,
+not one polymorphic ticket).
+
+<a id="section-master_reference--2-what-counts-as-a-sub-ticket"></a>
+#### 2. What counts as a sub-ticket
+
+- **2.1 Execution task**: a defined work package (Incident/Problem/Change/
+  Catalog/Release Task) owned by one group/person under a parent that owns
+  the overall outcome.
+- **2.2 Child ticket**: a full process record of the same or another class
+  with its own lifecycle/assignment/priority/SLA/closure (parent/child
+  incidents, Problem→Change, Incident→Change).
+- **2.3 Approval record**: a decision record, not an execution task
+  (`sysapproval_approver` in ServiceNow; `ApprovalChain`/`ApprovalGate`/
+  `ApprovalVote` in ServiceOps).
+- **2.4 Linked object**: context, not a ticket (CI, business service,
+  outage, knowledge article, attachment, SLA record, conflict, CAB meeting).
+
+<a id="section-master_reference--3-incident-management"></a>
+#### 3. Incident Management
+
+Lifecycle: New → In Progress → On Hold → Resolved → Closed → Canceled. On
+Hold reasons: Awaiting Caller/Change/Problem/Vendor. Process: Intake →
+Classification → Prioritization (Impact + Urgency = Priority; P1 Critical …
+P5 Planning) → Assignment → Investigation → Resolution → Closure.
+
+**Incident Task**: work delegated without transferring ownership; must not
+close the parent directly; parent shouldn't resolve while mandatory tasks are
+active.
+
+**Parent/Child Incidents**: separate reported impacts sharing an underlying
+cause, each with its own SLA/caller communication — distinct from an
+Incident Task (technical, invisible to end users).
+
+<a id="section-master_reference--4-major-incident-management"></a>
+#### 4. Major Incident Management
+
+Still fundamentally an Incident record with additional roles/workbench/
+communications/review. Lifecycle: Potential → Candidate → Review →
+Accepted/Rejected → Promoted → Response → Restoration → Resolution → PIR →
+Problem creation. Ownership split: Major Incident Manager (coordination),
+technical resolver groups (diagnosis/restoration), Problem Manager (later
+root-cause process).
+
+<a id="section-master_reference--5-problem-management"></a>
+#### 5. Problem Management
+
+Typical lifecycle: New → Assess → Root Cause Analysis → Fix
+planning/in progress → Resolved → Closed. Process: Identification →
+Assessment → Root-cause investigation (Five Whys, fishbone, fault-tree,
+timeline, Kepner-Tregoe, log correlation, config comparison, recent-change
+analysis) → Workaround → Known Error (a state/knowledge record, not another
+operational child ticket) → Permanent correction via a Change (`PRB → CHG →
+CTASKS`) → Verification and closure.
+
+**Problem Task**: divides investigation among subject-matter experts (Root
+Cause Analysis, General types). A Problem should not resolve while mandatory
+Problem Tasks remain active.
+
+<a id="section-master_reference--6-change-management"></a>
+#### 6. Change Management
+
+A Change Request must answer what is changing, why, affected services/CIs,
+business impact, technical risk, implementation/test/backout plans, required
+approvers, schedule, post-implementation outcome.
+
+- **6.1 Standard Change**: low risk, repeatable, pre-authorized via approved
+  template/model; each instance still validates against the approved
+  conditions.
+- **6.2 Normal Change**: full assessment and authorization (technical,
+  change-management, CAB as applicable).
+- **6.3 Emergency Change**: expedited but never "no approval" — still
+  requires Emergency CAB or designated emergency approver.
+- **6.4 Typical Change states**: New → Assess → Authorize → Scheduled →
+  Implement → Review → Closed (or Canceled at any point).
+
+<a id="section-master_reference--7-change-tasks"></a>
+#### 7. Change Tasks
+
+Official task types: **Planning, Implementation, Testing, Review**.
+
+**Change Task unlocking model** (implemented as `change_task_gate_block()`):
+
+Rules:
+
+- Implementation may leave Pending only once the change's approval chain is
+  fully Approved (or no chain applies).
+- Testing opens once at least one required Implementation task is Closed
+  Complete.
+- Review opens only once all required Implementation/Testing tasks are
+  terminal.
+- Planning is never gated by approval.
+- **Rejection behavior** (`app.py::supersede_change_approval`): returns the
+  change to Awaiting Approval and starts a fresh approval cycle when material
+  fields change after approval; cancels the approval chain when a change is
+  soft-deleted/cancelled.
+- **Parent-child closure**: a Change cannot enter Review while mandatory
+  Implementation/Testing tasks are active; cannot close while any mandatory
+  task is active; cancelling cascades to Pending/Open tasks; closed tasks
+  retain audit history; backout must be its own task or explicit outcome;
+  manually added tasks count toward closure validation.
+
+<a id="section-master_reference--8-request-management"></a>
+#### 8. Request Management
+
+REQ is the order-level container; RITM is one catalog item in the order (own
+approval rules, fulfillment group, delivery target, variables, tasks,
+outcome); SCTASK is fulfillment work under a RITM.
+
+Process: Catalog selection → variables → REQ/RITM created → approval where
+required → fulfillment flow starts → SCTASKs (sequential/parallel/
+conditional) → RITM fulfilled → REQ closes when all RITMs finish.
+
+**Closure aggregation** (`catalog_task_update()`): all Closed Complete → RITM
+Closed Complete; any Closed Incomplete → RITM Closed Incomplete; all Closed
+Skipped → RITM Closed Skipped. Same aggregation RITM→REQ.
+
+**SCTASK is not a child of CHG** — implemented 2026-07-29. SCTASKs belong to
+RITMs only; a Change relates to a RITM only through `RecordLink`
+(`link_type="requested_item_change"`). When a RITM's SCTASK is linked to a
+Change, coordination may proceed freely, but production/implementation work
+on that SCTASK is blocked while the linked Change is still New/Awaiting
+Approval (`ritm_linked_change()` / `transition_catalog_task()` — returns 409).
+This is a task-level check, not a task-type distinction — `CatalogTask` has
+no Planning/Implementation/Testing/Review split; a `purpose` field
+(Coordination vs. Production) is a flagged, not-yet-implemented candidate
+follow-up.
+
+<a id="section-master_reference--9-request-versus-incident"></a>
+#### 9. Request versus Incident
+
+<a id="section-master_reference--10-universal-request"></a>
+#### 10. Universal Request
+
+A common front-door ticket when the requester doesn't know which department
+should handle the matter. **Not currently implemented in ServiceOps**;
+tracked as a candidate backlog item if a genuine multi-department front door
+becomes a requirement.
+
+<a id="section-master_reference--11-release-management"></a>
+#### 11. Release Management
+
+Groups multiple Changes/deployment activities into a coordinated delivery. A
+Release doesn't replace Change authorization. **Not currently implemented in
+ServiceOps**.
+
+<a id="section-master_reference--12-relationships-between-the-main-tickets"></a>
+#### 12. Relationships between the main tickets
+
+- Incident → Problem: many Incidents → one Problem.
+- Problem → Change: one Problem → one or more Changes.
+- Incident → Change: service restoration requires controlled modification.
+- Request → Change: RITM → Change Request when fulfillment requires one.
+- Major Incident → Problem: root-cause analysis and prevention.
+- Change → Incident: a failed Change may create/link an Incident.
+- Change → Problem: a failed/repeatedly-unsuccessful Change may lead to a
+  Problem investigation.
+- Release → Change: coordinated deployment governance.
+
+<a id="section-master_reference--13-the-complete-operational-chain"></a>
+#### 13. The complete operational chain
+
+```
+Monitoring alert or user report → Incident → Service restored using
+workaround → Multiple/major incidents identified → Problem → Root cause and
+permanent fix identified → Change Request → Planning/assessment tasks →
+Technical/business approvals → Implementation/testing tasks →
+Post-implementation review → Change closed → Problem verifies permanent
+correction → Problem closed → Knowledge/Known Error records updated
+```
+
+For a requested service:
+
+```
+User submits catalog item → REQ and RITM created → Approval → SCTASK
+fulfillment → Change created when production modification is required →
+Change approved and implemented → RITM fulfilled → REQ closed
+```
+
+<a id="section-master_reference--14-mandatory-governance-rules-for-serviceops"></a>
+#### 14. Mandatory governance rules for ServiceOps
+
+**Parent ticket controls**:
+- Parent cannot close while mandatory child tasks are active. *(Implemented.)*
+- Canceling a parent cascades to eligible child tasks. *(Partial —
+  full task cascade is a candidate follow-up.)*
+- Closed child tasks remain immutable except via controlled reopening.
+  *(Implemented.)*
+- Every task must have an assignment group. *(Implemented — non-nullable.)*
+- Every closed task must have close code and close notes. *(Not yet
+  enforced — candidate follow-up.)*
+- Parent resolution must aggregate child outcomes. *(Implemented for RITM/
+  REQ; partial for Change via required-task gating.)*
+- Failed/incomplete/skipped outcomes must remain distinguishable.
+  *(Implemented.)*
+- Work notes internal; customer comments externally visible.
+  *(Implemented via `TaskNote.visibility`.)*
+- All state/assignment/approval/field changes audited. *(Implemented via
+  `log_history`/`log_field_changes`/`audit`.)*
+- Cross-ticket relationships visible from both records. *(Implemented via
+  `RecordLink`/`related_records()`.)*
+
+**Approval controls**:
+- Requester must not approve their own high-risk Change. *(Not yet
+  enforced.)*
+- Approval delegation recorded. *(Implemented:
+  `ApprovalVote.delegated_from_id`.)*
+- Approval requirements recalculated on material field changes.
+  *(Implemented: `supersede_change_approval`.)*
+- Rejected approval stops downstream execution. *(Implemented via task
+  gating.)*
+- Approval comments mandatory for rejection. *(Not yet enforced.)*
+- No approval record deleted to bypass a decision. *(Implemented — no
+  delete path exists.)*
+- All approvals retain timestamp/identity. *(Implemented.)*
+
+**Change Task controls**: as in §7 above, implemented via
+`change_task_gate_block()`. Remaining not-yet-enforced candidates: task
+dates fitting strictly within a live schedule exception window; automatic
+Change-outcome review trigger on task failure; backout task
+auto-provisioning on rollback declaration.
+
+---
+
+<a id="section-master_reference--part-4--whole-application-audit-this-session"></a>
+### Part 4 — Whole-application audit (this session)
+
+Fresh audit performed against `CLAUDE.md`'s rules (not generic best practice),
+reading `app.py` (8,015 lines pre-session), `serviceops_core/*` (395 lines
+total), 49 template files, all 22 pre-session migrations, and `tools/*`.
+Findings are grouped by category; items marked **[fixed this session]** were
+addressed and are detailed further in Part 5.
+
+<a id="section-master_reference--1-code-quality--structure"></a>
+#### 1. Code quality / structure
+
+- **High**: The monolith imbalance is severe and getting worse, contrary to
+  CLAUDE.md's "avoid expanding the monolithic application file
+  unnecessarily"/"continue decomposing" guidance. `app.py` (8,015 lines)
+  holds ~112 routes, every model (60+ `db.Model` classes), and almost all
+  business logic (workflow execution, change-conflict detection, priority/
+  SLA math, webhook signing/SSRF guards), while `serviceops_core/` totals
+  only 395 lines across five files. The extraction this module was created
+  for has stalled. Best candidates to move: `find_change_conflicts`/
+  `precreate_change_conflicts`, `deliver_webhook`/`process_outbox` delivery
+  logic, `visible_ticket_query`/`user_can_manage_ticket` authorization
+  predicates, workflow action execution.
+- **Medium**: `ticket_owning_group` and `user_can_manage_ticket` duplicate
+  "resolve owning group" logic that also appears inline in
+  `visible_ticket_query` — three paths to one concept. `find_record_by_number`
+  is a cross-record-type dispatcher — **[fixed this session: tenant
+  filtering added]**, but still a candidate for consolidation into one
+  tenant-safe lookup service.
+- **Low**: `serviceops_core/__init__.py` is 1 line — the package boundary
+  exists in name more than in practice so far.
+
+<a id="section-master_reference--2-performance"></a>
+#### 2. Performance
+
+- **High**: Systemic N+1 pattern — zero eager loading anywhere in the
+  codebase prior to this session (`grep -c "joinedload|selectinload"` = 0).
+  `/tickets/<kind>` rendered `requester`/`assignee` per row (up to ~100 extra
+  queries per 50-row page) and called `ticket_owning_group()` per row (each
+  issuing its own query) — **[fixed this session: eager loading +
+  batch-fetch added, see Part 5]**. `open_work()` had no `.limit()` at all
+  on either its ticket or request query — **[fixed this session: capped at
+  200 rows each with a "showing first N" UI note, see Part 5]**.
+- **Medium**: `dashboard()` issues ≥5 separate `.count()`/`.limit(8).all()`
+  queries sequentially on every load of `/`, the busiest route in the app —
+  not fixed this session, flagged as a follow-up (would benefit from a single
+  combined query or short-lived cache). Global-search-style routes build
+  Python-side ID sets from `.all()` before filtering by search term rather
+  than pushing the predicate into the query — not fixed this session.
+- **Low**: no missing-index gaps found; `tenant_id` columns are consistently
+  indexed, `Ticket.number`/`kind`/`state` are indexed.
+
+<a id="section-master_reference--3-stability--error-handling"></a>
+#### 3. Stability / error handling
+
+- **Medium**: `/admin/integrations/process` called `process_outbox()`
+  (default `limit=50`) synchronously in the request thread — each event can
+  make an SMTP call (10s timeout) and/or webhook POST (10s timeout, up to 3
+  redirect hops), worst case ~500s against gunicorn's 60s timeout —
+  **[fixed this session: capped to `limit=5`, see Part 5]**. The background
+  `tools/outbox_worker.py` remains the correct unbounded drain path.
+- Exception handling is otherwise disciplined: zero bare `except:` blocks,
+  only 6 `except Exception` blocks total, each paired with rollback where a
+  commit was in flight.
+- **Low**: migration `20260726_0001`'s baseline intentionally raises on
+  downgrade (correct per CLAUDE.md's "never destructively reset" rule) — any
+  rollback tooling blindly calling `alembic downgrade base` will hard-fail by
+  design; confirm rehearsal scripts account for this.
+
+<a id="section-master_reference--4-security--tenant-isolation"></a>
+#### 4. Security / tenant isolation
+
+Overall notably better than average for this class of finding.
+`tenant_context_id()` fails closed exactly as required: an authenticated user
+with a null `tenant_id` raises `TenantResolutionError` rather than defaulting
+to tenant 1. All ~30 tenant-owning tables consistently use
+`default=tenant_context_id`.
+
+- **Medium** (**[fixed this session]**): `find_record_by_number()` performed
+  six separate lookups (Ticket/EnterpriseRecord/CatalogRequest/RequestedItem/
+  CatalogTask/OperationalTask) with **no tenant filter on any of them** — a
+  cross-tenant existence oracle via record-linking. Fixed: every branch now
+  filters by tenant, joining through the owning parent where the child table
+  itself carries no `tenant_id` (RITM/SCTASK join to `CatalogRequest`; CTASK/
+  PTASK resolve their parent Ticket/EnterpriseRecord and compare tenant).
+- **Medium** (open, tracked as B-231's larger follow-up): many child/detail
+  tables (`Comment`, `TaskNote`, `Approval`, `GroupMember`, `TaskSLA`,
+  `RequestedItem`, `CatalogTask`, `ChangeGovernance`, `TicketAssignmentGroup`,
+  `RecordLink`, `TaskHistory`, `OperationalTask`, `TaskCI`, `ApprovalGate`,
+  `ApprovalVote`, `ChecklistItem`, `CatalogItemRouting`,
+  `ScheduleHoliday`, `ProblemProfile`, `ChangeRevision`,
+  `MajorIncidentProfile`, `Favorite`, `RecentView`, `UserPreference`,
+  `ExternalIdentity`, `DirectoryGroupMapping/Membership`) have no own
+  `tenant_id` column. Safe today only because every current query path joins
+  through an already-tenant-scoped parent — there is no DB-level constraint
+  enforcing that convention, so a future query written without that join
+  would silently violate isolation. This session added `tenant_id` directly
+  to `CIRelationship` as one instance of closing this gap (see Part 5); the
+  rest remains open and is the single largest remaining tenant-isolation
+  risk in the codebase.
+- **Good practice confirmed**: CSRF double-submit token verified centrally;
+  session cookies HttpOnly/SameSite=Lax/Secure-by-default with a fail-closed
+  startup guard; CSP present (`style-src 'unsafe-inline'` is a noted residual
+  weakening — worth tightening with nonces if inline styles can be removed);
+  SSRF-resistant webhooks (DNS/redirect re-validation, capped redirects,
+  HMAC-signed payloads); open-redirect guard on stored start pages;
+  `SECRET_KEY` length/presence enforced, sourceable from a mounted secret
+  file.
+
+<a id="section-master_reference--5-ux"></a>
+#### 5. UX
+
+This app fares well here relative to typical findings: all `<img>` tags carry
+`alt` text, no pseudo-button `onclick` divs/spans, flash messaging is
+consistently `"error"`/`"success"` only. Gaps: no `"warning"`/`"info"` flash
+category exists anywhere despite templates rendering a fixed category set (low
+risk, none currently produced); an empty-state copy pass on `open_work.html`/
+`tickets.html` was not completed this session (noted as a follow-up, not a
+defect).
+
+<a id="section-master_reference--6-current-db-schema-shape-as-of-pre-session-baseline"></a>
+#### 6. Current DB schema shape (as of pre-session baseline)
+
+Migration `20260726_0001` **adopts** the existing SQLAlchemy-model-defined
+schema (`db.metadata.create_all(bind)` on a truly empty database, or a
+presence check on `{"user","platform_setting","ticket","support_group"}`
+otherwise) rather than defining it via DDL — so `app.py`'s ~60 `db.Model`
+classes *are* the schema of record, and migrations 0002 onward are
+incremental `ALTER TABLE`s layered on top.
+
+- **Ticket/ITIL model**: `Ticket` natively models INC and CHG only (`kind` in
+  `{"incident","change"}`). PRB/PTASK/CTASK live in `EnterpriseRecord`
+  (generic, `domain`-discriminated) and `OperationalTask` (covers PTASK+CTASK
+  via a `task_kind`/`parent_type` discriminator). REQ/RITM/SCTASK are
+  separate first-class tables (`CatalogRequest`/`RequestedItem`/
+  `CatalogTask`). This matches CLAUDE.md's "do not collapse" rule — the
+  record types are genuinely distinct models, though the PRB/PTASK/CTASK
+  shared-container approach is a documented, deliberate partial compromise.
+- **CMDB (pre-session)**: `ConfigurationItem` had only `name`, `ci_class`,
+  `environment`, `operational_status`, `ip_address`, `owner`, `tenant_id`.
+  `CIRelationship` had `parent_id`/`child_id`/`relationship_type` with a
+  `(parent_id, child_id)` unique constraint and **no `tenant_id` column at
+  all**. This matched `docs/BACKLOG.md` B-032's own accurate description of
+  the CMDB as "implemented but partial" (no discovery-source field, no
+  lifecycle-state history, no attribute schema beyond fixed columns). **This
+  session closed the majority of this gap — see Part 5.**
+
+<a id="section-master_reference--7-docs-drift"></a>
+#### 7. Docs drift
+
+No material drift found in the areas sampled (CMDB, REST API, tenant
+isolation, CTASK detail pages) — this repository's documentation is unusually
+disciplined about marking things "in progress" vs. "implemented" vs.
+"verified" with specific evidence, and the backlog entries read as accurate
+self-assessment rather than aspirational claims. `docs/BACKLOG.md` B-032 and
+[docs/blueprints/BLUEPRINT_TRACEABILITY.md](ENGINEERING_REFERENCE.md#section-blueprints-blueprint_traceability) §8.10 both correctly described the
+pre-session CMDB as partial before this session's enrichment work began.
+
+---
+
+<a id="section-master_reference--part-5--this-sessions-changes-implementation-log"></a>
+### Part 5 — This session's changes (implementation log)
+
+This section is the authoritative record of what changed in this pass, for
+the next AI/engineer to pick up from. All changes are additive/reversible
+per CLAUDE.md's migration rules; nothing here was a rewrite.
+
+<a id="section-master_reference--schema"></a>
+#### Schema
+
+- **New migration**: `migrations/versions/20260729_0023_cmdb_enrichment.py`.
+  Adds to `configuration_item`: `description` (Text), `lifecycle_state`
+  (String, default `"In Use"`), `business_criticality` (String, default
+  `"Medium"`), `serial_number`, `vendor`, `model`, `location`, `cost_center`
+  (Strings), `discovery_source` (String, default `"Manual"`), `install_date`/
+  `warranty_expiry_date` (Date), `attributes` (JSON, default `{}`),
+  `support_group_id` (FK → `support_group.id`), `created_at`/`updated_at`
+  (DateTime). Adds to `ci_relationship`: `tenant_id` (FK → `tenant.id`,
+  NOT NULL, backfilled from the parent CI's tenant, indexed) and
+  `created_at`; widens the unique constraint from `(parent_id, child_id)` to
+  `(parent_id, child_id, relationship_type)`. Both directions (upgrade and
+  downgrade) are idempotent-safe (checks existing columns/constraints before
+  acting) and downgrade is a clean column/constraint drop, tested against a
+  fresh database this session (see Verification below).
+- **`app.py` model changes**: `ConfigurationItem` and `CIRelationship`
+  classes updated to match, including the new `support_group`
+  relationship on `ConfigurationItem` and the tightened `CIRelationship`
+  unique constraint.
+
+<a id="section-master_reference--application-code"></a>
+#### Application code
+
+- `app.py::find_record_by_number()` — added tenant filtering to every
+  branch (see Part 4 finding).
+- `app.py::integrations_process()` route — capped `process_outbox(limit=5)`
+  (was unbounded default of 50).
+- `app.py::tickets()` route — added `joinedload` for `requester`/`assignee`
+  and batch-fetched `TicketAssignmentGroup`/`ChangeOwnership` for the current
+  page instead of one query per row via `ticket_owning_group()`.
+- `app.py::open_work()` route — capped both the open-ticket and open-request
+  queries at 200 rows with a truncation flag surfaced to the template.
+- `app.py::seed_itil()` — now creates default "Laptop Request"/"Software
+  Request" `CatalogItem` rows on first bootstrap if the tenant has none,
+  before the existing routing-assignment loop runs. This is an
+  administrator-configurable starting point (explicitly commented as such in
+  code), not hard-coded routing logic — an admin can edit/deactivate them
+  freely afterward, consistent with CLAUDE.md's "catalog routing must be
+  configurable... not hard-coded" rule.
+- `app.py::ci_new()`/`ci_edit()`/`cmdb()`/`ci_relationship_add()`/
+  `ci_relationship_delete()` routes — updated for the new CI fields, and
+  `ci_relationship_delete()` simplified to use `tenant_record_or_404()` now
+  that `CIRelationship` carries its own `tenant_id`.
+- `app.py::parse_form_date()` — new small helper (mirrors the existing
+  `parse_form_datetime()`) for the new date-only CI fields.
+
+<a id="section-master_reference--templates"></a>
+#### Templates
+
+- `templates/ci_form.html` — full rewrite exposing every new CI field
+  (description, lifecycle state, business criticality, serial/vendor/model,
+  location, cost center, discovery source, install/warranty dates, owning
+  support group).
+- `templates/cmdb.html` — list view extended with Lifecycle, Criticality,
+  Location, and Owning team columns.
+- `templates/open_work.html` — added truncation notices for both sections.
+
+<a id="section-master_reference--new-tooling"></a>
+#### New tooling
+
+- `tools/load_demo_dataset.py` — realistic non-production dataset loader
+  (see Part 2's backlog addition for full description). Requires
+  `--confirm-non-production`. Builds ~19 CIs across three service trees
+  (Customer Portal / Payroll Service / Email & Collaboration, each with
+  Business Service → Application → Database → Server layers) plus shared
+  network (`CORE-SW01`, `EDGE-FW01`, `LB01`, `VPN-GW01`) and storage
+  (`SAN01`, `BACKUP-NAS01`) CIs, ~32 CI relationships, 2 per-team users for
+  each of the 6 IT teams (manager + agent, the managers also added as CCB
+  approvers), 5 requester accounts, 8 incidents across varied
+  priority/state, 3 problems each with 2 PTASKs, 3 changes (Standard/
+  Normal/Emergency) each with governance + CTASKs, 2 catalog
+  requests/RITMs/SCTASKs, and 5 knowledge articles.
+  - **Scope note, important for whoever uses this data next**: seeded
+    changes/problems set a descriptive `state` directly rather than driving
+    the live `ApprovalChain`/`ApprovalGate`/`ApprovalVote` engine, so records
+    are immediately browsable without a pending approval blocking every
+    screen. To exercise the *live* approval workflow itself, submit a *new*
+    change/request through the UI against this seeded data (the CCB and
+    manager approvers already exist and are eligible) — that exercises the
+    real engine end-to-end.
+- `Dockerfile` — extended the existing `rm -f` line that excludes
+  `tools/load_test_fixture.py` from the production image to also exclude
+  `tools/load_demo_dataset.py`, for the identical reason (well-known weak
+  passwords, must never be `docker exec`-reachable in a production
+  container).
+
+<a id="section-master_reference--verification-performed-this-session"></a>
+#### Verification performed this session
+
+1. `python3 -c "import ast; ast.parse(...)"` on `app.py` and
+   `tools/load_demo_dataset.py` after every edit — syntax-clean throughout.
+2. `docker compose down -v && docker compose up -d --build` — full flush of
+   the local dev PostgreSQL volume and Docker uploads volume, then a fresh
+   build/deploy from current source.
+3. Confirmed migration head after fresh install:
+   `SELECT version_num FROM alembic_version;` → `20260729_0023`.
+4. Confirmed `/health` → `{"status":"ok"}` and all three containers
+   (`app`, `db`, `worker`) reported healthy.
+5. Ran `tools/load_demo_dataset.py --confirm-non-production` inside a
+   throwaway container built from the current image (mounted read-only,
+   since the app container's root filesystem is intentionally read-only —
+   itself a confirmed-good least-privilege container control). Output:
+   `configuration_items: 19, ci_relationships: 32, tickets: 11, problems: 3,
+   requests: 2, knowledge_articles: 5, users: 18`.
+6. Logged in as `admin` over HTTP with a real CSRF-token round trip (GET
+   `/login` → extract `_csrf_token` → POST credentials) and confirmed
+   `HTTP 200` on `/`, `/cmdb`, `/tickets/incident`, `/tickets/change`,
+   `/work/open`, `/knowledge`, `/cmdb/new`.
+7. Confirmed the new CI fields render with real seeded data:
+   `"Criticality"`, `"Lifecycle"`, `"PORTALDB01"`, `"CORE-SW01"`, `"Owning
+   team"` all present in the rendered `/cmdb` HTML.
+
+<a id="section-master_reference--known-gaps-this-session-did-not-close-explicitly-deferred-not-silently-skipped"></a>
+#### Known gaps this session did not close (explicitly deferred, not silently skipped)
+
+- The REST CMDB endpoint (`PUT /api/v1/cmdb/configuration-items`,
+  `docs/API_REFERENCE.md` §9) was **not** extended to accept the new CI
+  fields — it still only accepts `name`/`ci_class`/`environment`/
+  `operational_status`/`ip_address`. Extending it (and its OpenAPI schema,
+  and the field-projection registry in `config/field_projections.json` if
+  CI records are ever exposed through governed export/search projections) is
+  a clean, contained follow-up.
+- The broader tenant-isolation follow-up from B-231 (the ~20 remaining
+  child tables with no own `tenant_id`) was not addressed beyond
+  `CIRelationship`.
+- `dashboard()`'s chatty multi-query hot path (Part 4 finding) was not
+  optimized this session.
+- No automated test was added for the new CMDB fields/migration or the
+  `find_record_by_number` tenant fix — `tests/test_app.py` should gain
+  coverage for both before this is considered release-ready, per CLAUDE.md's
+  "add negative authorization tests" and "add migration tests for schema
+  changes" rules.
+- The production Docker image itself was not rebuilt/pushed anywhere in this
+  session — only the local dev Compose stack was flushed, rebuilt, and
+  verified, per the user's explicit scope for this pass (local/dev only).
+
+---
+
+<a id="section-master_reference--part-6--requirements-traceability-matrix"></a>
+### Part 6 — Requirements traceability matrix
+
+(Full text of [docs/TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix). Status meanings: **Verified**
+has current automated evidence; **Implemented** has code but incomplete
+external/runtime proof; **Gap** is not production-ready.)
+
+| Requirement/source | ServiceOps evidence | Status | Backlog |
+|---|---|---|---|
+| Unified navigation, search, favorites, history, preferences | `templates/base.html`, `/ui/search`, favorites/recent views, tests | Verified | B-021 |
+| User profile, user list and administration home | tenant-scoped `/profile`, `/admin/users`, `/admin/users/<id>`, `/admin` | Verified | B-248 |
+| Categorized personal interface settings | `/preferences` categories; light-only governed by ADR-012 | Verified for implemented settings | B-248, B-240 |
+| Lists, filters, forms, activity, attachments, checklists | shared task-derived record shell, Event history, rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
+| Visual task boards | `/task-board`, move endpoint and test | Verified | B-023 |
+| Branding/logo/theme configuration | installer and `/admin/settings`; light-only UI | Implemented | B-024 |
+| Guided help/tours | interactive step-by-step tour, versioned content, role targeting, admin builder | Verified | B-120 |
+| Configurable workspace ("My Workspace") | closed, code-defined widget catalog with per-user layout; no page designer or metadata runtime | Verified for the closed catalog; general-purpose page/metadata-runtime designer is a deliberately descoped gap | B-121 |
+| Production-only initialization | seed, installer, Compose, cleanup tool and tests | Implemented | B-001 |
+| Team-manager and CCB approval chain | named manager controls, explicit CCB grants, chains/gates/votes | Implemented | B-030 |
+| Approval and lifecycle integrity | centralized transition guards, adversarial tests | Verified | B-034 |
+| Assignment-group operational authorization | shared INC/CHG read, explicit owning-team mutation guard | Verified | B-035, B-042 |
+| ITIL related-record network | `RecordLink`, `OperationalTask`, REQ/RITM/SCTASK hierarchy | Verified | B-031, B-037 |
+| Ticket history and change reapproval | `TaskHistory`, `ChangeRevision`, superseded chains | Verified | B-036 |
+| Task-to-CMDB relationships | primary/affected CIs, impacted services, conflict detection | Implemented | B-032 |
+| Catalog hierarchy and task orchestration | multi-RITM REQ, multiple team-owned SCTASKs, roll-up | Verified | B-033 |
+| Configurable catalog fulfillment routing | per-item routing, Windows defaults, Service Desk fallback | Verified | B-038 |
+| Catalog item administration | admin create/edit/deactivation | Verified | B-041 |
+| Catalog request visibility boundaries | participant/fulfillment/approver/admin policy | Verified | B-039 |
+| Cross-module object and field authorization | centralized policies, fail-closed field registry | Implemented; independent review pending | B-005, B-040, B-203 |
+| AD/LDAP and Keycloak authentication | authentication code, installer checks, group mapping | Implemented; external proof absent | B-061 |
+| Docker and external PostgreSQL deployment | Compose definitions, `./serviceops` lifecycle | Implemented | B-050 |
+| Kubernetes high availability | Helm resources/PDB/network policy | Implemented; cluster proof absent | B-051 |
+| Versioned database migrations and tenant foundation | Alembic baseline + tenant revision, backfill, tests | Migration path verified at full scale (2026-07-28); tenant_id sprawl and review pending | B-002, B-005, B-202, B-231 |
+| CSRF protection and hardened session lifecycle | central guard, injected tokens, rotation, tests | Verified | B-003, B-201 |
+| Tamper-evident audit evidence | tenant-specific hash chains, key rotation, retention policy | Implemented; external validation pending | B-004 |
+| Versioned REST API foundation | tenant/user-bound clients, scopes, projections, OpenAPI | Implemented for initial contract; broader resources pending | B-204 |
+| Responsive PWA foundation | dynamic manifest, shell-only service worker with tests | Implemented; offline records deferred | B-205 |
+| Durable integration foundation | transactional outbox, worker, retry/dead state, evidence | Implemented with simulated adapters | B-130 |
+| Priority and SLA governance | Git-backed matrix, business schedules, breach notifications | Implemented; OLA/escalation pending | B-206 |
+| Declarative workflow foundation | validated package, immutable versions, retries, evidence | Implemented; broader catalogue pending | B-207 |
+| Durable workflow orchestration | wait cursor/resume, evidence, triggers, rate limits | Implemented; recurrence/subflows pending at time of writing (later delivered, see B-209) | B-208 |
+| Scheduled workflows and subflows | subflow expansion, tenant schedules, scheduler claims | Implemented; calendar/blackout pending | B-209 |
+| Bootstrap credential lifecycle | mounted-file priority, split Secrets, rotation | Implemented; external vault ceremony pending | B-006, B-210 |
+| Supply-chain evidence | pinned deps/images/actions, Trivy, SBOM, Cosign, attestations | Implemented; GHCR/cluster proof pending | B-007, B-210 |
+| Production observability/SLOs | metrics, structured logs, traces, deployable alert rules, real Prometheus/Alertmanager rehearsal evidence | Partial; SLO dashboards, capacity model and exercised runbooks remain | B-070 |
+
+<a id="section-master_reference--connection-dependent-capability-boundary"></a>
+#### Connection-dependent capability boundary
+
+The following require the deploying organization's systems, policies,
+credentials, and representative test environments: MFA/SCIM, email/SMS/
+contact center, SIEM/EDR/scanners, infrastructure discovery, HRIS/ERP/CRM,
+DevOps integrations, mobile/offline applications, external AI services, and
+regulated retention/eDiscovery. They must be delivered through explicit
+adapters and are not represented as built-in capabilities.
+
+---
+
+<a id="section-master_reference--part-7--ui-capability-mapping-and-bp-001-blueprint-traceability"></a>
+### Part 7 — UI capability mapping and BP-001 blueprint traceability
+
+(Full text of [docs/UI_CAPABILITY_MAPPING.md](ENGINEERING_REFERENCE.md#section-ui_capability_mapping) and
+[docs/blueprints/BLUEPRINT_TRACEABILITY.md](ENGINEERING_REFERENCE.md#section-blueprints-blueprint_traceability)/[BLUEPRINT_REGISTRY.md](ENGINEERING_REFERENCE.md#section-blueprints-blueprint_registry).)
+
+<a id="section-master_reference--australia-ui-guide-capability-mapping"></a>
+#### Australia UI guide capability mapping
+
+Source reviewed: *Australia ServiceNow AI Platform user interface*, 1,148
+pages, updated July 7, 2026. This mapping uses the source guide as a
+behavioral reference only — ServiceOps does not copy its text, images,
+product names, or proprietary runtime.
+
+| Source guide family | ServiceOps implementation |
+|---|---|
+| Next Experience and unified navigation | Unified top navigation, collapsible app nav, global search, favorites, history, notifications, help, preferences, role-aware landing pages |
+| Landing pages and dashboards | Operational dashboard, analytics workspace, workload counters, role-based visibility, selectable start page |
+| Configurable workspace | Purpose-built ticket/request/change/CMDB/catalog/approval/analytics/ITIL admin workspaces |
+| CMDB discovery | Manual admin create/edit/retire for CIs and CI-to-CI relationships; automated registration via `PUT /api/v1/cmdb/configuration-items` and `tools/cmdb_sync_agent.sh` |
+| Lists and filters | Searchable/filterable lists, states, priorities, badges, responsive tables, empty states |
+| Forms and activity | Structured forms, validation, comments/activity stream, work notes, approvals, SLAs, checklists, attachments, audit events |
+| Favorites and history | Per-user persistent favorites and recently viewed pages |
+| Notifications | Per-user inbox with unread counts, clickable links to source records |
+| Reference fields | Type-ahead lookups for CIs and cross-record linking |
+| Assignment and reassignment | Group-level assignment always by team name; team-to-team reassignment restarts change approval |
+| Manager/team work views | Manager portal, unified "My tasks" queue |
+| Dashboard personalization | Admin-configurable dashboard sections, live P1/P2 signal |
+| Personalization and accessibility | Categorized preferences; density/font/contrast/motion/tooltips; light-only (ADR-012) |
+| User profile and administration | Self-service profile, admin-controlled identity/role/active/department, searchable user list |
+| Service Portal | Employee catalog, knowledge search, request tracking, self-service cases |
+| Visual Task Boards | Drag-and-drop lifecycle lanes backed by ticket state/audit/SLA |
+| Global search | Tickets, knowledge, enterprise work, CIs |
+| Attachments and checklists | Persistent uploads/downloads, actionable checklists |
+| Guided help and onboarding | Help Center, contextual guidance, navigation tour |
+| Themes and branding | Light-only design tokens; deployment-owned branding via installer/admin settings |
+| Core UI developer tooling | Flask templates, reusable styles, routes, tests |
+| CMS/UI Builder/widget APIs/Angular/Jelly/ServiceNow scripting | Not applicable — vendor-specific; ServiceOps uses Flask/Jinja/SQLAlchemy/CSS/JS |
+| Advanced Work Assignment/Agent Chat/Virtual Agent/voice/predictive | Requires external messaging/telephony/workforce-routing/AI services; not represented as operational |
+| Native mobile apps and offline distribution | Native iOS 1.3.0 workspace implements authenticated operational work, passkeys, biometric locking, versioned audit context, and APNs/inbox notifications; distribution and offline record synchronization remain external |
+
+**Verification expectation**: every capability described as implemented must
+have a working route/UI, persistent data, role enforcement, and automated or
+live runtime verification.
+
+<a id="section-master_reference--bp-001-programme-traceability"></a>
+#### BP-001 programme traceability
+
+BP-001 defines a multi-release platform programme, not a single feature.
+"Covered" means a currently evidenced foundation exists, not that the
+complete section is delivered.
+
+| BP section | Current foundation | Major missing scope | Disposition |
+|---|---|---|---|
+| 1 Platform layers | Identity, tasks, ITIL records, service/CI links, approvals, UI, analytics, audit | Formal module boundaries, durable automation, complete governance plane | Programme |
+| 2 Queue security | Central visibility helpers, governed REST/export/search projections | Compiled relationship-aware policy engine, independent review | P0 |
+| 3 Queue catalogue | Ticket lists, task board, approvals, requests | Personal/team/practice/management queue catalogue | P1 |
+| 4 Authorization | RBAC, tenant-aware root policies, transition guards, field permissions | ABAC/ReBAC policy compiler, independent review | P0 |
+| 5 Access levels | Git-backed action vocabulary, role grants, governed projections | Relationship-aware compiled bindings, independent review | P0 |
+| 6 Core data model | Ticket/EnterpriseRecord/request/task/history models | Common versioned work-item foundation | Architecture decision |
+| 7 Relationships | INC/PRB/CHG/REQ/RITM/PTASK/CTASK/SCTASK and CI relationships | Duplicate/outage/alert/release/deployment/vendor relationships | P1 |
+| 8.1 Interaction | No dedicated interaction model | Complete interaction intake/classification/conversion | P1 |
+| 8.2 Incident | Core incident, parent/child, major profile, SLA, CI, relationships | Full hold reasons, routing, escalation, survey, auto-close | P1 |
+| 8.3 Major incident | MajorIncidentProfile and coordination fields | Full roles, bridge, status page, PIR, follow-up actions | P1 |
+| 8.4 Requests/catalog | REQ/RITM/SCTASK, admin, routing, approvals | Catalogs/typed variables/entitlements/pricing/order guides | P1 |
+| 8.5 Problem | PRB, PTASK, known error, RCA/workaround/fix and links | Configurable models, clustering, risk acceptance, automation | P1 |
+| 8.6 Change | Types, plan, risk, CCB, CTASK, conflicts, reapproval | Standard catalog, CAB meetings, blackout windows, PIR evidence | P1 |
+| 8.7 Knowledge | Basic article list/create/search | Bases, lifecycle, versions, feedback, analytics, translation | P1 |
+| 8.8 Service levels | Definitions, task SLAs, Git-backed matrix, calendars, breach escalation | OLA/contracts, prediction, retroactive recalculation | P0/P1 |
+| 8.9 Events | No event/alert domain | Ingestion, normalization, correlation, suppression, CI binding | P1 |
+| 8.10 CMDB | CI classes/relationships/task links/conflict checks/manual+REST CRUD; **this session enriched CI attribute depth substantially — see Part 5** | Identification/reconciliation, discovery beyond self-reported facts, history/certification | P1 |
+| 8.11 Release/deployment | Change tasks only | Separate release/deployment models, evidence, waves | P1 |
+| 8.12 Improvement | Generic enterprise module only | Purpose-built continual-improvement register | P2 |
+| 9 Priority | Priority field | Impact/urgency matrix (implemented — this row is stale in the source doc), justification, controlled P1 criteria | P0 |
+| 10 Assignment | Explicit teams, team-scoped assignees, catalog routing, team reassignment | Ordered configurable rules, skills, on-call, workload | P0/P1 |
+| 11 Approvals | Chains, gates, any/all/majority, sequential stages, reapproval | Delegation, timeouts, dynamic resolution, signatures | P0/P1 |
+| 12 Web UI | Shell, lists, forms, board, catalog, admin settings, type-ahead, manager portal | Advanced list engine, workspace personas, tabs, mobile | P1/P2 |
+| 13 Rules/workflows | Git-backed versions, subflows, triggers, waits, retry, replay, simulation | Broader actions, blackout scheduling, concurrency quotas | P0 |
+| 14 Service model | Services, offerings, CIs, assets, relationships | Full hierarchy, governance, reconciliation, import APIs | P1 |
+| 15 Search | Access-aware global and domain search | Full text index, facets, typo/synonym, analytics | P1 |
+| 16 Communication | In-app notifications, durable SMTP/webhook/Teams delivery | Templates, preferences, digests, inbound email, SMS/push | P0/P1 |
+| 17 Identity/tenancy | Local, LDAP/AD, Keycloak OIDC, tenant migration/isolation | SAML, SCIM, MFA policy, session inventory, independent review | Architecture/P0 |
+| 18 Security/compliance | Headers, CSRF, authorization, audit evidence, key rotation, SBOM | Representative registry/cluster validation, malware scanning, review | P0 |
+| 19 Analytics | Basic access-aware dashboard | Full KPI definitions, time series, CSAT, scheduled reports | P1 |
+| 20 APIs/integrations | REST v1 ticket/incident contract, scopes, cursor pagination, OpenAPI | Broader resources, OAuth2, rate limits, webhooks, imports | P0/P1 |
+| 21 Architecture | Flask modular monolith, PostgreSQL, Docker/Helm | Decision on modularization vs. rewrite plus search/cache/event services | Architecture decision |
+| 22 Config deployment | Container configuration and admin settings | Git-backed config packages, diff, validation, promotion, rollback | P0/P1 |
+| 23 Implementation order | Several initial/core capabilities exist | Execute dependency-ordered programme with release gates | Governed roadmap |
+| 24 Deferred features | Current product largely follows this constraint | Explicit decision records for intentionally deferred features | Governance |
+| 25 Credible core | Chains, lifecycle controls, initial tenant isolation verified | Field security, durable timers, calendars, APIs, DR proof | Release gate |
+
+**Programme acceptance gate**: no section becomes Verified until its atomic
+requirements have automated tests, authorization tests, documentation,
+migration/rollback evidence, deployment evidence, and any required
+external-system validation. External services (AD, Keycloak, email, object
+storage, search, Kubernetes) cannot be certified using mocks alone.
+
+**Approved architecture disposition**: one organisation initially with
+tenant-aware conventions enforced now; incremental bounded-module refactor,
+no rewrite; light-only theme; PostgreSQL standard profile with enterprise
+services as optional adapters; SMTP/webhooks/monitoring/Teams integration
+priority; versioned REST first, GraphQL deferred; responsive PWA first,
+preserving future native-client contracts; Git-backed declarative
+configuration; security/platform foundations before visible expansion; data
+preserved via reversible versioned migrations.
+
+**Registered blueprint source**: BP-001, "Blueprint for building your own
+ServiceNow-class ITSM platform," received 2026-07-26, SHA-256
+`4c4d4f0b6e589e277b7663e6e99e2699817dca567cdeda853585ab9cf759df48`, 2,060
+lines, 43,034 bytes. The registered source is immutable; requirement
+interpretation belongs in this traceability section, not in silent rewrites
+of the supplied wording.
+
+---
+
+<a id="section-master_reference--part-8--rest-api-reference"></a>
+### Part 8 — REST API reference
+
+(Full text of `docs/API_REFERENCE.md`, version 1.0 · ServiceOps 1.19+. **Note
+from this session**: the CMDB endpoint's five-field contract described below
+is unchanged by this session's CI schema enrichment — see Part 5's "Known
+gaps" for why, and treat extending this endpoint as a清 follow-up.)
+
+<a id="section-master_reference--1-scope-and-base-url"></a>
+#### 1. Scope and base URL
+
+Supported API is REST v1: `https://serviceops.example.com/api/v1`. Live
+OpenAPI 3.1 document: `GET /api/v1/openapi.json`. Human-readable rendering:
+`GET /api/v1/docs`. Current contract supports ticket discovery, incident
+creation, controlled ticket updates, workflow triggering, CMDB
+auto-registration, and monitoring-event ingestion. Browser session cookies
+are not API credentials.
+
+<a id="section-master_reference--2-create-an-api-client"></a>
+#### 2. Create an API client
+
+Sign in as administrator → **Administration → API clients** → select the
+active user whose permissions the integration will exercise → select only
+required scopes → create and copy the token immediately (shown once,
+prefixed `sop_`; ServiceOps stores only an HMAC-derived verifier). Every
+request executes as the selected user — a scope never bypasses that user's
+tenant, role, team ownership, record visibility, lifecycle approvals, or
+field-projection rules.
+
+| Scope | Purpose |
+|---|---|
+| `tickets:read` | List and retrieve visible incidents and changes |
+| `incidents:create` | Create incidents |
+| `tickets:update` | Update an authorized owning-team ticket |
+| `workflows:execute` | Trigger configured API workflows for an authorized ticket |
+| `cmdb:write` | Upsert configuration items by name |
+
+<a id="section-master_reference--3-authentication-and-common-headers"></a>
+#### 3. Authentication and common headers
+
+```http
+Authorization: Bearer sop_REDACTED
+Accept: application/json
+Content-Type: application/json
+X-Request-ID: 9acdd549-4938-4eb2-bf8c-175ba8de2adc
+```
+
+State-changing endpoints also require `Idempotency-Key` (1–128 chars,
+letters/digits/`.`/`_`/`:`/`-`). Repeating the same key/method/path/body
+replays the stored response with `Idempotency-Replayed: true`; reusing the
+key for a different request returns `409`.
+
+<a id="section-master_reference--4-list-tickets"></a>
+#### 4. List tickets
+
+`GET /api/v1/tickets?type=incident&state=In%20Progress&limit=50&cursor=0`
+(scope `tickets:read`). `type` optional (`incident`/`change`), `state`
+optional exact match, `limit` 1–100 default 50, `cursor` last returned
+numeric ID (start 0). The `internal` object (assignment group/assignee) is
+returned only to agent/manager/admin audiences.
+
+<a id="section-master_reference--5-retrieve-one-ticket"></a>
+#### 5. Retrieve one ticket
+
+`GET /api/v1/tickets/INC0000041` (scope `tickets:read`). Case-insensitive
+numbers. Out-of-tenant/visibility records return `404`.
+
+<a id="section-master_reference--6-create-an-incident"></a>
+#### 6. Create an incident
+
+`POST /api/v1/incidents` (scope `incidents:create`). Required: `title`,
+`description`, `assignment_group_id` (must be an active IT fulfilment team
+in the client's tenant). `priority` defaults `P3`. Unknown fields rejected.
+Returns `201` with the governed ticket document; SLA/assignment/history/audit
+created in the same transaction.
+
+<a id="section-master_reference--7-update-a-ticket"></a>
+#### 7. Update a ticket
+
+`PATCH /api/v1/tickets/INC0000041` (scope `tickets:update`). Allowed fields:
+`state`, `priority`, `assigned_to_id` (null clears it; non-null must be
+active and in the owning team). Acting user must have update/assignment/
+transition permission and be an active member/manager of the owning team
+(or admin). Approval/lifecycle guards apply server-side — the API cannot
+move a change into implementation merely because the token has update scope.
+
+<a id="section-master_reference--8-trigger-an-api-workflow"></a>
+#### 8. Trigger an API workflow
+
+`POST /api/v1/tickets/INC0000041/workflow-events` (scope
+`workflows:execute`). Acting user must be authorized to manage/transition the
+ticket. Returns `202` with an `event_id`; execution is durable and
+asynchronous.
+
+<a id="section-master_reference--9-cmdb-auto-registration"></a>
+#### 9. CMDB auto-registration
+
+`PUT /api/v1/cmdb/configuration-items` (scope `cmdb:write`). Idempotent by
+design — **no** `Idempotency-Key` required, meant to be called on every agent
+run. Matched by `name` within the tenant: first call `201`, later calls
+`200`. **Only `name`, `ci_class`, `environment`, `operational_status`,
+`ip_address` are currently accepted** — unknown fields rejected with `400`.
+This means the new fields added in Part 5 (`serial_number`, `vendor`,
+`model`, `location`, `cost_center`, `discovery_source`, `install_date`,
+`warranty_expiry_date`, `lifecycle_state`, `business_criticality`,
+`support_group_id`, `attributes`) are **not yet reachable via this
+endpoint** — only via the `/cmdb` web UI. A ready-to-use shell agent is at
+`tools/cmdb_sync_agent.sh`, with an example Puppet class at
+`deploy/puppet/cmdb_sync.pp.example`.
+
+<a id="section-master_reference--10-monitoring-ingestion"></a>
+#### 10. Monitoring ingestion
+
+Monitoring sources use separate one-time credentials (not API-client
+tokens), created under **Administration → Integrations**.
+`POST /api/v1/monitoring/{source_id}/events` requires `external_id`,
+`severity` (`critical`/`high`/`medium`/`low`/`info`), `resource`, `summary`.
+Deduplicated by source+`external_id`: first ingestion `201`, replay `200`
+with `"deduplicated": true`. Creates an EVT record and routes an
+investigation task to the source's configured team.
+
+<a id="section-master_reference--11-error-contract"></a>
+#### 11. Error contract
+
+```json
+{"error": {"status": 403, "title": "Forbidden", "detail": "The API client lacks scope tickets:update.", "request_id": "9acdd549-4938-4eb2-bf8c-175ba8de2adc"}}
+```
+
+| Status | Meaning |
+|---|---|
+| `400` | Invalid JSON, fields, parameters, transition, or idempotency key |
+| `401` | Missing, invalid, or revoked token |
+| `403` | Scope, role, team, tenant, or action is not authorized |
+| `404` | Record does not exist or is intentionally hidden |
+| `409` | Idempotency conflict, integrity failure, or state conflict |
+| `429` | Reserved for enforced rate limits in a future compatible revision |
+| `500` | Unexpected server failure; retain the request ID for investigation |
+
+Retry only transient `5xx` with exponential backoff + jitter and the same
+idempotency key. Never auto-retry `400`/`401`/`403`/`404`/`409`.
+
+<a id="section-master_reference--1213-quick-starts"></a>
+#### 12–13. Quick starts
+
+cURL: set `SERVICEOPS_URL`/`SERVICEOPS_TOKEN`, use
+`--fail-with-body --silent --show-error`, avoid the token on the command
+line, `unset` it when done. Python: use `requests`, always set
+connect/read timeouts, validate TLS, log request IDs not credentials.
+
+<a id="section-master_reference--14-current-compatibility-boundary"></a>
+#### 14. Current compatibility boundary
+
+REST v1 is the supported integration surface. GraphQL is intentionally
+deferred (ADR-015). CMDB registration is the first CMDB REST resource,
+deliberately narrow. The API does not yet expose catalog ordering, REQ/
+RITM/SCTASK, PRB/PTASK, CHG/CTASK creation, CI relationship management,
+approvals, attachments, knowledge, users, or reporting as public REST
+resources — do not automate browser forms as a substitute.
+
+---
+
+<a id="section-master_reference--part-9--complete-platform-manual-operations"></a>
+### Part 9 — Complete platform manual (operations)
+
+(Full text of `docs/OPERATIONS_MANUAL.md`, version 1.26.3 as last authored;
+subsequent 1.27.x changes haven't required rewriting this section. As of
+1.27.22, `OPERATIONS_MANUAL.md` gained two large new chapters — "3A. Visual
+walkthrough" (22 real screenshots of every major workspace, each with an
+explanatory caption) and "3B. Common task walkthroughs" (step-by-step
+procedures for incident/change/catalog/manager-portal workflows) — plus a
+`tools/generate_operations_manual.py` upgrade that renders Markdown tables as
+real bordered/styled tables and images as scaled, captioned figures instead of
+flattened text. These are deliberately **not** reproduced here: screenshots
+are binary image files that cannot be represented in this Markdown merge, and
+duplicating the walkthrough prose without its screenshots would misrepresent
+what changed. Read `docs/OPERATIONS_MANUAL.md` directly (or the regenerated
+`ServiceOps_Complete_Platform_Manual.pdf`) for the current, complete visual
+and procedural content; this section remains the source for the still-current
+narrative/reference material below it, which is otherwise unaffected.)
+
+<a id="section-master_reference--1-purpose-and-operating-model"></a>
+#### 1. Purpose and operating model
+
+ServiceOps is an enterprise service-management platform for requesters,
+fulfillers, team managers, CCB members, and platform administrators:
+incident, request, problem, change, catalog, knowledge, CMDB, asset, SLA,
+approval, audit, analytics, and enterprise workspaces. No deployment
+mechanism eliminates every infrastructure/operator failure — the standard
+uses prevention, validation, observability, tested recovery, least
+privilege, immutable releases, and documented rollback rather than claiming
+infallibility.
+
+<a id="section-master_reference--2-roles-and-teams"></a>
+#### 2. Roles and teams
+
+| Role | Normal responsibilities |
+|---|---|
+| Requester | Submit and track requests and incidents, search knowledge |
+| Agent | Triage, assign, fulfill, document, and resolve operational work |
+| Manager | Agent work plus team oversight and manager approvals |
+| CCB member | Review planned changes, risk, evidence, schedule, and backout plan |
+| Administrator | Identity, service operations settings, CMDB, audit, and platform operation |
+
+CoreApps, Database, Network, Windows, Unix, and SSD are standard fulfillment
+teams. AD groups (e.g. `gg_unix`) map to teams; membership reconciles at
+login. Manager appointment and CCB authority remain explicit admin
+decisions. Operational ownership is separate from approval authority: every
+incident/request/change has one owning IT fulfillment team; an active
+member of that team, its manager, or an admin can change operational
+fields; assignees must stay active members of the owning team. All IT
+teams' active members/managers can *read* every incident/change (triage,
+handoffs, awareness); only the owning team or an admin can *change* it. CCB
+membership grants approval authority only, never cross-team operational
+control.
+
+<a id="section-master_reference--3-end-user-guide"></a>
+#### 3. End-user guide
+
+**REST API docs**: `docs/API_REFERENCE.md` / `/api/v1/docs` /
+`/api/v1/openapi.json` (see Part 8).
+
+**Governed record projections**: object visibility and field visibility are
+separate controls. Central tenant-aware object policies decide record
+access; `config/field_projections.json` (validated, Git-backed) decides
+which fields leave the app for a given resource/audience. Requester
+projections exclude internal assignment details; unknown resources/
+audiences/duplicate fields fail application startup.
+
+**Browser request security**: every unsafe request needs a session-bound
+CSRF token (rendered into forms + a JS header for interactive actions,
+rotated post-auth). Session cookies HttpOnly/SameSite=Lax,
+`SESSION_COOKIE_SECURE` defaults `true` everywhere; app refuses to start
+insecure without the explicit `ALLOW_INSECURE_SESSION_COOKIES=true` escape
+hatch (dev/localhost only, never production). A user with no resolvable
+`tenant_id` is logged out and rejected 403 rather than defaulted. CSP header
+sent on every response.
+
+**Database migration gate**: production schema changes are Alembic
+revisions; Compose runs the gate before init, Kubernetes uses a dedicated
+Helm migration Job (replicas set `AUTO_MIGRATE=false` and refuse to start on
+a stale schema). `20260726_0001` adopts an existing schema or creates a
+fresh one, with a deliberately non-destructive (backup-requires) downgrade.
+`20260726_0002` creates the default tenant and backfills all root records.
+Bundled rehearsal: `./serviceops rehearse-migrations 100000` (clones into an
+isolated `_migration_rehearsal`-suffixed DB, adds representative records,
+downgrades/rolls-forward, compares counts+fingerprints, always cleans up;
+refuses in external-database mode).
+
+**Tamper-evident audit**: `20260726_0003` extends every audit event with
+UUID, correlation ID, source context, integrity algorithm, previous/event
+hash; existing events sealed into a legacy chain, new events HMAC-SHA-256.
+DB triggers reject audit UPDATE/DELETE. Admin audit page verifies the full
+tenant chain before display; export blocked if verification fails,
+otherwise returns signed JSON evidence
+(`X-ServiceOps-Audit-Signature`/`-Key-ID`). `20260726_0011` adds per-event
+key IDs and forward-only rotation from the audit page after full-chain
+verification. Minimum seven-year retention + legal hold governed from the
+same page; only active `siem` connections receive `audit.created` events.
+Protect `AUDIT_INTEGRITY_KEY` as an independently rotated secret.
+
+**Declarative action/field authorization**: `config/authorization.json` is
+the Git-controlled role/action vocabulary (discover, read, comment, create,
+update, assign, accept, transition, resolve, close, reopen, approve,
+delegate, relate, export, report, delete, purge, configure, administer,
+security-administration). Startup fails on malformed policy or unknown
+role action. Field projection is separate from object visibility (see
+above); requesters never receive internal ticket history, work notes,
+change plans, approvals, SLA internals, MI coordination, affected-CI
+internals, operational tasks, or checklists.
+
+**REST API v1**: admins create/revoke identities under **Administration →
+API clients**; each client binds to one active user and inherits their
+authorization, further restricted by explicit scopes. Tokens shown once,
+stored as HMAC hash+prefix. `API_TOKEN_PEPPER` rotation revokes every token
+by design.
+
+**Responsive PWA**: dynamic company/instance manifest, root-scoped service
+worker caching only CSS/JS shell assets (never HTML/auth/API/tickets/
+attachments). HTTPS required outside localhost. Offline operational
+records explicitly deferred pending encrypted storage/revocation/data-loss
+policy.
+
+**Durable integrations and monitoring**: `20260726_0005` adds a
+PostgreSQL-backed outbox, per-channel delivery evidence, encrypted webhook/
+Teams connections, authenticated deduplicated monitoring sources. The
+Compose/Kubernetes worker claims due events with `FOR UPDATE SKIP LOCKED`,
+retries with bounded exponential delay, moves to `Dead` after 5 failures.
+SMTP: STARTTLS by default, admin-controlled. Webhooks: HTTPS + HMAC-SHA-256
+signature headers; literal loopback/private/link-local/non-HTTPS targets
+rejected at config time; at delivery time the destination is re-resolved
+and redirects are manually re-validated per hop (up to 3), closing most
+DNS-rebinding/redirect-SSRF risk — a narrow TOCTOU window remains between
+re-resolution and the HTTP client's own connect-time DNS lookup; true IP
+pinning is tracked as future work. Monitoring sources bind to a team;
+`POST /api/v1/monitoring/{source_id}/events` validates severity/payload,
+dedupes by source+external ID, creates EVT+EVTASK, maps
+critical/high/medium/low → P1/P2/P3/P4.
+
+**Workflow state integrity**: approval-derived states are controlled by the
+approval engine only — never manually selectable. A change stays `Awaiting
+Approval` until manager+CCB gates complete. Admins cannot cast another
+approver's vote. Invalid transitions return `409` with no data change.
+
+**ITIL related-record model**:
+
+| Record | Purpose and supported relationships |
+|---|---|
+| INC | Restore service; parent/child INC, primary/affected CIs, PRB, fix CHG, caused-by CHG, converted REQ |
+| PRB | Root cause, workaround, known error, permanent fix; many INCs, PTASKs, multiple CHGs, knowledge |
+| PTASK | Independently assigned investigation/resolution work under a PRB |
+| CHG | Risk, authorization, schedule, overall implementation control; related INCs/PRBs/RITMs/CIs/services |
+| CTASK | Planning/implementation/testing/review work under a CHG |
+| REQ | User order container with one or more RITMs |
+| RITM | Catalog item, variables, approvals, fulfillment stage; may link a controlled CHG |
+| SCTASK | Independently assigned fulfillment work under a RITM |
+
+A required open CTASK blocks its CHG completing; a required open PTASK
+blocks its PRB completing; a RITM completes only once all SCTASK work is
+terminal; a REQ completes only once all RITMs complete. Major-incident
+coordination is an INC extension, not a separate prefix.
+
+**Ticket history and approval-safe change revisions**: every record's
+chronological history captures actor/time/event/field/old/new/details.
+Material CHG approval inputs: purpose/description, type, risk, impact,
+implementation/test/backout plan, planned window, primary CI. Editing any
+of them preserves the previous chain as history, marks it Superseded,
+increments the plan revision, returns the CHG to Awaiting Approval, creates
+a fresh chain, and notifies every approver once. An old approval is never
+silently applied to a materially different plan.
+
+**Disposable test fixtures** (updated per this session):
+`tools/load_test_fixture.py` (unchanged) creates an admin + one
+manager/CCB approver per IT team with well-known weak passwords
+(`admin`/`admin`, `coreapps`/`coreapps`, etc.) plus minimal disposable
+catalog/CI/asset/knowledge/service-offering records; never automatic, always
+excluded from the production image. **New this session**:
+`tools/load_demo_dataset.py` — same non-production/exclusion guarantees, but
+builds a much deeper realistic dataset (full CMDB service trees, per-team
+named users, a representative INC/PRB/CHG/REQ/RITM/SCTASK/KB spread) — see
+Part 5 for full detail. Neither should ever be exposed on a network-reachable
+instance or reused for production data.
+
+**Navigation**: role-appropriate left navigator; top bar has global search,
+favorites, history, notifications, help, preferences. Preferences control
+density/font-scale/contrast/motion/tooltips/keyboard/date-display/sidebar-pin/
+start-page. Self-service profile covers name/email/title/phone/timezone/
+date-format; role/active-state/department/team-membership/manager-authority/
+CCB-authority are never self-service. Light-only, no theme selector
+(ADR-012). Admin home is a capability-oriented entry point; Users & roles
+gives tenant-scoped search + editable records, role/active/department
+gated to `security_administer`.
+
+**Incidents**: dense two-column operational form with a persistent
+Update/Resolve header; body exposes number/caller/contact type/state/
+category/subcategory/impact/urgency/calculated priority/service offering/
+primary CI/assignment group/assignee/notification preference/short
+description/description. Event history (field-level old/new + actor/time)
+follows immediately. The same task-derived model covers changes, problems,
+other enterprise records, and request containers; list workspaces share a
+New/search/filter bar, filter summary, record count, pagination, priority
+indicators, operational columns.
+
+**Requests and catalog**: select item → variables/justification → submit →
+REQ/RITM/approvals/SCTASK created. Approval-required RITMs snapshot the
+requested-for employee's active, same-tenant line manager as stage one, even
+when AD/LDAP provisioned that manager before their first login; stage two is
+active Service Desk fulfillment authorization. Missing, inactive,
+self-referential, or cross-tenant manager relationships fail closed before
+record creation, and an administrator is never substituted. Fulfillment routing is
+administrator-controlled under **Administration home → Service delivery and governance → Catalog and
+fulfillment routing**; Laptop/Software route to Windows by default (and, as
+of this session, both catalog items themselves are now auto-created on
+first bootstrap — see Part 5). Legacy items without an explicit route fall
+back to active Service Desk; ordering fails closed if neither exists.
+Catalog request visibility is need-to-know: requested-by/for, fulfillment
+team members/managers, SCTASK-assigned teams, named approvers, and admins
+only.
+
+**Changes**: must state type, affected CI, owning team, risk, impact,
+planned window, implementation/test/backout plans. Review conflicts before
+approval. CCB approval is authorization, not technical validation or
+implementation-team membership. The New Change form now also accepts a
+repeatable "Additional configuration items" picker alongside the primary CI,
+linked via the existing `TaskCI` mechanism at creation time; adding an
+affected CI to an approved change is still a material change (new approval
+cycle).
+
+**Sidebar profile card**: shows the signed-in user's name, avatar, and
+active role. A user holding more than one granted role sees an "Acting as
+{Role}" control there (not in the top nav) to switch active role without
+signing out; single-role users never see it. A full-width, text-labeled
+"Sign out" button sits below it.
+
+**System Health** (Administration home → System): application-error table
+(`ApplicationLog`) plus a raw `LOG_DIR` request-log-file viewer, both with
+combinable Splunk-style filters (level, logger, path, request ID, date
+range; method/status on the log-file viewer) and CSV/JSON/NDJSON/text export
+(`/admin/system-health/errors/export`, `/admin/system-health/logs/export`,
+admin-only, audited, 10k-row cap). `docker logs`/`kubectl logs` mirror the
+same detailed JSON lines as the in-app viewer and the log file.
+
+**Knowledge, CMDB, assets, boards**: search knowledge before duplicating
+work; use the CMDB relationship view for service-impact understanding
+(now considerably richer per Part 5 — lifecycle state, criticality,
+location, owning team, vendor/model/serial, discovery source, install/
+warranty dates); asset pages track accountable inventory; the visual task
+board changes underlying ticket state and remains audited/role-controlled.
+**Agentless SNMP discovery** (Admin → CMDB → Discovery, `DiscoveryTarget`,
+`serviceops_core/network_discovery.py`) finds CIs and "Connects to"
+relationships from switches/devices via SNMP GET/WALK (MIB-II/IF-MIB/IP-MIB
+ARP/LLDP-MIB), on demand or scheduled via the outbox worker loop;
+credentials encrypted at rest like `IntegrationConnection`. Complementary to
+(not a replacement for) the agent-based `tools/cmdb_sync_agent.sh`. New
+`/cmdb/topology` page renders CIs/relationships as a dependency-free
+vanilla-JS force-directed graph. A device that doesn't answer SNMP (most
+consumer/office devices don't) still gets a bare liveness check
+(`tcp_liveness_probe`, a handful of common TCP ports against only the
+configured target, no port scanning) plus a best-effort `reverse_dns_lookup`
+via shared `probe_host()`, rather than being silently invisible.
+Real-hardware validation: 1→96 devices found on the same real `/24` after
+that fix. **A run never writes a CI directly** — it stages every result as
+a `DiscoveryCandidate` row; the new `/cmdb/discovery/<id>/review` page lets
+an administrator add selected devices, add all of them, or discard the
+batch, and only that explicit decision calls `reconcile_facts_into_cmdb`
+(which still never overwrites a manually-classified CI's identity fields,
+and never downgrades an SNMP-profiled CI to a bare one on a later liveness-
+only hit). Real production incident fixed in the same pass: `discover_host`
+was constructing a brand-new `SnmpEngine()` (pysnmp's heaviest object, MIB
+compilation on cold cache) per GET/WALK — ~9 per host — which under 40
+concurrent sweep threads could exhaust memory; refactored to one shared
+`SnmpEngine`/event-loop per host via `_SnmpSession`, verified bounded
+memory (266MB isolated, ~470MB on the live stack) for a full `/24` sweep.
+
+<a id="section-master_reference--4-deployment-decision"></a>
+#### 4. Deployment decision
+
+| Environment | Application | Database | Upload storage |
+|---|---|---|---|
+| Single server | Docker Compose | Bundled PostgreSQL | Docker volume |
+| Single production server | Docker Compose behind HTTPS proxy | Bundled or external PostgreSQL | Docker volume with backups |
+| Enterprise production | Kubernetes/Helm, 3+ replicas | Managed HA PostgreSQL | RWX CSI volume or object-storage extension |
+
+Production Kubernetes must use externally operated, highly available
+PostgreSQL.
+
+<a id="section-master_reference--5-docker-installation"></a>
+#### 5. Docker installation
+
+`./serviceops install web` → `http://127.0.0.1:8090` → configure profile/
+database/identity/listener → validate → deploy. `./serviceops status`/
+`health`/`logs`/`backup`/`restore`/`doctor` for lifecycle ops. Put an HTTPS
+proxy in front of the loopback-bound app and terminate TLS there.
+
+<a id="section-master_reference--6-kubernetes-prerequisites"></a>
+#### 6. Kubernetes prerequisites
+
+Kubernetes 1.27+, 3+ worker nodes for HA; Helm 3, kubectl, default-deny CNI,
+CSI storage; private registry + immutable image tag/digest; external HA
+PostgreSQL with TLS/backups/PITR; RWX upload storage for >1 replica;
+ingress/DNS/TLS automation; Metrics Server; secrets controller/vault.
+
+<a id="section-master_reference--7-kubernetes-installation"></a>
+#### 7. Kubernetes installation
+
+Build/scan/sign/push an immutable image → copy
+`deploy/kubernetes/values-production.example.yaml` →
+`values-production.yaml` → set registry/tag/ingress/storage/replicas/
+identity/role mappings → `./serviceops install kubernetes --preflight` →
+`./serviceops install kubernetes` → confirm rollout/TLS/login/record
+creation/upload/approval/notification/audit.
+
+<a id="section-master_reference--8-kubernetes-chart-controls"></a>
+#### 8. Kubernetes chart controls
+
+Non-root UID/GID, RuntimeDefault seccomp, all capabilities dropped,
+read-only root filesystem, disabled service-account-token mounts, distinct
+startup/readiness/liveness probes, zero-unavailable rolling update, topology
+spreading, PDB, optional HPA, resource requests/limits, NetworkPolicy,
+persistent upload claim, JSON schema validation, Helm test hook.
+
+<a id="section-master_reference--9-identity-configuration"></a>
+#### 9. Identity configuration
+
+**Local admin**: one vaulted break-glass account, tested quarterly, rotated
+after every use. **AD/LDAP**: LDAPS/StartTLS, cert validation,
+least-privilege read-only bind, narrow base DN, escaped filter, explicit
+group-role mappings; validate bind/search/user-bind/disabled-user/group-
+mapping/cert-expiry/outage behavior. **Keycloak**: confidential OIDC
+client, authorization-code flow, exact HTTPS redirect URI, short-lived
+tokens, approved realm-role claims, client-secret rotation, restrictive
+redirect/web-origin settings; validate login/logout/expired-session/
+revoked-user/missing-email/role-change/provider-outage.
+
+<a id="section-master_reference--10-post-deployment-system-settings"></a>
+#### 10. Post-deployment system settings
+
+**Administration home → Platform settings**: platform/company name, PNG logo,
+colors, support identity, display defaults, LDAP/Keycloak, encrypted
+provider secrets, security limits, workflow defaults, notification
+identity. Each field marked **Live** (read from PostgreSQL every request) or
+**Restart required** (needs a full Compose restart / Kubernetes rollout).
+Database topology/replicas/storage/ingress/TLS remain Compose/Helm-owned
+and read-only in the UI. Sensitive values encrypted before storage, never
+returned to the browser; `SETTINGS_ENCRYPTION_KEY` must be durable.
+
+**Priority and SLA policy**: priority calculated from impact/urgency via
+Git-backed `config/priority_matrix.json`; manager/admin override requires an
+auditable ≥10-character reason. Business calendars use IANA timezones,
+weekdays/hours, holiday exclusions; an SLA without a calendar is 24x7
+wall-clock. The worker detects breaches, writes evidence, records ticket
+history, notifies owning-team manager + assignee via the durable outbox.
+
+**Declarative workflow operations**: source in `config/workflows.json`;
+startup validates and publishes a new immutable runtime version only when
+the canonical spec changes. Supported foundation: `ticket.state_entry`
+events, equality/inequality/membership/empty-value conditions, three
+actions (add history, notify requester, notify owning-team manager).
+State transitions enqueue a correlated job in the same transaction; the
+worker claims via PostgreSQL coordination, retries with bounded exponential
+backoff, `Dead` after 5 attempts. Durable waits commit cursor+resume
+timestamp. API triggers require `workflows:execute` + operational
+permission + idempotency key. Reusable subflows (schema v2) validate
+references before deployment, reject unknown deps/cycles. Recurring ticket
+schedules are tenant-scoped, bounded-interval, PostgreSQL-row-locked,
+coalesce missed intervals into one catch-up event.
+
+**Bootstrap credential retirement**: `ADMIN_PASSWORD_FILE` takes precedence
+over `ADMIN_PASSWORD`; Kubernetes separates bootstrap from runtime secrets
+and never injects it into workers. After first install: sign in as local
+admin → **Administration → Change password** (increments auth version,
+invalidates other sessions) → store in vault → `./serviceops
+retire-bootstrap-secret` → `./serviceops doctor` (worker-secret isolation
+check).
+
+**Release evidence**: tagged releases run the pinned supply-chain workflow
+(full test suite, provenance build, Trivy HIGH/CRITICAL block, CycloneDX
+SBOM, keyless Cosign signing, SLSA/SBOM attestations). Kubernetes values
+must provide `image.digest`, never a mutable tag. Generate release records
+with `python tools/release_evidence.py --version ... --image ... --output
+...`. External vulnerability scanning, signing, provenance publication,
+registry verification, admission enforcement remain required before
+organizational production approval.
+
+<a id="section-master_reference--11-security-operations"></a>
+#### 11. Security operations
+
+Enforce TLS externally, enable HSTS only after HTTPS is proven; vault
+secrets, never commit `.env`/values/kubeconfig; restrict namespace RBAC and
+DB privileges; scan source/deps/image/manifests/endpoints in CI; sign
+images and enforce admission verification; forward all relevant logs;
+alert on login failures, admin changes, approval anomalies, SLA breaches,
+crash loops, readiness loss, saturation, storage pressure; patch under
+change control.
+
+<a id="section-master_reference--12-backup-and-recovery"></a>
+#### 12. Backup and recovery
+
+Back up PostgreSQL + uploads as one recovery set, encrypted, off-cluster,
+retained/immutable, restore-tested. Quarterly: `./serviceops
+rehearse-recovery` + `rehearse-pitr` → restore into isolated env → restore
+DB to recovery point → restore uploads → deploy matching version → validate
+counts/attachments/identities/approvals/audit/workflows → record actual
+RPO/RTO. Logical recovery (`pg_dump`) deliberately reports
+`pitr_proven=false`; the separate PITR rehearsal
+(`pg_basebackup`+continuous WAL+named recovery target on disposable
+clusters) reports `pitr_proven=true` only after boundary+integrity checks
+pass.
+
+<a id="section-master_reference--13-upgrades-and-rollback"></a>
+#### 13. Upgrades and rollback
+
+`./serviceops rehearse-upgrade` first (verified rollback set, isolated
+clone, candidate migration gate, health/schema/audit/attachment
+validation, source health proof) → back up → review release notes/schema →
+deploy to staging → `./serviceops doctor` → automated tests →
+`./serviceops update` production → verify health/login/ticket
+creation/approval routing/attachment access/backups. `--atomic` rolls back
+Kubernetes *resources* on failure; database schema/data rollback still
+needs a release-specific tested procedure.
+
+<a id="section-master_reference--14-monitoring-and-slos"></a>
+#### 14. Monitoring and SLOs
+
+Monitor availability, request rate, latency percentiles, HTTP errors,
+worker saturation, pod restarts, readiness, CPU/memory throttling, DB
+connections/query latency, replication/backup health, volume capacity,
+login errors, notification failures, SLA breach rate. Define
+business-approved SLOs; page only on actionable symptoms.
+
+<a id="section-master_reference--15-incident-response"></a>
+#### 15. Incident response
+
+Declare severity + incident commander, preserve evidence, stabilize
+service, communicate on a fixed cadence, use tested rollback/failover,
+validate recovery, create a blameless problem record with corrective
+actions. Never delete audit/operational evidence during response.
+
+<a id="section-master_reference--16-production-acceptance-checklist"></a>
+#### 16. Production acceptance checklist
+
+- [ ] Immutable, scanned image from trusted registry
+- [ ] External HA PostgreSQL with TLS, PITR, and restore test
+- [ ] Three or more application replicas across failure domains
+- [ ] RWX persistent uploads and tested restore
+- [ ] TLS ingress, DNS, HSTS, security headers
+- [ ] Restricted Pod Security and least-privilege RBAC
+- [ ] Network policies validated with the actual CNI and endpoint topology
+- [ ] LDAP/Keycloak end-to-end tests and vaulted break-glass account
+- [ ] Monitoring, logs, alert routing, dashboards, and runbooks
+- [ ] Load, soak, failover, node-drain, rollback, and disaster-recovery tests
+- [ ] Security review, penetration test, and formal go-live approval
+
+---
+
+<a id="section-master_reference--part-10--deployment-guide"></a>
+### Part 10 — Deployment guide
+
+(Full text of `docs/DEPLOYMENT.md` — see Part 9 for the complete
+user/admin/identity/Kubernetes/security/monitoring/backup/recovery/upgrade/
+rollback/incident-response runbook this file points back to.)
+
+<a id="section-master_reference--kubernetes-production-deployment"></a>
+#### Kubernetes production deployment
+
+Supported enterprise topology: `charts/serviceops` Helm chart, immutable
+image, 2+ replicas, external HA PostgreSQL, RWX upload storage, ingress
+TLS, Restricted Pod Security, NetworkPolicy, probes, topology spreading,
+disruption protection.
+
+```bash
+cp deploy/kubernetes/values-production.example.yaml deploy/kubernetes/values-production.yaml
+./serviceops install kubernetes --preflight
+./serviceops install kubernetes
+```
+
+Set `image.repository` and verified `image.digest`; export
+`SERVICEOPS_GITHUB_ORGANIZATION`. Chart validation rejects missing digest,
+single replica, bundled PostgreSQL. Installer deploys pinned Sigstore
+policy controller + GitHub trust policy, enables attestation enforcement,
+uses atomic Helm deployment.
+
+<a id="section-master_reference--web-installation-center"></a>
+#### Web Installation Center
+
+`./serviceops install web` → `http://127.0.0.1:8090`. Installer doesn't
+receive the Docker socket; writes a request to a private local state
+directory, host-side script performs Compose actions. Confirms Docker/
+Compose readiness, writable storage, free disk, listener availability,
+PostgreSQL auth/query execution, LDAP TLS bind/search, Keycloak discovery
+metadata, production security policy. Generated env files mode `0600`;
+validation never echoes passwords.
+
+**Production-only initialization**: creates only the local bootstrap admin
+and structural ITIL groups/SLA definitions — never demo personas, manager
+placeholders, catalog/CMDB examples, assets, or knowledge articles. Use
+`tools/production_cleanup.py` after backing up an older database containing
+legacy bootstrap demo data.
+
+<a id="section-master_reference--ad-and-ldap"></a>
+#### AD and LDAP
+
+Service bind locates exactly one directory user, then binds as that user's
+DN to verify the password. Production requires LDAPS/StartTLS + cert
+validation. `LDAP_ROLE_MAPPINGS` maps full group DNs to
+requester/agent/manager/admin (unmapped → requester). AD group→team
+mapping accepts a short common name (`gg_unix`) or full DN; membership
+reconciles at each AD login without overwriting manual manager/CCB
+appointments.
+
+<a id="section-master_reference--keycloak"></a>
+#### Keycloak
+
+Confidential OIDC client, standard authorization-code flow, redirect URI
+`https://serviceops.example.com/auth/keycloak/callback`. Enable `openid
+profile email`, include realm roles in the ID token if role mapping is
+needed. `KEYCLOAK_ROLE_MAPPINGS` maps realm role names to ServiceOps
+roles. Keep the local admin credential vaulted for IdP outages.
+`KEYCLOAK_ATTR_MAP` (mirrors `LDAP_ATTR_MAP`'s shape) additionally maps
+title/department/division/employee_id/employee_type/business_phone/
+mobile_phone/location from OIDC userinfo claims onto the user profile on
+every login, same as LDAP sync does for interactive LDAP logins; LDAP sync
+itself now also covers business_phone/mobile_phone/location, not just the
+original five fields. Neither path ever nulls a field the current login's
+claim/attribute set left out.
+
+<a id="section-master_reference--fast-installation"></a>
+#### Fast installation
+
+Supported host: 64-bit Linux, 2+ CPU, 4GB+ RAM, 10GB+ free disk, Docker
+Engine 24+, Compose v2, outbound registry access.
+
+Unattended: `./serviceops install server --mode bundled --port 8080 --bind 127.0.0.1 --yes`.
+
+<a id="section-master_reference--rpm-packaging"></a>
+#### RPM packaging
+
+For package-managed hosts: installs the control plane only (CLI, Compose
+files, Helm chart, ops tooling) — **no application source or Dockerfile** —
+so `dnf upgrade` never triggers a rebuild, only changes which image
+`serviceops update` pulls next. Pass a digest as `build-dist.sh`'s third
+argument to pin `repository@sha256:...` instead of a mutable tag.
+
+| Path | Purpose |
+|---|---|
+| `/opt/serviceops` | Control plane (CLI, Compose files, Helm chart, tools) |
+| `/etc/serviceops/serviceops.env` | Generated secrets/config (`0600`; symlinked from `/opt/serviceops/.env`) |
+| `/var/lib/serviceops/backups` | DB/upload backups (symlinked from `/opt/serviceops/backups`) |
+| `/usr/bin/serviceops` | Symlink to the CLI |
+| `systemd` unit `serviceops.service` | Wraps `serviceops start`/`stop` |
+
+```bash
+bash packaging/build-dist.sh 1.26.3 ghcr.io/awijesundara/serviceops sha256:<pushed-image-digest>
+rpmdev-setuptree
+cp dist/serviceops-1.26.3.tar.gz packaging/systemd/serviceops.service ~/rpmbuild/SOURCES/
+rpmbuild --define "version 1.26.3" -ba packaging/rpm/serviceops.spec
+sudo dnf install ~/rpmbuild/RPMS/noarch/serviceops-1.26.3-1.*.noarch.rpm
+sudo serviceops install server --yes
+sudo systemctl enable --now serviceops
+```
+
+Requires Docker Engine + Compose plugin already installed; `%pre` adds the
+`serviceops` system account to the `docker` group. The browser web
+installer is not included in packaged installs — use `serviceops install
+server`. `serviceops update` (or bump `SERVICEOPS_IMAGE` +
+`serviceops restart`) moves to a new pinned image.
+
+<a id="section-master_reference--architecture-a-bundled-postgresql"></a>
+#### Architecture A: bundled PostgreSQL
+
+One-server installations, straightforward backups. PostgreSQL not published
+to the host network; installer generates its password with a health gate
+before app start.
+
+<a id="section-master_reference--architecture-b-external-postgresql"></a>
+#### Architecture B: external PostgreSQL
+
+Managed databases, HA clusters, separate backup ownership, multiple app
+servers. Provision PostgreSQL 14+, create a dedicated owner role/DB, permit
+the ServiceOps server through the firewall, require TLS
+(`sslmode=verify-full` where possible):
+
+```bash
+./serviceops install server --mode external \
+  --database-url 'postgresql+psycopg://serviceops:password@db.internal:5432/serviceops?sslmode=verify-full' \
+  --port 8080 --bind 127.0.0.1 --yes
+```
+
+Uses `compose.external-db.yaml`; no local DB container/volume.
+
+<a id="section-master_reference--https-and-network-exposure"></a>
+#### HTTPS and network exposure
+
+Keep `BIND_ADDRESS=127.0.0.1`, place ServiceOps behind an HTTPS proxy,
+expose only 80/443. Never expose PostgreSQL or 8080 publicly.
+
+<a id="section-master_reference--operations"></a>
+#### Operations
+
+Bundled backups: `./serviceops backup`, `rehearse-recovery`,
+`rehearse-pitr` — writes a custom-format dump, upload archive, and SHA-256
+manifest to `backups/` (owner-only permissions). External database backups
+are intentionally delegated to the provider.
+
+<a id="section-master_reference--recovery-objectives"></a>
+#### Recovery objectives
+
+Define and test: RPO, RTO, PostgreSQL PITR, upload-volume recovery, `.env`
+secret escrow, DNS/TLS failover, quarterly restore exercises. Database and
+uploads must recover from the same logical backup window.
+
+<a id="section-master_reference--upgrades"></a>
+#### Upgrades
+
+One released minor version at a time; skipping versions requires
+rehearsing every intervening migration. `./serviceops rehearse-upgrade`
+before every release (verified rollback set, isolated clone, candidate
+migration gate, schema/audit/attachment/health/source-health validation;
+never migrates production itself). Then: verified backup → review release
+notes → staging deploy → `./serviceops doctor` → automated tests →
+`./serviceops update` production → verify health/login/ticket
+creation/approval routing/attachment access/backups.
+
+<a id="section-master_reference--security-checklist"></a>
+#### Security checklist
+
+Replace bootstrap credentials immediately; keep `.env` owner-readable and
+out of version control; HTTPS + secure cookies at the proxy; restrict
+Docker socket access; non-root read-only container with `no-new-privileges`;
+private PostgreSQL requiring TLS externally; host security
+updates/monitoring/disk alerts/log forwarding/backup alerts; integrate
+organizational SSO before wide deployment; review users/managers/CCB/audit
+regularly.
+
+<a id="section-master_reference--scaling"></a>
+#### Scaling
+
+External managed PostgreSQL; shared object storage for attachments (future
+adapter); 2+ app nodes behind a load balancer; move session state/
+background work to shared services before horizontal scaling; migrations
+run once per release, not per node. The current Compose deployment targets
+a highly reliable single application host, not a multi-region control
+plane.
+
+---
+
+<a id="section-master_reference--part-11--documentation-index-and-synchronization-rule"></a>
+### Part 11 — Documentation index and synchronization rule
+
+(Full text of [docs/DOCUMENTATION_INDEX.md](../README.md), plus this file's own entry.)
+
+| Document | Purpose |
+|---|---|
+| [MASTER_REFERENCE.md](BACKLOG.md#section-master_reference) (this file) | Single merged reference for any AI/engineer: governance, backlog, ITIL model, audit findings, this session's changes, traceability, UI mapping, API reference, operations manual, deployment guide, all in one place |
+| `API_REFERENCE.md` | REST API contract: authentication, scopes, endpoints, examples, errors |
+| `OPERATIONS_MANUAL.md` | Complete platform manual: administration, security model, ITIL workflows, product use |
+| `DEPLOYMENT.md` | Docker, Kubernetes, RPM packaging, identity, backup, and recovery instructions |
+| `BACKLOG.md` | Authoritative completed and open work, with evidence references |
+| [GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance) | Architecture decisions, production-readiness verdict, non-deviation controls |
+| [TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix) | Implementation evidence mapped to requirements/backlog items |
+| [UI_CAPABILITY_MAPPING.md](ENGINEERING_REFERENCE.md#section-ui_capability_mapping) | Supplied ServiceNow UI PDF analysis and capability gaps |
+| [ITIL_TICKET_HIERARCHY.md](ENGINEERING_REFERENCE.md#section-itil_ticket_hierarchy) | ServiceNow-pattern ticket hierarchy reference and Change Task governance rule mapping |
+| [blueprints/BLUEPRINT_REGISTRY.md](ENGINEERING_REFERENCE.md#section-blueprints-blueprint_registry) / [BLUEPRINT_TRACEABILITY.md](ENGINEERING_REFERENCE.md#section-blueprints-blueprint_traceability) | BP-001 controlled source and programme traceability |
+| `ServiceOps_Complete_Platform_Manual.pdf` | PDF rendering of `OPERATIONS_MANUAL.md`, generated by `tools/generate_operations_manual.py` — regenerate after any `OPERATIONS_MANUAL.md` change |
+
+<a id="section-master_reference--keeping-this-synchronized"></a>
+#### Keeping this synchronized
+
+When implementing a change:
+
+- Update this index if a document is added/removed/renamed.
+- Update `BACKLOG.md`, marking items done only with corresponding evidence.
+- Update [TRACEABILITY_MATRIX.md](BACKLOG.md#section-traceability_matrix) if implementation status changed.
+- Update [GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance)'s decision log if an architectural decision changed.
+- Update the relevant manual section
+  (`OPERATIONS_MANUAL.md`/`DEPLOYMENT.md`/`API_REFERENCE.md`).
+- **Update this file ([MASTER_REFERENCE.md](BACKLOG.md#section-master_reference))** — it is a merge, not an
+  independent source; if the above documents change and this file isn't
+  regenerated from them, this file becomes the stale one. Treat "update the
+  docs" instructions in `CLAUDE.md` as covering this file too from now on.
+- Regenerate `docs/ServiceOps_Complete_Platform_Manual.pdf` via
+  `python tools/generate_operations_manual.py` whenever
+  `OPERATIONS_MANUAL.md` changes.
+
+This directory is excluded from the public GitHub repository but must still
+be maintained locally; do not delete it because it is gitignored.
+
+<a id="section-master_reference--outstanding-synchronization-task-from-this-session"></a>
+#### Outstanding synchronization task from this session
+
+This session changed `app.py`/templates/migrations (Part 5) in ways that
+individual source documents (`BACKLOG.md`, `OPERATIONS_MANUAL.md`,
+`API_REFERENCE.md`) have **not yet been separately updated** to describe —
+this merged file captures the changes accurately, but per the rule above,
+the individual controlled documents should also be updated in a focused
+follow-up pass (specifically: a new `BACKLOG.md` row for the CMDB
+enrichment/tenant-fix/performance-fix work with a formal B-number, an
+`OPERATIONS_MANUAL.md` CMDB section update describing the new fields, and
+an `API_REFERENCE.md` note on the CMDB endpoint's five-field limitation
+relative to the richer web-UI model) so the individual files don't silently
+drift from this merged one.
+
+---
+
+<a id="section-archive-master_reference"></a>
+
+## Historical excerpts: ServiceOps master reference (for any AI or engineer touching this codebase)
+
+Historical source: `docs/archive/MASTER_REFERENCE.md`. Exact duplicate prose already retained in the maintained sections has been omitted. Original dates, claims and superseded operating conventions in these excerpts remain historical.
+<a id="section-archive-master_reference--serviceops-master-reference-for-any-ai-or-engineer-touching-this-codebase"></a>
+
+---
+
+<a id="section-archive-master_reference--part-0--quick-start-for-an-ai-agent-picking-up-this-repo"></a>
+### Part 0 — Quick-start for an AI agent picking up this repo
+
+**Architecture map**:
+
+---
+
+<a id="section-archive-master_reference--part-1--product-governance-and-non-deviation-policy"></a>
+### Part 1 — Product governance and non-deviation policy
+
+(Full text of [docs/GOVERNANCE.md](ENGINEERING_REFERENCE.md#section-governance))
+
+<a id="section-archive-master_reference--product-boundary"></a>
+#### Product boundary
+
+<a id="section-archive-master_reference--non-negotiable-controls"></a>
+#### Non-negotiable controls
+
+<a id="section-archive-master_reference--change-gate"></a>
+#### Change gate
+
+<a id="section-archive-master_reference--architecture-decision-log"></a>
+#### Architecture decision log
+
+<a id="section-archive-master_reference--governed-non-requirements"></a>
+#### Governed non-requirements
+
+<a id="section-archive-master_reference--current-production-readiness-verdict"></a>
+#### Current production-readiness verdict
+
+---
+
+<a id="section-archive-master_reference--part-2--governed-backlog-authoritative-work-register"></a>
+### Part 2 — Governed backlog (authoritative work register)
+
+| ID | Priority | State | Work and acceptance criteria |
+|---|---|---|---|
+| B-001 | P0 | Implemented | Remove demo mode/personas/sample seeding/default passwords; fresh-install and cleanup tests pass. |
+| B-002 | P0 | Verified | Production uses an Alembic migration gate with safe fresh-schema creation, existing-schema adoption, version verification, dedicated Kubernetes migration Job and tenant backfill. Re-verified 2026-07-28 at full scale: 100,717 records across 63 tables, fingerprints preserved. Independent tenant-isolation review remains open under B-231. |
+| B-003 | P0 | Verified | Central CSRF enforcement protects every unsafe browser request; rendered forms and JavaScript actions carry session-bound tokens, authentication rotates tokens, and tests prove missing-token rejection and authenticated acceptance. |
+| B-004 | P0 | In progress | Tenant-specific chained HMAC evidence, correlation, database mutation denial, verification-gated signed export and adversarial tests are implemented. Per-event key identifiers, non-destructive governed key rotation, file-mounted key support, minimum seven-year retention/legal-hold policy, and signed durable SIEM-only outbox delivery are in place. Representative external WORM/SIEM validation and independent security review remain. |
+| B-005 | P0 | In progress | Central object policies and adversarial coverage protect ticket, request, approval-chain, attachment, enterprise/problem, analytics and search surfaces, plus a validated fail-closed Git-backed field-projection registry. Independent authorization review remains. |
+| B-006 | P0 | Implemented | File-mounted bootstrap secrets, bootstrap-password exclusion from workers, split Kubernetes bootstrap/runtime Secrets, retirement tooling, credential rotation. External vault rotation ceremony remains. |
+| B-007 | P0 | In progress | Digest-pinned images, full-SHA-pinned CI actions, Trivy blocking, CycloneDX SBOM, keyless Cosign signing, SLSA/SBOM attestations, Sigstore admission enforcement. A real tagged GHCR run and cluster admission rejection test remain. |
+| B-008 | P0 | Open | Run penetration test and remediate critical/high findings. |
+| B-009 | P0 | In progress | SHA-256 recovery-set manifests, archive traversal protection, isolated logical restore, non-destructive `pg_basebackup` + continuous-WAL rehearsal. Off-site immutable recovery storage and organisation-approved RPO/RTO targets remain. |
+| B-010 | P0 | In progress | Guarded candidate-image rehearsal, pre-upgrade recovery set, migration gate, Kubernetes retains five revisions with `maxUnavailable: 0`. A real two-version cluster rollout and forced-failure rollback test remain. |
+| B-021 | P1 | Verified | Unified navigation, search, history, favorites and light-only preferences. |
+| B-022 | P1 | Implemented | Ticket lists/forms/activity/attachments/checklists; pagination/saved-filter/malware-scanning gaps remain. |
+| B-023 | P1 | Verified | Visual task board and state movement. |
+| B-024 | P1 | Implemented | Post-install branding/settings/logo. |
+| B-030 | P1 | Implemented | Named team managers, explicit CCB approver authority and approval chains. |
+| B-031 | P1 | Implemented | Core INC/PRB/PTASK/CHG/CTASK/REQ/RITM/SCTASK lifecycle and relationship network, known errors, major-incident extension. |
+| B-032 | P1 | Implemented | Primary/affected CI and impacted-service task relationships, CI-aware conflict detection, `/cmdb` manual CI+relationship CRUD, `PUT /api/v1/cmdb/configuration-items` (`cmdb:write`), `tools/cmdb_sync_agent.sh`. **This session extended the CI schema itself** — see Part 5. Discovery ingestion beyond self-reported facts remains open. |
+| B-033 | P1 | Implemented | Multi-RITM requests, multiple independently assigned SCTASKs, sequential/parallel task control, closure roll-up, approvals and SLAs. |
+| B-034 | P0 | Verified | Central server-side lifecycle guards prevent approval bypass through any surface. |
+| B-035 | P0 | Verified | Explicit owning teams for incidents/requests/changes; only active owning-team members/managers/admins mutate operational fields. |
+| B-036 | P0 | Verified | Append-only in-record task history; material CHG plan changes supersede prior approvals and notify. |
+| B-037 | P1 | Verified | Governed related-record network (parent/child INC, INC↔PRB/CHG links, PRB knowledge, RITM↔CHG, PTASK/CTASK). |
+| B-038 | P1 | Verified | Administrator-managed catalog-item fulfillment routing; Laptop/Software default to Windows. **Note:** as of this session, `Laptop Request`/`Software Request` catalog items themselves are now auto-created on fresh install (see Part 4 finding, "Part 5" fix) — previously a fresh install had zero catalog items despite this routing default existing in code. |
+| B-039 | P0 | Verified | Scope REQ/RITM visibility to requested-by/for, fulfillment teams, SCTASK teams, named approvers, admins. |
+| B-040 | P0 | Verified | Object-level authorization across ticket/enterprise lists, direct IDs, dashboards, boards, analytics, searches, attachments, approvals, CI links, REQ/SCTASK creation. |
+| B-041 | P1 | Verified | Catalog item admin CRUD with governed fields; inactive items fail closed. |
+| B-042 | P0 | Verified | All active IT fulfillment-team members/managers read every INC/CHG; mutation stays owning-team/admin only. |
+| B-050 | P1 | Implemented | Docker bundled/external PostgreSQL deployment; restore/rolling-upgrade proof pending completion. |
+| B-051 | P1 | Implemented | Helm HA scaffolding; real multi-zone cluster validation pending. |
+| B-052 | P1 | Open | Add supported object storage for attachments, antivirus scanning, encryption and retention. |
+| B-061 | P1 | Implemented | LDAP/Keycloak/local admin plus AD-group-to-team login sync; representative external validation pending. |
+| B-062 | P1 | Open | Add MFA policy integration, SCIM lifecycle, session inventory/revocation and emergency access controls. |
+| B-070 | P1 | Open | Metrics, structured logs, traces, alerting, SLO dashboards, capacity model and runbooks. |
+| B-071 | P1 | Open | Load/soak/failover tests with published targets. |
+| B-080 | P1 | Open | Accessibility audit to WCAG 2.2 AA. |
+| B-090 | P1 | Open | Data classification, retention, legal hold, privacy export/deletion and regional controls. |
+| B-100 | P2 | Implemented | Administrator post-deployment settings; extend to workflows/numbering/states/notifications/policy versioning. |
+| B-101 | P2 | Verified | Consolidate lifecycle operations behind `./serviceops`. |
+| B-102 | P2 | Verified | Explicit isolated test-fixture loader (`tools/load_test_fixture.py`). **This session added a second, richer loader**, `tools/load_demo_dataset.py` (full CMDB, INC/PRB/CHG/REQ/RITM/SCTASK/KB spread) — see Part 5. |
+| B-120 | P2 | Open | Guided tours and contextual help with versioned content and role targeting. |
+| B-121 | P2 | Open | Configurable workspace/page builder. |
+| B-130 | P1 | In progress | Durable outbox, worker coordination, bounded retry, SMTP/webhooks/Teams, encrypted secrets, delivery evidence, monitoring ingestion. External validation and DNS-rebinding egress enforcement remain. |
+| B-200 | P0 | In progress | Decompose BP-001 into atomic requirements and governed release epics (ADR-010–019). |
+| B-201 | P0 | Verified | Foundation CSRF/session/cookie/deployment release. |
+| B-202 | P0 | In progress | Default tenant creation, 15 tenant-owned roots backfilled, tenant-aware query conventions. Independent tenant-isolation review remains. |
+| B-203 | P0 | In progress | First stable bounded interface `serviceops_core.security`. Further extraction remains (see Part 4 finding #1 — this is the area most in need of continued work). |
+| B-204 | P0 | In progress | REST v1 tenant/user-bound clients, scopes, cursor pagination, idempotent writes, OpenAPI, live docs at `/api/v1/docs`. Broader resources/OAuth2/rate limits remain. |
+| B-205 | P1 | Implemented | Installable PWA manifest, privacy-safe shell-only service worker. |
+| B-206 | P0 | Implemented | Git-backed impact/urgency matrix, documented priority overrides, business schedules, SLA lifecycle evidence, breach escalation. |
+| B-207 | P0 | Implemented | Git-backed workflow packages, immutable versions, state-entry jobs, retries/dead-letter. |
+| B-208 | P0 | Implemented | Durable wait cursors, per-workflow rate limits, manual/API/SLA triggers, idempotency, dead-job replay. |
+| B-209 | P0 | Implemented | Reusable subflows, tenant-aware recurring schedules, SKIP LOCKED scheduler claims. |
+| B-210 | P0 | Implemented | Credential auth-version invalidation, mounted bootstrap-secret loading, split Kubernetes Secrets. |
+| B-211 | P0 | Implemented | Local-auth login lockout with audited events. |
+| B-220 | P1 | Implemented | `/work/tasks` unified CTASK/PTASK/EVTASK/SCTASK queue; `/manager/portal`. |
+| B-221 | P1 | Implemented | Dashboard "Assigned to me"/SLA breach/Incidents tiles, admin-toggleable. **Note:** this session added pagination/caps to `/work/open` — see Part 4/5. |
+| B-222 | P1 | Implemented | Notifications carry target links. |
+| B-223 | P1 | Implemented | Team-to-team reassignment for incidents/changes, restarting change approval. |
+| B-224 | P1 | Implemented | Type-ahead lookups for CIs and cross-record references. |
+| B-225 | P2 | Open | Git history predates 2026-07-27; not recoverable further back. |
+| B-230 | P0 | Implemented | Migration rehearsal script derives head/prior revision dynamically instead of hardcoding. |
+| B-231 | P0 | Implemented | `tenant_context_id()` fails closed instead of defaulting to tenant 1. Tenant-scoping remaining dependent tables (approvals/gates/votes, comments, catalog routing, group membership, directory mappings, requested items, catalog tasks, task history, record links, attachments) remains open — the larger follow-up. **This session added `tenant_id` to `CIRelationship`** as one instance of this follow-up (Part 5) and fixed a related cross-tenant lookup gap in `find_record_by_number()` (Part 4/5). |
+| B-232 | P1 | Implemented | Reapproval notification deduplication. |
+| B-233 | P1 | Implemented | Secure session cookie defaults with explicit insecure-cookie escape hatch. |
+| B-234 | P1 | Implemented | Open-redirect guard on `UserPreference.start_page`. |
+| B-235 | P1 | Implemented | Content-Security-Policy header. `style-src 'unsafe-inline'` noted as a residual weakening in Part 4 finding — worth tightening with nonces if inline styles can be removed. |
+| B-236 | P1 | Implemented | Webhook DNS-rebinding/redirect-SSRF re-validation per hop. True DNS pinning remains open. |
+| B-237 | P1 | Implemented | Gunicorn timeout/worker-recycling configuration. Root-cause (timeout vs. OOM) memory-profiling evidence still not gathered. |
+| B-238 | P1 | Implemented | Version-string alignment across installer/Compose/Helm/env examples. |
+| B-239 | P0 | Implemented | `.dockerignore` now excludes `backups/`, `.installer-state/`, etc. from the build context. |
+| B-240 | P2 | Implemented | Removed dead dark-mode CSS (ADR-012 light-only). |
+| B-241 | P1 | Implemented | `tools/load_test_fixture.py` excluded from the production image. **This session applied the identical exclusion to the new `tools/load_demo_dataset.py`** in the same `Dockerfile` line. |
+| B-242 | P0 | Implemented | Authlib CVE-2026-27962 fix. |
+| B-244 | P0 | Implemented | Dependency audit sweep (Flask/Authlib/requests/Werkzeug/pytest), secure-cookie default fix for `compose.external-db.yaml`/`.env.example`, digest-pinning support in `build-dist.sh`. |
+| B-243 | P2 | Implemented | RPM packaging alternative to `git clone`. |
+| B-245 | P1 | Verified | ServiceNow-inspired incident record workspace (dense two-column form, Event history). |
+| B-246 | P0 | Verified | PWA service-worker cache-versioning fix (visual delivery bug). |
+| B-247 | P1 | Verified | Governed record/list interaction model extended to Change/Problem/enterprise/REQ. |
+| B-248 | P1 | Verified | Identity and administration workspace (searchable user list, admin-only role/active/department control, preferences). |
+| B-249 | P1 | In progress | Notification read-state, profile AD-sync display, required-field-asterisk consistency, change-plan-edit state guard. |
+| B-250 | P0 | Verified | `conflict_status` column widened (`VARCHAR(40)`→`VARCHAR(500)`) after a real truncation-triggered 500; ticket-create validation now redisplays the form instead of a generic error page. |
+| B-251 | P1 | Verified | CTASK backfill migration for pre-existing changes; Change Tasks tab redesigned as a table with per-row inline update. |
+| B-252 | P1 | Verified | Dedicated `operational_task_detail` page/route for CTASK/PTASK, replacing the inline-table interface. |
+
+---
+
+<a id="section-archive-master_reference--part-3--itil--servicenow-pattern-ticket-hierarchy-reference"></a>
+### Part 3 — ITIL / ServiceNow-pattern ticket hierarchy reference
+
+<a id="section-archive-master_reference--governing-principle-implemented-in-serviceops-2026-07-29"></a>
+#### Governing principle implemented in ServiceOps (2026-07-29)
+
+<a id="section-archive-master_reference--1-the-servicenow-itsm-ticket-hierarchy"></a>
+#### 1. The ServiceNow ITSM ticket hierarchy
+
+Formal Service Catalog hierarchy: `REQ → RITM → SCTASK`.
+
+<a id="section-archive-master_reference--2-what-counts-as-a-sub-ticket"></a>
+#### 2. What counts as a sub-ticket
+
+<a id="section-archive-master_reference--3-incident-management"></a>
+#### 3. Incident Management
+
+<a id="section-archive-master_reference--4-major-incident-management"></a>
+#### 4. Major Incident Management
+
+<a id="section-archive-master_reference--5-problem-management"></a>
+#### 5. Problem Management
+
+<a id="section-archive-master_reference--6-change-management"></a>
+#### 6. Change Management
+
+<a id="section-archive-master_reference--7-change-tasks"></a>
+#### 7. Change Tasks
+
+Official task types: **Planning, Implementation, Testing, Review**.
+
+**Change Task unlocking model** (implemented as `change_task_gate_block()`):
+
+Rules:
+
+<a id="section-archive-master_reference--8-request-management"></a>
+#### 8. Request Management
+
+<a id="section-archive-master_reference--9-request-versus-incident"></a>
+#### 9. Request versus Incident
+
+<a id="section-archive-master_reference--10-universal-request"></a>
+#### 10. Universal Request
+
+<a id="section-archive-master_reference--11-release-management"></a>
+#### 11. Release Management
+
+<a id="section-archive-master_reference--12-relationships-between-the-main-tickets"></a>
+#### 12. Relationships between the main tickets
+
+<a id="section-archive-master_reference--13-the-complete-operational-chain"></a>
+#### 13. The complete operational chain
+
+For a requested service:
+
+<a id="section-archive-master_reference--14-mandatory-governance-rules-for-serviceops"></a>
+#### 14. Mandatory governance rules for ServiceOps
+
+---
+
+<a id="section-archive-master_reference--part-4--whole-application-audit-this-session"></a>
+### Part 4 — Whole-application audit (this session)
+
+<a id="section-archive-master_reference--1-code-quality--structure"></a>
+#### 1. Code quality / structure
+
+<a id="section-archive-master_reference--2-performance"></a>
+#### 2. Performance
+
+<a id="section-archive-master_reference--3-stability--error-handling"></a>
+#### 3. Stability / error handling
+
+<a id="section-archive-master_reference--4-security--tenant-isolation"></a>
+#### 4. Security / tenant isolation
+
+<a id="section-archive-master_reference--5-ux"></a>
+#### 5. UX
+
+<a id="section-archive-master_reference--6-current-db-schema-shape-as-of-pre-session-baseline"></a>
+#### 6. Current DB schema shape (as of pre-session baseline)
+
+<a id="section-archive-master_reference--7-docs-drift"></a>
+#### 7. Docs drift
+
+---
+
+<a id="section-archive-master_reference--part-5--this-sessions-changes-implementation-log"></a>
+### Part 5 — This session's changes (implementation log)
+
+<a id="section-archive-master_reference--schema"></a>
+#### Schema
+
+<a id="section-archive-master_reference--application-code"></a>
+#### Application code
+
+<a id="section-archive-master_reference--templates"></a>
+#### Templates
+
+<a id="section-archive-master_reference--new-tooling"></a>
+#### New tooling
+
+<a id="section-archive-master_reference--verification-performed-this-session"></a>
+#### Verification performed this session
+
+---
+
+<a id="section-archive-master_reference--part-6--requirements-traceability-matrix"></a>
+### Part 6 — Requirements traceability matrix
+
+| Requirement/source | ServiceOps evidence | Status | Backlog |
+|---|---|---|---|
+| Unified navigation, search, favorites, history, preferences | `templates/base.html`, `/ui/search`, favorites/recent views, tests | Verified | B-021 |
+| User profile, user list and administration home | tenant-scoped `/profile`, `/admin/users`, `/admin/users/<id>`, `/admin` | Verified | B-248 |
+| Categorized personal interface settings | `/preferences` categories; light-only governed by ADR-012 | Verified for implemented settings | B-248, B-240 |
+| Lists, filters, forms, activity, attachments, checklists | shared task-derived record shell, Event history, rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
+| Visual task boards | `/task-board`, move endpoint and test | Verified | B-023 |
+| Branding/logo/theme configuration | installer and `/admin/settings`; light-only UI | Implemented | B-024 |
+| Guided help/tours | interactive step-by-step tour; static help articles | Partial | B-120 |
+| Full configurable workspace/page-builder | no page designer or metadata runtime | Gap | B-121 |
+| Production-only initialization | seed, installer, Compose, cleanup tool and tests | Implemented | B-001 |
+| Team-manager and CCB approval chain | named manager controls, explicit CCB grants, chains/gates/votes | Implemented | B-030 |
+| Approval and lifecycle integrity | centralized transition guards, adversarial tests | Verified | B-034 |
+| Assignment-group operational authorization | shared INC/CHG read, explicit owning-team mutation guard | Verified | B-035, B-042 |
+| ITIL related-record network | `RecordLink`, `OperationalTask`, REQ/RITM/SCTASK hierarchy | Verified | B-031, B-037 |
+| Ticket history and change reapproval | `TaskHistory`, `ChangeRevision`, superseded chains | Verified | B-036 |
+| Task-to-CMDB relationships | primary/affected CIs, impacted services, conflict detection | Implemented | B-032 |
+| Catalog hierarchy and task orchestration | multi-RITM REQ, multiple team-owned SCTASKs, roll-up | Verified | B-033 |
+| Configurable catalog fulfillment routing | per-item routing, Windows defaults, Service Desk fallback | Verified | B-038 |
+| Catalog item administration | admin create/edit/deactivation | Verified | B-041 |
+| Catalog request visibility boundaries | participant/fulfillment/approver/admin policy | Verified | B-039 |
+| Cross-module object and field authorization | centralized policies, fail-closed field registry | Implemented; independent review pending | B-005, B-040, B-203 |
+| AD/LDAP and Keycloak authentication | authentication code, installer checks, group mapping | Implemented; external proof absent | B-061 |
+| Docker and external PostgreSQL deployment | Compose definitions, `./serviceops` lifecycle | Implemented | B-050 |
+| Kubernetes high availability | Helm resources/PDB/network policy | Implemented; cluster proof absent | B-051 |
+| Versioned database migrations and tenant foundation | Alembic baseline + tenant revision, backfill, tests | Migration path verified at full scale (2026-07-28); tenant_id sprawl and review pending | B-002, B-005, B-202, B-231 |
+| CSRF protection and hardened session lifecycle | central guard, injected tokens, rotation, tests | Verified | B-003, B-201 |
+| Tamper-evident audit evidence | tenant-specific hash chains, key rotation, retention policy | Implemented; external validation pending | B-004 |
+| Versioned REST API foundation | tenant/user-bound clients, scopes, projections, OpenAPI | Implemented for initial contract; broader resources pending | B-204 |
+| Responsive PWA foundation | dynamic manifest, shell-only service worker with tests | Implemented; offline records deferred | B-205 |
+| Durable integration foundation | transactional outbox, worker, retry/dead state, evidence | Implemented with simulated adapters | B-130 |
+| Priority and SLA governance | Git-backed matrix, business schedules, breach notifications | Implemented; OLA/escalation pending | B-206 |
+| Declarative workflow foundation | validated package, immutable versions, retries, evidence | Implemented; broader catalogue pending | B-207 |
+| Durable workflow orchestration | wait cursor/resume, evidence, triggers, rate limits | Implemented; recurrence/subflows pending at time of writing (later delivered, see B-209) | B-208 |
+| Scheduled workflows and subflows | subflow expansion, tenant schedules, scheduler claims | Implemented; calendar/blackout pending | B-209 |
+| Bootstrap credential lifecycle | mounted-file priority, split Secrets, rotation | Implemented; external vault ceremony pending | B-006, B-210 |
+| Supply-chain evidence | pinned deps/images/actions, Trivy, SBOM, Cosign, attestations | Implemented; GHCR/cluster proof pending | B-007, B-210 |
+| Production observability/SLOs | health endpoints only | Gap | B-070 |
+
+<a id="section-archive-master_reference--connection-dependent-capability-boundary"></a>
+#### Connection-dependent capability boundary
+
+---
+
+<a id="section-archive-master_reference--part-7--ui-capability-mapping-and-bp-001-blueprint-traceability"></a>
+### Part 7 — UI capability mapping and BP-001 blueprint traceability
+
+<a id="section-archive-master_reference--australia-ui-guide-capability-mapping"></a>
+#### Australia UI guide capability mapping
+
+| Source guide family | ServiceOps implementation |
+|---|---|
+| Next Experience and unified navigation | Unified top navigation, collapsible app nav, global search, favorites, history, notifications, help, preferences, role-aware landing pages |
+| Landing pages and dashboards | Operational dashboard, analytics workspace, workload counters, role-based visibility, selectable start page |
+| Configurable workspace | Purpose-built ticket/request/change/CMDB/catalog/approval/analytics/ITIL admin workspaces |
+| CMDB discovery | Manual admin create/edit/retire for CIs and CI-to-CI relationships; automated registration via `PUT /api/v1/cmdb/configuration-items` and `tools/cmdb_sync_agent.sh` |
+| Lists and filters | Searchable/filterable lists, states, priorities, badges, responsive tables, empty states |
+| Forms and activity | Structured forms, validation, comments/activity stream, work notes, approvals, SLAs, checklists, attachments, audit events |
+| Favorites and history | Per-user persistent favorites and recently viewed pages |
+| Notifications | Per-user inbox with unread counts, clickable links to source records |
+| Reference fields | Type-ahead lookups for CIs and cross-record linking |
+| Assignment and reassignment | Group-level assignment always by team name; team-to-team reassignment restarts change approval |
+| Manager/team work views | Manager portal, unified "My tasks" queue |
+| Dashboard personalization | Admin-configurable dashboard sections, live P1/P2 signal |
+| Personalization and accessibility | Categorized preferences; density/font/contrast/motion/tooltips; light-only (ADR-012) |
+| User profile and administration | Self-service profile, admin-controlled identity/role/active/department, searchable user list |
+| Service Portal | Employee catalog, knowledge search, request tracking, self-service cases |
+| Visual Task Boards | Drag-and-drop lifecycle lanes backed by ticket state/audit/SLA |
+| Global search | Tickets, knowledge, enterprise work, CIs |
+| Attachments and checklists | Persistent uploads/downloads, actionable checklists |
+| Guided help and onboarding | Help Center, contextual guidance, navigation tour |
+| Themes and branding | Light-only design tokens; deployment-owned branding via installer/admin settings |
+| Core UI developer tooling | Flask templates, reusable styles, routes, tests |
+| CMS/UI Builder/widget APIs/Angular/Jelly/ServiceNow scripting | Not applicable — vendor-specific; ServiceOps uses Flask/Jinja/SQLAlchemy/CSS/JS |
+| Advanced Work Assignment/Agent Chat/Virtual Agent/voice/predictive | Requires external messaging/telephony/workforce-routing/AI services; not represented as operational |
+| Native mobile apps and offline distribution | Responsive web only; no native app publishing |
+
+<a id="section-archive-master_reference--bp-001-programme-traceability"></a>
+#### BP-001 programme traceability
+
+---
+
+<a id="section-archive-master_reference--part-8--rest-api-reference"></a>
+### Part 8 — REST API reference
+
+<a id="section-archive-master_reference--1-scope-and-base-url"></a>
+#### 1. Scope and base URL
+
+<a id="section-archive-master_reference--2-create-an-api-client"></a>
+#### 2. Create an API client
+
+<a id="section-archive-master_reference--3-authentication-and-common-headers"></a>
+#### 3. Authentication and common headers
+
+<a id="section-archive-master_reference--4-list-tickets"></a>
+#### 4. List tickets
+
+<a id="section-archive-master_reference--5-retrieve-one-ticket"></a>
+#### 5. Retrieve one ticket
+
+<a id="section-archive-master_reference--6-create-an-incident"></a>
+#### 6. Create an incident
+
+<a id="section-archive-master_reference--7-update-a-ticket"></a>
+#### 7. Update a ticket
+
+<a id="section-archive-master_reference--8-trigger-an-api-workflow"></a>
+#### 8. Trigger an API workflow
+
+<a id="section-archive-master_reference--9-cmdb-auto-registration"></a>
+#### 9. CMDB auto-registration
+
+<a id="section-archive-master_reference--10-monitoring-ingestion"></a>
+#### 10. Monitoring ingestion
+
+<a id="section-archive-master_reference--11-error-contract"></a>
+#### 11. Error contract
+
+<a id="section-archive-master_reference--1213-quick-starts"></a>
+#### 12–13. Quick starts
+
+<a id="section-archive-master_reference--14-current-compatibility-boundary"></a>
+#### 14. Current compatibility boundary
+
+---
+
+<a id="section-archive-master_reference--part-9--complete-platform-manual-operations"></a>
+### Part 9 — Complete platform manual (operations)
+
+<a id="section-archive-master_reference--1-purpose-and-operating-model"></a>
+#### 1. Purpose and operating model
+
+<a id="section-archive-master_reference--2-roles-and-teams"></a>
+#### 2. Roles and teams
+
+| Role | Normal responsibilities |
+|---|---|
+| Requester | Submit and track requests and incidents, search knowledge |
+| Agent | Triage, assign, fulfill, document, and resolve operational work |
+| Manager | Agent work plus team oversight and manager approvals |
+| CCB member | Review planned changes, risk, evidence, schedule, and backout plan |
+| Administrator | Identity, ITIL configuration, CMDB, audit, and platform operation |
+
+<a id="section-archive-master_reference--3-end-user-guide"></a>
+#### 3. End-user guide
+
+**ITIL related-record model**:
+
+**Requests and catalog**: select item → variables/justification → submit →
+REQ/RITM/approvals/SCTASK created. Fulfillment routing is
+administrator-controlled under **ITIL configuration → Catalog item
+fulfillment routing**; Laptop/Software route to Windows by default (and, as
+of this session, both catalog items themselves are now auto-created on
+first bootstrap — see Part 5). Legacy items without an explicit route fall
+back to active Service Desk; ordering fails closed if neither exists.
+Catalog request visibility is need-to-know: requested-by/for, fulfillment
+team members/managers, SCTASK-assigned teams, named approvers, and admins
+only.
+
+**Changes**: must state type, affected CI, owning team, risk, impact,
+planned window, implementation/test/backout plans. Review conflicts before
+approval. CCB approval is authorization, not technical validation or
+implementation-team membership.
+
+**Knowledge, CMDB, assets, boards**: search knowledge before duplicating
+work; use the CMDB relationship view for service-impact understanding
+(now considerably richer per Part 5 — lifecycle state, criticality,
+location, owning team, vendor/model/serial, discovery source, install/
+warranty dates); asset pages track accountable inventory; the visual task
+board changes underlying ticket state and remains audited/role-controlled.
+
+<a id="section-archive-master_reference--4-deployment-decision"></a>
+#### 4. Deployment decision
+
+<a id="section-archive-master_reference--5-docker-installation"></a>
+#### 5. Docker installation
+
+<a id="section-archive-master_reference--6-kubernetes-prerequisites"></a>
+#### 6. Kubernetes prerequisites
+
+<a id="section-archive-master_reference--7-kubernetes-installation"></a>
+#### 7. Kubernetes installation
+
+<a id="section-archive-master_reference--8-kubernetes-chart-controls"></a>
+#### 8. Kubernetes chart controls
+
+<a id="section-archive-master_reference--9-identity-configuration"></a>
+#### 9. Identity configuration
+
+<a id="section-archive-master_reference--10-post-deployment-system-settings"></a>
+#### 10. Post-deployment system settings
+
+**Administration → System settings**: platform/company name, PNG logo,
+colors, support identity, display defaults, LDAP/Keycloak, encrypted
+provider secrets, security limits, workflow defaults, notification
+identity. Each field marked **Live** (read from PostgreSQL every request) or
+**Restart required** (needs a full Compose restart / Kubernetes rollout).
+Database topology/replicas/storage/ingress/TLS remain Compose/Helm-owned
+and read-only in the UI. Sensitive values encrypted before storage, never
+returned to the browser; `SETTINGS_ENCRYPTION_KEY` must be durable.
+
+<a id="section-archive-master_reference--11-security-operations"></a>
+#### 11. Security operations
+
+<a id="section-archive-master_reference--12-backup-and-recovery"></a>
+#### 12. Backup and recovery
+
+<a id="section-archive-master_reference--13-upgrades-and-rollback"></a>
+#### 13. Upgrades and rollback
+
+<a id="section-archive-master_reference--14-monitoring-and-slos"></a>
+#### 14. Monitoring and SLOs
+
+<a id="section-archive-master_reference--15-incident-response"></a>
+#### 15. Incident response
+
+<a id="section-archive-master_reference--16-production-acceptance-checklist"></a>
+#### 16. Production acceptance checklist
+
+---
+
+<a id="section-archive-master_reference--part-10--deployment-guide"></a>
+### Part 10 — Deployment guide
+
+<a id="section-archive-master_reference--kubernetes-production-deployment"></a>
+#### Kubernetes production deployment
+
+<a id="section-archive-master_reference--web-installation-center"></a>
+#### Web Installation Center
+
+<a id="section-archive-master_reference--ad-and-ldap"></a>
+#### AD and LDAP
+
+<a id="section-archive-master_reference--keycloak"></a>
+#### Keycloak
+
+Confidential OIDC client, standard authorization-code flow, redirect URI
+`https://serviceops.example.com/auth/keycloak/callback`. Enable `openid
+profile email`, include realm roles in the ID token if role mapping is
+needed. `KEYCLOAK_ROLE_MAPPINGS` maps realm role names to ServiceOps
+roles. Keep the local admin credential vaulted for IdP outages.
+
+<a id="section-archive-master_reference--fast-installation"></a>
+#### Fast installation
+
+<a id="section-archive-master_reference--rpm-packaging"></a>
+#### RPM packaging
+
+<a id="section-archive-master_reference--architecture-a-bundled-postgresql"></a>
+#### Architecture A: bundled PostgreSQL
+
+<a id="section-archive-master_reference--architecture-b-external-postgresql"></a>
+#### Architecture B: external PostgreSQL
+
+Uses `compose.external-db.yaml`; no local DB container/volume.
+
+<a id="section-archive-master_reference--https-and-network-exposure"></a>
+#### HTTPS and network exposure
+
+<a id="section-archive-master_reference--operations"></a>
+#### Operations
+
+<a id="section-archive-master_reference--recovery-objectives"></a>
+#### Recovery objectives
+
+<a id="section-archive-master_reference--upgrades"></a>
+#### Upgrades
+
+<a id="section-archive-master_reference--security-checklist"></a>
+#### Security checklist
+
+<a id="section-archive-master_reference--scaling"></a>
+#### Scaling
+
+---
+
+<a id="section-archive-master_reference--part-11--documentation-index-and-synchronization-rule"></a>
+### Part 11 — Documentation index and synchronization rule
+
+(Full text of [docs/DOCUMENTATION_INDEX.md](../README.md), plus this file's own entry.)
+
+<a id="section-archive-master_reference--keeping-this-synchronized"></a>
+#### Keeping this synchronized
+
+When implementing a change:
+
+<a id="section-archive-master_reference--outstanding-synchronization-task-from-this-session"></a>
+#### Outstanding synchronization task from this session
+
+---
+
+<a id="section-archive-traceability_matrix"></a>
+
+## Historical excerpts: Requirements traceability matrix
+
+Historical source: `docs/archive/TRACEABILITY_MATRIX.md`. Exact duplicate prose already retained in the maintained sections has been omitted. Original dates, claims and superseded operating conventions in these excerpts remain historical.
+<a id="section-archive-traceability_matrix--requirements-traceability-matrix"></a>
+
+| Requirement/source | ServiceOps evidence | Status | Backlog |
+|---|---|---|---|
+| Unified navigation, search, favorites, history, preferences (UI PDF: Next Experience) | `templates/base.html`, `/ui/search`, favorites/recent views, `tests/test_app.py` | Verified | B-021 |
+| User profile, user list and administration home (UI PDF: User Interface/User Administration) | tenant-scoped `/profile`, `/admin/users`, `/admin/users/<id>` and `/admin`; self-service contact fields are separated from admin-only role, active state and department authority; search and persistence/denial tests | Verified | B-248 |
+| Categorized personal interface settings (UI PDF: System Settings) | `/preferences` categories for accessibility, lists, forms and notification navigation; persistent density, scale, contrast, motion, tooltips, date display and navigation settings; light-only governed by ADR-012 | Verified for implemented settings; vendor theme/developer controls are intentionally not reproduced | B-248, B-240 |
+| Lists, filters, forms, activity, attachments, checklists (UI PDF: Core UI/Workspace) | shared task-derived record shell for INC/CHG/PRB/enterprise records/REQ, common two-column operational fields, action headers, field-level Event history, type-specific related sections and Incident section navigation, shared list toolbar/search/filter/record count/pagination/priority signals and lifecycle plus rendered-browser tests | Verified | B-022, B-245, B-247, B-248 |
+| Visual task boards (UI PDF: VTB) | `/task-board`, move endpoint and test | Verified | B-023 |
+| Branding/logo/theme configuration (UI PDF: Theme Builder/configuration) | installer and `/admin/settings`; light-only UI | Implemented | B-024 |
+| Guided help/tours (UI PDF: Adoption services) | `templates/help.html` + `static/platform.js` interactive step-by-step tour with inline focus/advance/skip; static help articles alongside it | Partial; versioned content and role targeting remain open | B-120 |
+| Full configurable workspace/page-builder capability | no page designer or metadata runtime | Gap | B-121 |
+| Production-only initialization | `seed`, installer, Compose, cleanup tool and tests | Implemented | B-001 |
+| Team-manager and CCB approval chain | named manager controls, explicit CCB approver grants, chains/gates/votes; change submission fail-closed | Implemented | B-030 |
+| Approval and lifecycle integrity | centralized transition guards, approval-owned states, exact-voter enforcement, board/form/task bypass tests | Verified | B-034 |
+| Assignment-group operational authorization | shared INC/CHG read visibility for active IT teams, explicit owning-team mutation guard, team-scoped assignees and adversarial cross-team read/write tests | Verified | B-035, B-042 |
+| ITIL related-record network | governed `RecordLink`, `OperationalTask`, `ProblemProfile`, `MajorIncidentProfile`, REQ/RITM/SCTASK hierarchy, reverse related lists and relationship tests | Verified | B-031, B-037 |
+| Ticket history and change reapproval | `TaskHistory`, `ChangeRevision`, material-field comparison, superseded chains, fresh notifications and adversarial approval-reset tests | Verified | B-036 |
+| Task-to-CMDB relationships | primary/affected CIs, impacted services and multi-CI schedule-conflict detection | Implemented | B-032 |
+| CMDB attribute depth (lifecycle, criticality, discovery source, ownership) | `ConfigurationItem` fields added by migration `20260729_0023`: description, lifecycle_state, business_criticality, serial_number, vendor, model, location, cost_center, discovery_source, install/warranty dates, JSON attributes, support_group_id; `CIRelationship` gained its own `tenant_id` and a tightened `(parent, child, type)` unique constraint | Implemented; no automated test added yet, REST `cmdb:write` endpoint not yet extended to the new fields | B-253 |
+| Cross-record lookup tenant isolation (`find_record_by_number`) | every branch now filters by the caller's tenant, joining through the owning parent for RITM/SCTASK/CTASK/PTASK | Implemented; no adversarial test added yet | B-253 |
+| Ticket lifecycle-transition errors stay inline (no generic error page) | `ticket_detail`'s `update`/`quick_resolve` actions now wrap `transition_ticket` in `try/except HTTPException`, matching `enterprise_detail`'s existing pattern; verified live against a real invalid-transition ticket | Verified | B-254 |
+| Catalog order approval-prerequisite validation (no crash on missing approvers) | `catalog_order` validates an active admin and a non-empty Service Desk membership before creating any REQ/RITM rows, flashing a clear error instead of raising `AttributeError`/`ValueError`; verified live against the actual empty-membership case that produced the reported 500 | Verified | B-254 |
+| RITM/SCTASK lifecycle stepper and Opened/Opened by fields | reused existing `build_state_track`/`_state_track.html` component with new `ritm`/`catalog_task` state orders; verified live via rendered HTML on real RITM/SCTASK records | Verified | B-254 |
+| Org chart readability at scale | replaced fragile flex/connector-line tree with an indented vertical tree (`org2-*`); verified live against all 18 seeded users with no clipped/misaligned nodes | Verified | B-255 |
+| Manager visibility into team performance/SLA exposure | `manager_portal_context()` computes per-member open incidents/changes/tasks, 30-day resolutions, and SLA breached/at-risk via batched aggregate queries; verified live across 6 teams / 12 members | Verified | B-255 |
+| CSV/print export coverage | `csv_response()` helper wired into manager portal, tickets, open work, CMDB, and requests list; browser print/PDF via a dedicated print stylesheet | Verified | B-255 |
+| Print/Save-as-PDF works under CSP | replaced inline `onclick` handlers (silently blocked by `script-src 'self'`) with `data-print-page` + a delegated listener in `platform.js`; verified CSP header unchanged and listener present in served JS | Verified | B-256 |
+| Pending-approvals and open-task visibility in navigation | `pending_approvals_count`/`my_open_tasks_count` added to the shared `ui_context()` context processor, rendered as amber nav badges; verified live against a real pending approval | Verified | B-256 |
+| Analytics reflects standard ITSM reporting metrics | SLA compliance, 14-day volume trend, backlog aging, MTTR by priority, change success rate, busiest teams — all computed from real `TaskSLA`/`Ticket` data with proportional (not arbitrary) chart scaling | Verified | B-256 |
+| Sidebar collapse/scroll stability | persisted `nav-collapsed` via `localStorage` and moved scroll/collapse-state restoration into a blocking, CSP-compliant `static/nav-init.js` applied before first paint; verified live with CSP header unchanged and no JS errors | Verified | B-257 |
+| Change approval invalidated on Affected CI/Impacted Service change | `task_ci_add` now calls `supersede_change_approval` for change tickets, matching the other three material-change paths | Verified | B-258 |
+| Emergency change accelerated-but-auditable approval route | `change_approval_stages` gives Emergency changes a single-approver "expedited" CCB stage instead of the full-board majority gate; CCB authorization and audit trail remain mandatory | Verified | B-258 |
+| LDAP bind fails closed on key-rotation/decrypt failure | `ldap_authenticate` resolves the bind password directly and aborts rather than falling back to an anonymous bind if a configured password can't be decrypted | Verified | B-258 |
+| REST API rate limiting | new `api_rate_limit_window` table (migration `20260729_0024`), DB-backed per-client-per-minute counter enforced in `authenticate_api_request()`, configurable via `API_RATE_LIMIT_PER_MINUTE`; verified live returning `429`+`Retry-After` after the configured limit | Verified | B-258 |
+| `ChangeGovernance.ccb_required` wired into CCB gating | previously defined and defaulted but never read; now respected by `change_approval_stages` (no UI to set it False yet — deliberately deferred, security-sensitive) | Implemented | B-258 |
+| Attachment content-type/extension verification | `validate_attachment_upload()` allowlists extensions and cross-checks magic bytes, storing the verified MIME type instead of the client-supplied one; verified live against a rejected `.exe` and an accepted `.pdf` | Verified | B-258 |
+| Attachment malware scanning and cryptographic hashing | optional ClamAV INSTREAM adapter (`scan_attachment()`, no new dependency, configurable host/port/enable), rejects/quarantines a positive scan result before any `file_attachment` row is created, records `sha256`/`scan_status` (migration `20260729_0026`); honestly reports `not_scanned` when unconfigured rather than claiming clean; verified live end-to-end (upload succeeds, `not_scanned` + hash recorded) | Verified | B-260 |
+| `ChangeGovernance`/`ApprovalGate`/`ApprovalVote` own enforced `tenant_id` | previously reachable only by joining back through `approval_chain`/`ticket`; migration `20260729_0025` adds and backfills an own tenant_id column on each, same defense-in-depth precedent as `CIRelationship` (B-253); verified live against the running Postgres database with zero NULL backfills | Verified | B-260 |
+| Catalog hierarchy and task orchestration | multi-RITM REQ, multiple team-owned SCTASKs, sequential/parallel dependency control and terminal-state roll-up | Verified | B-033 |
+| Configurable catalog fulfillment routing | per-item `CatalogItemRouting`, administrator route UI, Windows defaults for Laptop/Software, Service Desk fallback and generated-SCTASK routing tests | Verified | B-038 |
+| Catalog item administration | administrator create/edit controls for item metadata, delivery target, approval, availability and fulfillment route; create/edit/deactivation test | Verified | B-041 |
+| Catalog request visibility boundaries | participant/fulfillment/approver/admin policy applied to REQ list, direct detail, dashboard counts and global search with cross-team denial tests | Verified | B-039 |
+| Cross-module object and field authorization | centralized ticket/request/enterprise policies; direct-ID, list, search, attachment, analytics, approval, relationship and mutation tests; Git-backed action vocabulary plus validated fail-closed field registry for REST tickets, audit exports, JSON search, monitoring/workflow acknowledgements and UI mutation responses | Implemented; independent authorization review pending | B-005, B-040, B-203 |
+| AD/LDAP and Keycloak authentication | authentication code, installer checks, AD group-to-team mapping and login reconciliation | Implemented; external proof absent | B-061 |
+| LDAP directory sync (profile fields, manager chain, group membership) — manual and scheduled | `serviceops_core/ldap_sync.py`, `app.process_ldap_sync_schedule`, `tools/outbox_worker.py`, migrations `20260729_0027`/`20260730_0028`, `tests/test_ldap_sync.py`, `tests/test_ldap_sync_schedule.py` | Implemented and verified; unit tests mocked (7 scheduling tests + prior sync tests), full suite passed against real PostgreSQL 16, migration upgrade/downgrade/re-upgrade verified live, and manager chain/profile fields/group membership verified live end-to-end against a real throwaway OpenLDAP server | B-262 |
+| Docker and external PostgreSQL deployment | Compose definitions, single `./serviceops` lifecycle command, internal installers, health endpoints | Implemented | B-050 |
+| Kubernetes high availability | Helm resources/PDB/network policy | Implemented; cluster proof absent | B-051 |
+| Versioned database migrations and tenant foundation | Alembic baseline plus tenant revision, existing-schema adoption, default-tenant backfill for 15 roots, tenant-aware list/search/direct-ID policies, Kubernetes migration Job, outdated-schema startup refusal, cross-tenant denial tests, and a guarded disposable PostgreSQL `20260727_0013 → 20260727_0012 → 20260727_0013` rehearsal with 100,717 records across 63 tables (dynamically resolved head/prior revision, not hardcoded) | Migration path verified at full scale (2026-07-28); `ApprovalGate`/`ApprovalVote`/`ChangeGovernance` closed by B-260; roughly 21 further dependent child tables and independent tenant-isolation review still pending | B-002, B-005, B-202, B-231, B-260 |
+| CSRF protection and hardened session lifecycle | central unsafe-method guard, injected form tokens, JavaScript token headers, post-login rotation, HttpOnly/SameSite cookies and explicit rejection/acceptance tests | Verified | B-003, B-201 |
+| Tamper-evident audit evidence | tenant-specific hash chains, per-event key IDs, non-destructive encrypted historical-key retention and rotation, file-mounted bootstrap key, request/source correlation, database UPDATE/DELETE denial triggers, minimum seven-year retention/legal hold policy, verification-gated signed export, and SIEM-only signed durable delivery | Implemented; representative external WORM/SIEM validation and independent review pending | B-004 |
+| Versioned REST API foundation | tenant/user-bound hashed clients, scopes, shared policies and projections, cursor pagination, JSON errors/request IDs, OpenAPI, idempotent writes, auditing, one-time token display and revocation | Implemented for initial ticket/incident contract; broader resources, OAuth2, rate limiting and compatibility programme pending | B-204 |
+| Responsive PWA foundation | dynamic manifest, company icon support, secure-context registration and static-shell-only service worker with tests proving no API/ticket caching | Implemented; encrypted governed offline records intentionally deferred | B-205 |
+| Durable integration foundation | transactional outbox, Compose/Kubernetes worker, SKIP LOCKED coordination, bounded retry/dead state, SMTP/STARTTLS, signed webhooks, Teams payloads, encrypted secrets, delivery evidence, authenticated monitoring ingestion, deduplication and team-routed EVT/EVTASK | Implemented with simulated adapters; representative external-system validation and operational SLO evidence pending | B-130 |
+| Priority and SLA governance | Git-backed validated impact/urgency matrix, controlled override evidence, IANA-timezone business schedules, holiday exclusions, immutable SLA lifecycle events, pause/resume accounting and worker-driven breach notifications | Implemented; OLA/contracts, escalation ladders and production-scale calendar/load rehearsal pending | B-206 |
+| Declarative workflow foundation | validated Git package, immutable published versions, restricted expression/actions, state-entry jobs, PostgreSQL worker retries/dead state, correlation and execution evidence, idempotency, safe simulation and administrator deployment view | Implemented for ticket state-entry notification/history actions; broader trigger/action catalogue, waits, compensation, subflows, rate limits and promotion governance pending | B-207 |
+| Durable workflow orchestration | PostgreSQL wait cursor/resume, action-step evidence, manual/API/SLA triggers, API scope/idempotency, per-workflow rate limits, bounded retry, controlled replay and final-attempt safe compensation | Implemented; scheduled recurrence, reusable subflows, broader actions and production failure/load evidence pending | B-208 |
+| Scheduled workflows and subflows | reusable subflow expansion with unknown/cycle rejection, immutable materialized versions, tenant ticket schedules, concurrent scheduler claims, single due-event emission and missed-run coalescing | Implemented; calendar expressions, blackout policy, package dependencies, concurrency quotas and production-scale proof pending | B-209 |
+| Bootstrap credential lifecycle | mounted-file priority, worker exclusion, split Kubernetes runtime/bootstrap Secrets, password rotation, auth-version session invalidation, verified retirement command | Implemented; external vault/provider rotation ceremony pending | B-006, B-210 |
+| Supply-chain evidence | exact dependencies, digest-pinned bases, full-SHA-pinned CI actions, tests, Trivy high/critical gate, CycloneDX image SBOM, digest-only publication/deployment, keyless Cosign signature, GitHub SLSA/SBOM attestations, registry verification and Sigstore namespace admission enforcement | Implemented; representative tagged GHCR publication and cluster rejection proof pending | B-007, B-210 |
+| Production observability/SLOs | health endpoints only | Gap | B-070 |
+
+<a id="section-archive-traceability_matrix--connection-dependent-capability-boundary"></a>
+### Connection-dependent capability boundary
+
+---
+
+<a id="section-archive-ui_capability_mapping"></a>
+
+## Historical excerpts: Australia UI guide capability mapping
+
+Historical source: `docs/archive/UI_CAPABILITY_MAPPING.md`. Exact duplicate prose already retained in the maintained sections has been omitted. Original dates, claims and superseded operating conventions in these excerpts remain historical.
+<a id="section-archive-ui_capability_mapping--australia-ui-guide-capability-mapping"></a>
+
+| Source guide family | ServiceOps implementation |
+|---|---|
+| Next Experience and unified navigation | Unified top navigation, collapsible application navigation, global search, favorites, history, notifications, help, preferences, and role-aware landing pages |
+| Landing pages and dashboards | Operational dashboard, analytics workspace, workload counters, role-based record visibility, selectable start page |
+| Configurable workspace | Purpose-built ticket, request, change, CMDB, catalog, approval, analytics, and ITIL administration workspaces |
+| CMDB discovery | Manual administrator create/edit/retire for configuration items and CI-to-CI relationships; automated registration from Linux hosts via `PUT /api/v1/cmdb/configuration-items` (idempotent upsert-by-name) and a lightweight shell agent, with an example Puppet class for scheduled fleet-wide sync |
+| Lists and filters | Searchable/filterable record lists, states, priorities, badges, responsive tables, empty states; administrator user list searches name, username, email and department |
+| Forms and activity | Structured forms, field validation, comments/activity stream, work notes, related approvals, SLAs, checklist, attachments, audit events, and Incident section navigation for Notes/Related Records/Resolution/Event History |
+| Favorites and history | Per-user persistent favorites and recently viewed pages, exposed as a single combined star control (list + toggle) plus a distinct history clock, each page carrying its own title so entries are distinguishable |
+| Notifications | Per-user notification inbox with unread counts, approval notifications, and clickable links back to the source ticket/record/approval queue |
+| Reference fields | Type-ahead search-as-you-type lookups for configuration items and cross-record linking (`/internal/lookup/cis`, `/internal/lookup/records`), showing a description line per match, in place of long unlabeled `<select>` dropdowns |
+| Assignment and reassignment | Group-level assignment is always by team name, never by picking an individual manager; incidents and changes can be reassigned to a different owning IT-fulfillment team from the record detail page, which restarts change approval against the new team's manager |
+| Manager/team work views | Manager portal (per-team open change/incident/task counts) and a unified "My tasks" queue covering CTASK/PTASK/EVTASK/SCTASK assigned to the user or their teams across every parent record |
+| Dashboard personalization | Admin-configurable dashboard sections (Assigned to me, SLA breached/at-risk with configurable warning window, Recently updated) via System Settings, plus a live P1/P2 signal on the Incidents tile |
+| Personalization and accessibility | Categorized General/List/Form/Notification preferences; compact/comfortable density, font scaling, high contrast, reduced motion, accessible tooltips, keyboard/date display/data-pattern preferences, sidebar pin preference, semantic labels and responsive layouts. Light-only by governed decision (ADR-012); no dark/system theme option exists |
+| User profile and administration | Self-service name/contact/timezone/date-format profile, administrator-controlled user identity/role/active/department records, searchable user list, and capability-based administration home. Directory membership remains governed by AD mapping and team administration rather than editable self-service fields |
+| Service Portal | Employee catalog, knowledge search, request tracking, requested-item stages, attachments, and self-service cases |
+| Visual Task Boards | Drag-and-drop lifecycle lanes backed by ticket state, audit, and SLA updates |
+| Global search | Tickets, knowledge, enterprise work, and configuration items |
+| Attachments and checklists | Persistent Docker-backed file uploads/downloads and per-ticket actionable checklists |
+| Guided help and onboarding | Help Center, contextual task guidance, and an interactive navigation tour |
+| Themes and branding | ServiceOps design tokens (light-only, no user-selectable theme, ADR-012); deployment-owned branding colors/logo via installer and admin settings |
+| Core UI developer tooling | Adapted as server-rendered Flask templates, reusable styles, routes, and automated tests |
+| CMS, UI Builder, widget developer APIs, Angular providers, Jelly, and ServiceNow scripting APIs | Not applicable: these are vendor-specific development runtimes. ServiceOps uses Flask, Jinja, SQLAlchemy, CSS, and JavaScript instead |
+| Advanced Work Assignment, Agent Chat, Virtual Agent, voice guidance, predictive recommendations | Requires external messaging, telephony, workforce-routing, or AI services and is not represented as locally operational |
+| Native mobile apps and offline distribution | Responsive web access is implemented; native app publishing is not included |
+
+<a id="section-archive-ui_capability_mapping--verification-expectations"></a>
+### Verification expectations
+
+<a id="section-archive-master_reference--this-sessions-additions-to-the-backlog-not-yet-assigned-formal-ids--see-part-8-for-the-sync-required-follow-up"></a>
+<a id="section-archive-master_reference--known-gaps-this-session-did-not-close-explicitly-deferred-not-silently-skipped"></a>
