@@ -32,11 +32,8 @@ creating another document for each feature or review.
 ## Sources, assets and public artifacts
 
 - `docs/diagrams/`, `docs/screenshots/` and `docs/readme/` contain image assets;
-  their existing paths are preserved for the manual and screenshot tools.
-- `tools/generate_operations_manual.py` builds the public PDF from the
-  operations document. `tools/regenerate_manual.sh` also recaptures screenshots
-  from a configured development stack; see that script's prerequisites.
-- `tools/sync_api_reference.sh` mirrors the API contract to the sibling
+  their existing paths are preserved for the generated manual.
+- `docs/API_REFERENCE.md` is mirrored to the sibling
   `ServiceOps/docs/API_REFERENCE.md`; both copies must be byte-identical.
 
 Internal Markdown sources stay here. The sibling ServiceOps repository retains

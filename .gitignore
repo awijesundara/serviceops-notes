@@ -53,7 +53,5 @@ AGENTS.md
 .claude/
 .codex/
 
-# Local image-generation tooling (screenshots, diagrams).
-tools/capture_screenshots.py
-tools/generate_diagrams.py
-tools/regenerate_manual.sh
+# Local documentation tooling (manual, screenshots, diagrams, API mirror).
+tools/
