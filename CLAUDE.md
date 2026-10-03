@@ -42,10 +42,11 @@ bumping versions and tagging by hand on every push.
    Every successful quality gate on `main` releases a patch automatically; use
    the workflow's manual dispatch (`increment: minor` or `major`) for larger
    changes.
-3. If the next tag already exists (a release commit failed to land on `main`,
-   so `VERSION` is behind the newest tag), automatic patch releases fail with
-   "Tag vX.Y.Z already exists". Fix forward by dispatching the next increment
-   that yields an unused tag; never move or delete a tag to make room.
+3. The workflow creates its release commit through the GitHub API, so GitHub
+   signs it (`main` requires verified signatures), and creates the tag only
+   after that commit lands. If a version's tag already exists from an earlier
+   run that never reached `main`, the workflow skips to the next version of the
+   same increment. Never move or delete a tag to make room.
 4. Record the version in the relevant `docs/BACKLOG.md` entry so its rationale
    is traceable.
 5. Never retag or move an existing tag to a different commit; if a tag was
@@ -58,7 +59,7 @@ bumping versions and tagging by hand on every push.
    committer, no `Co-authored-by:` or `Claude-Session:` trailers, and no
    `claude/` or `codex/` branch names in merged history. The one standing
    exception is the release workflow's own `chore(release)` commit by
-   `github-actions[bot]`.
+   `github-actions[bot]`, which GitHub signs.
 7. **Before merging any PR, check the merge commit message for an
    auto-inserted `Co-authored-by:` trailer and strip it.** GitHub adds one for
    every distinct commit author on the branch, including bots and agents.

@@ -22,11 +22,11 @@ never moved or rebuilt; a correction receives a new patch version.
 6. Only after all gates pass does automation publish the GitHub release and generated release notes.
 
 If a post-tag gate fails, there is no published GitHub release. Fix forward and
-issue a new patch release; do not replace the failed tag. If the release commit
-fails to land on `main` (for example because `main` moved during the run), its
-tag still exists and `VERSION` stays behind it; the next automatic patch then
-fails with "Tag vX.Y.Z already exists". Dispatch the next increment that yields
-an unused tag.
+issue a new patch release; do not replace the failed tag. The release commit is
+created through the GitHub API (`tools/release_commit.py`), so GitHub signs it,
+and the tag is created only after that commit lands on `main`. If a version's
+tag already exists from an earlier run, the workflow skips to the next version
+of the same increment.
 
 After the new release is deployed to MicroK8s and verified, delete every older
 git tag and GitHub release so only the newest remains (GHCR image versions are
@@ -34,10 +34,11 @@ kept).
 
 ## Branch and change controls
 
-- Current state (2026-10-03): `main` has no branch protection and its ruleset is
-  disabled; the sole maintainer pushes directly, and the supply-chain gate runs on
-  every push. Pull requests, approvals and tag restrictions are the target once
-  more than one person contributes.
+- Current state (2026-10-03): the active `security` ruleset on `main` requires
+  verified signatures, blocks force pushes and branch deletion, and requests
+  Copilot code review on push. The sole maintainer pushes directly, and the
+  supply-chain gate runs on every push. Pull requests, approvals and tag
+  restrictions are the target once more than one person contributes.
 - Every commit is authored and committed as Anushka Wijesundara and SSH-signed
   (GitHub "Verified"); no AI or bot attribution except the release workflow's
   `chore(release)` commit.
