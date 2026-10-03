@@ -1167,6 +1167,7 @@ A closed lid sleeps the Mac unless `sudo pmset -a disablesleep 1` is set (or the
 
 | Symptom | Cause and fix |
 |---|---|
+| Pages stall, then load without styling | A request thread is blocked. Filter System Health → Logs by logger `serviceops.crash`: each stuck request (longer than `SLOW_REQUEST_REPORT_SECONDS`, default 30) is recorded with its thread stack, as are worker timeouts and arbiter SIGKILL/OOM messages. Records are spooled in `LOG_DIR/crash-spool` and imported by the next worker to boot |
 | "This endpoint has not been allowlisted..." | The operator has not listed that server; the message names the entry to add |
 | "Provider rejected the request" | Wrong or empty API key, or wrong model identifier |
 | "The server rejected the API key" during detection | Key mismatch with `--api-key-file` |
@@ -1305,3 +1306,7 @@ ServiceOps 1.38.2 improved release consistency, CI quality checks, one
 redirect boundary, and shared accessibility semantics. It did not close any
 gate in the table above. Scope and evidence are in
 [REMEDIATION_PLAN_1.38.2.md](BACKLOG.md#section-remediation_plan_1.38.2) (now superseded; see that file).
+
+### Syslog receiver network access
+
+Application settings or environment variables SYSLOG_ENABLED, SYSLOG_HOST, SYSLOG_PORT, SYSLOG_TRANSPORT and SYSLOG_LEVEL configure forwarding at process startup. In Kubernetes, allow the chosen receiver with narrow destination and port rules in Helm values `syslog.extraEgress`; the rules apply to web, outbox and AI worker NetworkPolicies. Keep the default empty list until a receiver is selected. Syslog records use [RFC 5424](https://www.rfc-editor.org/info/rfc5424/) and stream transports use octet-counting framing from [RFC 6587](https://www.rfc-editor.org/info/rfc6587/). TLS verifies the receiver using the system trust store. UDP cannot confirm receipt; TCP/TLS socket success also does not establish remote durable retention. Locally emitted records remain in the existing log sinks.

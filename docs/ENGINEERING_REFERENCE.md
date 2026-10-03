@@ -1501,3 +1501,13 @@ New routes go in the module for their area. Business rules still belong in
 `serviceops_core/` service and policy modules, not in route handlers.
 Moving module-level services out of `app.py` (about 7,300 lines of
 services and helpers above `create_app()`) is the next decomposition step.
+
+### Syslog forwarding boundaries
+
+`serviceops_core/syslog_forwarding.py` uses a daemon worker and a 1,024-record bounded queue. Request threads enqueue already redacted/formatted messages without remote socket I/O. Records larger than 60,000 bytes are retained locally and produce a rate-limited warning. Socket operations have a two-second timeout; destination failures suppress further attempts for 30 seconds, with a local warning at most once per minute. Forwarder warnings bypass the remote handler to avoid recursive failures. TLS uses verified default SSL context; web and both workers read startup settings after database/migration initialization. Global receiver settings use the existing installation-settings administrator boundary.
+
+### Offline interface localization and AI references
+
+`UserPreference.language` is a validated bundled language code, default `en`, introduced by expand migration 20261003_0112. `serviceops_core/localization.py` loads and validates `locales/catalogs.json` once per process into immutable maps, provides a request-specific translator and English fallback, and never sends record text to a translation service. Only explicitly marked literal interface labels are translated. The initial catalogs contain 83 locales and 24 common messages each; explanatory sentences and unmarked labels remain English. Translations were authored by the coding assistant and are not claimed to have native-speaker review. The language preference does not alter stored workflow states, API fields, access checks or record identifiers.
+
+AI evidence IDs remain internal correlation keys for provider grounding. At the human boundary, `ai/references.py` resolves these to verified server-generated application paths with readable numbers/titles, also linking known ticket numbers. Posted notes accept local Markdown reference links and reject remote/protocol-relative/control-character/backslash URLs. Unsupported references lose opaque labels. Citation conversion runs only after source access checks; normal action expiry, stale record and explicit approval controls remain in force.

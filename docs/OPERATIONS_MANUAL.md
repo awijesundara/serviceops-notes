@@ -1480,3 +1480,21 @@ Only selected reported limits and capability indicators are stored, not raw temp
 Requests use conservative UTF-8 byte accounting, not an exact tokenizer. Unknown limits use a 4096-token ceiling for a server on your network and 32,768 tokens for a hosted provider (which does not advertise its limit). Output is bounded by the administrator cap, reported output cap and one quarter of context. Required instructions and the newest question remain intact; older turns and evidence are shortened first. Oversized questions fail with an actionable message. Reasoning allowance is bounded too; unknown thinking controls are omitted. Provider context rejection fails closed without switching to another provider.
 
 Streaming, tools, GPU memory, speed and pricing are not inferred from model names or successful listing. Existing administrator switches, private conversations, permission filtering, encrypted credentials and cancellation remain enforced. Migration does not alter existing enablement.
+
+### Editing an investigation comment
+
+After an incident investigation completes, choose **Review comment draft**. The comment editor starts with only the **Draft Operator Response**, without the investigation summary, diagnostics, missing-information sections or section title. Edit the text and choose **Post comment**, or **Discard** it. If a structured answer has no operator response, enter your own comment in the empty editor. The posted comment uses your name and the **AI-assisted** label; no attribution sentence is added to its body. Posting rechecks access, administrator settings, proposal expiry and whether the ticket changed. Repeated submission does not create another comment.
+
+### Team names, executive approval and syslog
+
+Administrators can rename operational groups in **Team managers** or **Governance groups**. Record links keep the same group ID, old names remain aliases, and recent renames appear in a small audit trail. Client support follows its group type rather than requiring the literal name SysOps.
+
+**Executive approval** accepts multiple active users. Choose **Every selected executive** or **Any one selected executive**. This affects new approval chains; existing approval decisions remain historical.
+
+In **Administration → Platform & security → Security and limits**, enable syslog forwarding and enter the server, port, transport and minimum severity. The default is disabled, port 514, UDP and WARNING. Restart or roll out web and both workers after saving these settings. TLS uses system certificate trust and hostname verification; a TLS receiver commonly uses port 6514. Forwarding does not replace existing local logs. If forwarding fails, the application records a local warning. No receiver is enabled until an administrator configures it.
+
+### Offline language preferences
+
+Open **Preferences**, choose **Language**, and save. English is the default. Bundled catalogs provide 24 common interface terms in 83 languages and regional variants, covering the preference title, key navigation labels and common actions. Labels without bundled translations remain in English. This is partial interface localization, not full translation of every screen. Record descriptions, comments, names and identifiers retain their original content. Arabic, Persian, Hebrew, Urdu and Pashto use a right-to-left layout. Translation runs locally with no translation provider or internet access.
+
+AI investigation drafts and generated notes resolve evidence references to readable application links. Ticket references use their ticket number. Unknown source labels are removed; readable source titles are retained when no link exists. The operator can still edit an investigation comment before posting it. Existing notes whose source mapping is unavailable no longer show opaque S-number badges.
