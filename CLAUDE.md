@@ -34,6 +34,19 @@ Every push to GitHub that lands new changes must carry a matching git tag:
 4. Record the version bump in the relevant `docs/BACKLOG.md` entry so the tag's rationale is traceable later.
 5. Never retag or move an existing tag to a different commit — if a tag was wrong, cut a new version instead.
 6. Never add a `Co-Authored-By: Claude` (or any other Claude/Anthropic) trailer to commit messages or annotated tag messages. All commits and tags are authored solely under the user's configured git identity.
+7. **Before merging any PR (squash or otherwise), check the merge commit message for an auto-inserted `Co-authored-by:` trailer and strip it.** GitHub auto-adds one of these for every distinct commit author on the branch — including bot/agent accounts (e.g. `ServiceOps Maintainer`, Copilot) that pushed intermediate commits — even though none of this repo's own commits or workflow files reference that trailer. This has already caused two full-history `git filter-repo` + force-push rewrites (2026-08-04, 2026-08-05) to remove it after the fact; catching it at merge time avoids a third. Edit the squash-merge commit message box in the GitHub UI (or `gh pr merge --squash --body "..."` with an explicit body) to drop the trailer before confirming the merge.
+
+## Release retention (effective 2026-09-26)
+
+Per explicit user direction, keep only the newest release: after a new
+version publishes and is verified deployed, delete every older git tag and
+GitHub Release (the release object and its assets) so only the current one
+remains. Do not delete GHCR container package versions this way -- that is
+a separate resource with a different blast radius (another deployment could
+still be pulling one by tag) and is only touched if separately requested.
+This is a standing step in the governed release process now, not a one-time
+cleanup: it was first performed on 2026-09-26 across 98 tags / 78+ releases
+going back to v1.80.x.
 
 ## Complete release obligation (effective 2026-08-23)
 
@@ -102,6 +115,21 @@ Supported authentication patterns are:
 - Keycloak/OIDC
 
 The local bootstrap administrator must be handled securely and must not have a known default password.
+
+Cloudflare Access (or an equivalent reverse-proxy identity layer sitting in
+front of the deployment) may additionally be trusted as a *login shortcut*
+into one of the patterns above, never as a fifth independent authentication
+backend: when `CLOUDFLARE_ACCESS_TEAM_DOMAIN`/`CLOUDFLARE_ACCESS_AUD` are
+configured, `/login` verifies the edge-issued `Cf-Access-Jwt-Assertion`
+JWT (signature, audience, expiry against Access's own JWKS) and, only on a
+verified match to an existing active local user's email, establishes the
+same session `login_user()`/local login already creates -- it does not
+create, provision, or elevate accounts, and every other authentication
+requirement in this section (lockout, MFA, audit, tenant scoping) still
+applies to the account being logged into. This is additive to, not a
+replacement for, local/LDAP/Keycloak: any deployment not fronted by such a
+proxy is entirely unaffected, and the feature is a no-op unless both env
+vars are explicitly set.
 
 Enforce tenant_id and tenant-aware authorization everywhere, even when only one organization currently exists.
 

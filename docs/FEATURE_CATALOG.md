@@ -293,6 +293,28 @@ global-search results, analytics, and overdue reporting where applicable.
   ceiling, verified at mobile, standard desktop, and 2560-pixel-wide desktop
   viewports.
 
+### Rack equipment images and identification
+
+- Front/rear rack views and the embedded CI preview show equipment images.
+  NetBox model artwork takes precedence, followed by an exact bundled model
+  image and an offline equipment-type illustration when an image is absent.
+- Recognizes servers, network switches, routers, firewalls, load balancers,
+  storage, blade chassis, PDUs, UPS/batteries, patch panels, KVM/console
+  equipment, cooling units, and other appliances. Unknown equipment remains
+  visible with an explicit unidentified label and a neutral illustration.
+- Identification uses recorded equipment roles, CI class, exact model/model
+  family, then bounded name hints. Vendor aliases and model punctuation are
+  normalized without treating approximate models as exact artwork matches.
+- The equipment inventory displays names, vendor/model,
+  status, category and identification basis. 0U, missing-position and
+  out-of-bounds equipment has its own section; rack-mounted horizontal PDUs
+  stay at their recorded U position. Space usage accounts for overlapping
+  front/rear equipment and fractional U positions.
+- Existing tenant/class permissions apply to every equipment section; NetBox
+  credentials and private URLs stay server-side. Images are not fetched from
+  public third-party image/AI services. Type illustrations are category
+  representations, not exact photos of every manufacturer/model.
+
 ### Import and synchronization
 
 - CSV CMDB import with parse, normalize, validate, dry-run, create/update, and
