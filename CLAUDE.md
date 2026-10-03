@@ -24,17 +24,46 @@ Per explicit user direction, every change from this date forward is held to a pr
 - "Production ready" still requires documented production-readiness evidence per the "Validation expectations" section below, and is never inferred from a passing unit-test suite. This standard raises the bar on verification; it does not relax the honesty requirements elsewhere in this file — never report a change as tested, deployed, or production ready unless it was actually verified.
 - When live infrastructure (Postgres, LDAP, Kubernetes, etc.) is unavailable in the working environment, say so explicitly as a remaining risk rather than skipping the verification silently.
 
-## Release tagging policy (effective 2026-07-30)
+## Versioning, tagging and commit identity (updated 2026-10-03)
 
-Every push to GitHub that lands new changes must carry a matching git tag:
+Versions and tags are produced only by the **Governed release** workflow (see
+"Complete release obligation" below). This replaces the 2026-07-30 rule of
+bumping versions and tagging by hand on every push.
 
-1. Bump the version consistently everywhere it already appears (currently: `charts/serviceops/Chart.yaml` `version`/`appVersion`, `templates/base.html` cache-busting query strings, `installer/app.py` default image tag, `.env`'s `SERVICEOPS_IMAGE`) per this file's "Migrations and releases" section, which already requires these to agree.
-2. Use semantic versioning: patch for fixes, minor for new user-facing capability, major for breaking changes — judge from the actual diff, don't default to patch.
-3. Create an annotated tag `vX.Y.Z` at the commit being pushed, and push the tag alongside the commit (`git push origin <branch> && git push origin vX.Y.Z`, or `--follow-tags`).
-4. Record the version bump in the relevant `docs/BACKLOG.md` entry so the tag's rationale is traceable later.
-5. Never retag or move an existing tag to a different commit — if a tag was wrong, cut a new version instead.
-6. Never add a `Co-Authored-By: Claude` (or any other Claude/Anthropic) trailer to commit messages or annotated tag messages. All commits and tags are authored solely under the user's configured git identity.
-7. **Before merging any PR (squash or otherwise), check the merge commit message for an auto-inserted `Co-authored-by:` trailer and strip it.** GitHub auto-adds one of these for every distinct commit author on the branch — including bot/agent accounts (e.g. `ServiceOps Maintainer`, Copilot) that pushed intermediate commits — even though none of this repo's own commits or workflow files reference that trailer. This has already caused two full-history `git filter-repo` + force-push rewrites (2026-08-04, 2026-08-05) to remove it after the fact; catching it at merge time avoids a third. Edit the squash-merge commit message box in the GitHub UI (or `gh pr merge --squash --body "..."` with an explicit body) to drop the trailer before confirming the merge.
+1. Never edit the version files by hand (`VERSION`, `charts/serviceops/Chart.yaml`
+   `version`/`appVersion`, `values.yaml` image tag, `README.md` badge,
+   `static/service-worker.js`, `.env.example`, `installer/app.py`,
+   `tools/install/server.sh`, `packaging/rpm/serviceops.spec`). The release
+   workflow reads `VERSION`, bumps it and writes all of them in its own
+   `chore(release): X.Y.Z` commit. A hand-edited version blocks or skews the
+   next release.
+2. Semantic versioning, judged from the actual diff: patch for fixes, minor for
+   new user-facing capability or additive schema, major for breaking changes.
+   Every successful quality gate on `main` releases a patch automatically; use
+   the workflow's manual dispatch (`increment: minor` or `major`) for larger
+   changes.
+3. If the next tag already exists (a release commit failed to land on `main`,
+   so `VERSION` is behind the newest tag), automatic patch releases fail with
+   "Tag vX.Y.Z already exists". Fix forward by dispatching the next increment
+   that yields an unused tag; never move or delete a tag to make room.
+4. Record the version in the relevant `docs/BACKLOG.md` entry so its rationale
+   is traceable.
+5. Never retag or move an existing tag to a different commit; if a tag was
+   wrong, cut a new version. The only exceptions were full-history rewrites the
+   user explicitly authorized (2026-08-04, 2026-08-05, 2026-10-02/03).
+6. Every commit is authored and committed as `Anushka Wijesundara
+   <anushka@wijesundara.com>` and SSH-signed (`commit.gpgsign=true`,
+   `gpg.format=ssh`) so GitHub shows it as Verified. No AI or bot attribution
+   anywhere: no Claude, Codex, Copilot or other agent identity as author or
+   committer, no `Co-authored-by:` or `Claude-Session:` trailers, and no
+   `claude/` or `codex/` branch names in merged history. The one standing
+   exception is the release workflow's own `chore(release)` commit by
+   `github-actions[bot]`.
+7. **Before merging any PR, check the merge commit message for an
+   auto-inserted `Co-authored-by:` trailer and strip it.** GitHub adds one for
+   every distinct commit author on the branch, including bots and agents.
+   Prefer merging locally (fast-forward or a signed merge commit) so the result
+   is signed by Anushka; a GitHub web merge records `web-flow` as committer.
 
 ## Release retention (effective 2026-09-26)
 
@@ -425,6 +454,9 @@ Keep these synchronized in `serviceops-notes` where they exist:
 - Migration and rollback instructions
 - Release evidence
 
+This file is maintained here in `serviceops-notes/CLAUDE.md`; the local, untracked
+`ServiceOps/CLAUDE.md` must be a byte-identical copy.
+
 After editing this file or any doc that belongs in `serviceops-notes`, copy the
 changed file(s) into `/Users/anushka/Github/serviceops-notes` and commit there too —
 see that repo's own README for the sync procedure. Do not delete local docs because
@@ -457,21 +489,56 @@ For each meaningful change, run proportionate validation, including as applicabl
 
 A healthy /health endpoint alone is not sufficient production evidence.
 
-## Deployment after changes
+## Deployment after changes (updated 2026-10-03)
 
-After every completed code change:
+The delivery target is the MicroK8s cluster, namespace `operations`,
+`serviceops.wijesundara.com`. Environment values live in
+`/Users/anushka/Github/k8s/serviceops-values-microk8s.yaml`; commit that file
+(signed) whenever the deployed image changes, and never commit Secret values.
 
-1. Build a fresh ServiceOps image from the exact current source.
-2. Ensure the image contains the expected migration head.
-3. Deploy the updated stack.
-4. Run migrations safely.
-5. Confirm application, worker, database, and persistent storage health.
-6. Verify the changed workflow in the running application.
-7. Give the user the URL and exact test scenario.
-8. Report the deployed image/version and migration revision.
-9. Report any validation that could not be performed.
+Two stages, never mixed up:
+
+1. **Candidate (optional, before pushing).** A locally built image may be
+   pushed to the in-cluster registry (`localhost:32000`) and deployed by digest
+   for acceptance testing. A candidate is temporary.
+2. **Release (always).** Once the change is pushed and the Governed release has
+   published `vX.Y.Z`, deploy that release's GHCR image by digest
+   (`ghcr.io/awijesundara/serviceops-server@sha256:...`, tagged by release
+   commit SHA) with the chart from the same tag. Production must not be left on
+   a candidate built from uncommitted source.
+
+For every upgrade:
+
+1. Only one agent or person deploys at a time. Before starting, confirm no other
+   `helm` process is running and `helm history serviceops -n operations` shows
+   no `pending-*` revision. Another collaborator may be mid-deploy.
+2. Take a backup (`kubectl create job --from=cronjob/serviceops-backup`) and
+   restore-test it into a scratch database; use that job as
+   `database.backupReference`.
+3. Run `helm upgrade ... --wait --timeout 10m` **without `--atomic`**. The
+   migration job commits schema changes before the pods roll; an automatic
+   rollback then leaves old pods that refuse the newer schema (this caused a
+   full outage on 2026-10-02). If an upgrade fails, roll forward. Roll back only
+   after restoring the verified backup.
+4. Verify web and worker rollouts, `helm test`, `/health` and `/ready`, the
+   Alembic head, ticket and user counts, Cloudflare Access (302) and recent
+   logs. A skipped check is a reported gap.
+5. Report the deployed version, digest, Helm revision and migration revision.
 
 Do not tell the user a change is deployed until the running environment has been checked.
+
+### MicroK8s footprint (effective 2026-10-03)
+
+Per explicit user direction, only the Cloudflare tunnel and the jump host are
+fail-safe; everything else runs one lean replica:
+
+- `cloudflared`: two replicas, one per node, PodDisruptionBudget `minAvailable: 1`.
+- Jump host: one pod; its Longhorn volume keeps two replicas, one per node, so it
+  can restart on either node.
+- ServiceOps web, workers, FlowOps, Baseline, website: one replica each with small
+  requests and limits. ServiceOps uses `allowSingleReplica: true`.
+- Longhorn: CSI controllers one replica each, UI scaled to zero, new volumes default
+  to one replica.
 
 ## Current review priorities
 
