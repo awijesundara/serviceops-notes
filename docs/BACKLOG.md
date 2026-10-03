@@ -3970,3 +3970,41 @@ Verification: `tests/test_crash_reports.py` (7 cases), covering the watchdog, wo
 Remaining: the code path that hangs in production is not yet identified. The watchdog exists to capture it on the next occurrence.
 
 Release and deployment: the minor dispatch for `05be38c` committed `chore(release): 1.111.0`, then failed in the Docker test image, where Playwright is not installed and a module-level import aborted collection. `70f1f88` guards the three new browser tests (skip without Playwright or `AXE_CORE_PATH`). Governed release v1.111.1 (`353a0e7`) published successfully. The orphaned v1.111.0 tag was removed under release retention; v1.110.2 and v1.110.1 were deleted. Deployed through Helm revision 157 as `ghcr.io/awijesundara/serviceops-server@sha256:72aabd1118138a4878bc268f2cf183bc4bd91283fcb40b9796ad578bd981da0c`, replacing the local `serviceops-crash` candidate. Backup `serviceops-backup-v11111-20261003231628:/backups/serviceops-20261003T141630Z.dump` restored at `20261003_0112` with 20 tickets. Verified: helm test Succeeded, Alembic `20261003_0112`, 20 tickets and 8 users, in-pod `/ready` and `/status` 200, the running Gunicorn loads `--config /app/gunicorn.conf.py`, Cloudflare Access 302, and no ERROR/CRITICAL lines in 15 minutes of logs. Values committed as k8s `a4deffb`.
+
+### Worldwide interface localization — 2026-10-04
+
+Requirement: support every language that can practically be supported, completing the 2026-10-03 partial localization (24 common terms in 83 languages; other text English).
+
+Implemented (ServiceOps source):
+- **Every interface string translatable.**
+  - All 107 page templates and the installer page route text through `tr()`/`trn()`/`tr_value()`; a test re-runs the template rewriter and fails on any unwrapped text.
+  - 755 server-message call sites use Python `tr()`: flash messages, abort descriptions, user-facing exceptions, and installer check results.
+  - About 230 script strings go through `tr()`/`trNoop()`.
+  - Fixed values such as states, priorities, roles, kinds and settings labels come from a generated registry and display through `tr_value()`.
+  - English plural hacks were replaced with `trn()`.
+  - Scripts that parsed visible English text now read data attributes: sync polling and AI model selection.
+  - Installer and discovery script output is built with DOM methods rather than `innerHTML`.
+- **Runtime.** `serviceops_core/localization.py`:
+  - One lazy JSON catalog per language, with fallback chains.
+  - Writing direction comes from the script, covering every right-to-left script.
+  - Escaping-safe template rendering.
+  - Resolution order: explicit preference, then `Accept-Language` (signed out or `auto`), then `DEFAULT_LANGUAGE`. Signed-out `/api/` requests always get English.
+  - CLDR month and weekday names, applied through `usertime` and `l10n_strftime`.
+  - Embedded script catalog JSON.
+- **Interface.**
+  - The language picker shows each language's own name and its English name, a coverage percentage, and an **Automatic (browser language)** option.
+  - Administrator setting **Default interface language**.
+  - `rtl.css` extended to mirror accent bars, indents, popovers and the AI widget.
+- **Build tools.** `tools/i18n_build_catalogs.py` (extract, index from CLDR, catalogs with quality checks), `i18n_interface_values.py`, `i18n_wrap_templates.py`, `i18n_wrap_python.py`, `i18n_translate_offline.py` (MADLAD-400 via CTranslate2, resumable, placeholder protection).
+- **Language set.** `tools/i18n_languages.json` lists 438 language variants: every living language MADLAD-400 can translate, with Brazilian Portuguese. Extinct and fictional languages (Old English, Ancient Greek, Klingon) and informal romanisations of languages with native scripts are excluded. Names and scripts come from CLDR, with SIL ISO 639-3 reference names where CLDR has none.
+
+Verification:
+- Full suite with browser and accessibility tests: 1,505 passed, 125 skipped, 4 failed. The four failures were one hard-coded language count in a browser test (now `len(CATALOGS) + 1` for the Automatic option); the corrected browser tests and localization suites then passed (58 passed, 0 failed).
+- `tests/test_localization_runtime.py`: 40 cases covering the coverage gates, catalog quality checks, escaping, fallback, negotiation, resolution order, right-to-left rendering, the installer, and translation-marker round trips.
+- Ruff clean; every script passes `node --check`.
+- English output is unchanged across the suite.
+
+Pending:
+- Generating the full catalogs with the offline model requires the user's approval to run downloaded model code on this machine. The weights are google/madlad400-3b-mt at revision `fa184c67`, Apache-2.0, SHA-256 `66ff5f8f…a76d4`.
+- Until that run completes, 82 languages carry only the 24 reviewed common terms. The picker labels each one "<1%", and all other text falls back to English.
+- Machine translations will not be native-speaker reviewed.

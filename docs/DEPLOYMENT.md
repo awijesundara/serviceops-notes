@@ -1310,3 +1310,16 @@ gate in the table above. Scope and evidence are in
 ### Syslog receiver network access
 
 Application settings or environment variables SYSLOG_ENABLED, SYSLOG_HOST, SYSLOG_PORT, SYSLOG_TRANSPORT and SYSLOG_LEVEL configure forwarding at process startup. In Kubernetes, allow the chosen receiver with narrow destination and port rules in Helm values `syslog.extraEgress`; the rules apply to web, outbox and AI worker NetworkPolicies. Keep the default empty list until a receiver is selected. Syslog records use [RFC 5424](https://www.rfc-editor.org/info/rfc5424/) and stream transports use octet-counting framing from [RFC 6587](https://www.rfc-editor.org/info/rfc6587/). TLS verifies the receiver using the system trust store. UDP cannot confirm receipt; TCP/TLS socket success also does not establish remote durable retention. Locally emitted records remain in the existing log sinks.
+
+### Interface language catalogs
+
+Catalogs are part of the image; no runtime service, network access or extra container is involved. `DEFAULT_LANGUAGE` (Administration → Appearance, or the environment) sets the language for new accounts and for signed-out pages whose browser asks for no available language; `auto` (the default) follows the browser.
+
+To change interface text or languages, from the repository root with `pip install -r requirements-dev.txt` (Babel provides CLDR metadata at build time only):
+
+1. `python tools/i18n_interface_values.py` refreshes the fixed-value registry.
+2. `python tools/i18n_build_catalogs.py extract` refreshes `serviceops_core/locales/source.json`.
+3. Translate new messages offline in a separate tooling environment (`ctranslate2`, `sentencepiece` and a CTranslate2 conversion of `google/madlad400-3b-mt`): `python tools/i18n_translate_offline.py --model DIR --spm DIR/spiece.model --languages LIST --output translations.jsonl`. An interrupted run resumes.
+4. `python tools/i18n_build_catalogs.py index --languages LIST`, then `python tools/i18n_build_catalogs.py catalogs --input machine.json --input reviewed.json --report report.json`. Later inputs override earlier ones, so reviewed terms win; entries failing the quality checks are dropped and listed in the report.
+
+The test suite fails when a template contains unwrapped text, when `source.json` or the value registry is stale, or when a bundled translation fails the checks.
