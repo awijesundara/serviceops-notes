@@ -1,7 +1,7 @@
 # ServiceOps documentation
 
 This repository is the authoritative source for ServiceOps documentation.
-Start here for navigation; read [CLAUDE.md](CLAUDE.md) before changing the project.
+Start here for navigation.
 
 ## Six maintained documents
 
@@ -31,7 +31,6 @@ creating another document for each feature or review.
 
 ## Sources, assets and public artifacts
 
-- `CLAUDE.md` contains the project collaboration and quality instructions.
 - `docs/diagrams/`, `docs/screenshots/` and `docs/readme/` contain image assets;
   their existing paths are preserved for the manual and screenshot tools.
 - `tools/generate_operations_manual.py` builds the public PDF from the

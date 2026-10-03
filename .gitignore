@@ -46,3 +46,14 @@ secrets.*.json
 # Generated recovery/release material may include operational metadata.
 backups/
 release-evidence/
+
+# AI assistant (Claude, Codex) development instructions stay local.
+CLAUDE.md
+AGENTS.md
+.claude/
+.codex/
+
+# Local image-generation tooling (screenshots, diagrams).
+tools/capture_screenshots.py
+tools/generate_diagrams.py
+tools/regenerate_manual.sh
