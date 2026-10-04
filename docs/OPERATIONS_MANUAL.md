@@ -1495,6 +1495,8 @@ In **Administration → Platform & security → Security and limits**, enable sy
 
 ### Interface languages
 
+Language selection is currently switched off: ServiceOps displays in English and the options below are hidden until full translations are bundled.
+
 Open **Preferences**, choose **Language** and save. Choose **Automatic (browser language)** to follow the language your browser asks for, or pick a language from the list. Each language is listed in its own script with its English name, so you can find it whichever language the page is currently in; a percentage after the name shows how much of the interface that language covers when it is not yet complete.
 
 Sign-in, password reset and other signed-out pages, and the web installer, follow the browser's language. Administrators set the default for new accounts, and for signed-out pages when the browser asks for no available language, in **Administration → Platform & security → Appearance → Default interface language**. Existing accounts keep the language they chose.
