@@ -3,6 +3,13 @@
 This repository is the authoritative source for ServiceOps documentation.
 Start here for navigation.
 
+[![CI](https://github.com/awijesundara/serviceops-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/awijesundara/serviceops-notes/actions/workflows/ci.yml)
+[![Last commit](https://img.shields.io/github/last-commit/awijesundara/serviceops-notes/main)](https://github.com/awijesundara/serviceops-notes/commits/main)
+[![Top language](https://img.shields.io/github/languages/top/awijesundara/serviceops-notes)](https://github.com/awijesundara/serviceops-notes)
+[![Code size](https://img.shields.io/github/languages/code-size/awijesundara/serviceops-notes)](https://github.com/awijesundara/serviceops-notes)
+[![docs](https://img.shields.io/badge/docs-6%20maintained%20documents-003E4C)](#six-maintained-documents)
+[![for](https://img.shields.io/badge/for-ServiceOps-0C7C68)](https://github.com/awijesundara/ServiceOps)
+
 ## Six maintained documents
 
 | Document | Read it for |
@@ -40,3 +47,14 @@ Internal Markdown sources stay here. The sibling ServiceOps repository retains
 its public README, generated `docs/ServiceOps_Complete_Platform_Manual.pdf`,
 the public API mirror and README image assets. Local documentation edits do
 not authorize commits, pushes, tags, publication or GitHub pipelines.
+
+## Project statistics
+
+| Metric | Value |
+|---|---|
+| Tracked files | 46 |
+| Lines of code (non-blank) | 0 |
+| Languages |  |
+| Commits | 182 |
+
+CI checks that every relative link and in-document anchor resolves on each push to `main`.
